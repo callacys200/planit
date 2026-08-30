@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Plan It</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ECEEF5;
+    --card:#FFFFFF;
+    --ink:#14172A;
+    --ink60:#585D78;
+    --ink35:#9298B2;
+    --line:#DFE2ED;
+    --brag:#E09A12;
+    --list:#0F9E68;
+    --org:#5350E8;
+    --lock:#E03F7C;
+    --accent:var(--org);
+    --accent-soft:rgba(83,80,232,.12);
+    --t-test:#E23D6D;
+    --t-deadline:#E2761B;
+    --t-birthday:#8A5CF6;
+    --t-meeting:#2F80ED;
+    --t-other:#6B7280;
+    --r:14px;
+    --shadow:0 1px 2px rgba(20,23,42,.06), 0 8px 24px -12px rgba(20,23,42,.18);
+  }
+  *{box-sizing:border-box}
+  html,body,#root{height:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:"Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size:15px; line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:"Bricolage Grotesque","Instrument Sans",sans-serif; letter-spacing:-.02em; margin:0}
+  .mono{font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums}
+  button{font:inherit;color:inherit;cursor:pointer}
+  input,textarea,select{font:inherit;color:inherit}
+  :focus-visible{outline:2.5px solid var(--accent); outline-offset:2px; border-radius:6px}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#C9CDDD;border-radius:99px;border:3px solid transparent;background-clip:content-box}
+  ::-webkit-scrollbar-thumb:hover{background:#AAB0C6;background-clip:content-box;border:3px solid transparent}
+
+  /* ---------- shell ---------- */
+  .app{display:flex;height:100%;overflow:hidden}
+  .rail{
+    width:210px;flex:none;padding:18px 0 18px 14px;display:flex;flex-direction:column;gap:6px;
+  }
+  .brand{display:flex;align-items:baseline;gap:7px;padding:6px 10px 18px 12px}
+  .brand b{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:21px;letter-spacing:-.03em}
+  .brand span{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink35);font-family:"IBM Plex Mono",monospace}
+  .tab{
+    position:relative;display:flex;align-items:center;gap:11px;
+    padding:11px 12px;margin-right:0;border:0;background:transparent;text-align:left;
+    border-radius:12px 0 0 12px;color:var(--ink60);font-weight:500;transition:background .16s, color .16s;
+  }
+  .tab .emoji{font-size:18px;line-height:1;filter:saturate(1.05)}
+  .tab .lbl{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .tab .sub{display:block;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink35);font-weight:400}
+  .tab:hover{background:rgba(255,255,255,.6);color:var(--ink)}
+  .tab.on{background:var(--card);color:var(--ink);box-shadow:-1px 0 0 var(--line) inset, 0 -1px 0 var(--line), 0 1px 0 var(--line)}
+  .tab.on::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:4px;border-radius:0 4px 4px 0;background:var(--tabcolor)}
+  .tab.on::after{content:"";position:absolute;right:-1px;top:0;bottom:0;width:14px;background:var(--card)}
+  .tab[disabled]{opacity:.45;cursor:not-allowed}
+  .rail-foot{margin-top:auto;padding:12px;font-size:11.5px;color:var(--ink35);line-height:1.5}
+
+  .pane{
+    flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-right:0;
+    border-radius:18px 0 0 18px;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow)
+  }
+  .pane-head{padding:22px 26px 0;flex:none}
+  .title-wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  h1{font-size:30px;font-weight:800;position:relative;display:inline-block;z-index:0}
+  h1::after{
+    content:"";position:absolute;left:-6px;right:-8px;bottom:2px;height:12px;z-index:-1;
+    background:var(--accent);opacity:.22;transform:skewX(-12deg) rotate(-.6deg);border-radius:2px
+  }
+  .tagline{color:var(--ink60);font-size:13.5px;margin-top:4px}
+  .tape{display:flex;gap:3px;margin:18px 0 0;padding:3px;background:#F2F3F8;border-radius:12px;width:fit-content;max-width:100%;overflow-x:auto}
+  .tape button{
+    border:0;background:transparent;padding:8px 16px;border-radius:9px;font-weight:600;font-size:13.5px;color:var(--ink60);white-space:nowrap
+  }
+  .tape button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(20,23,42,.14);position:relative}
+  .tape button.on::after{content:"";position:absolute;left:14px;right:14px;bottom:4px;height:2.5px;border-radius:2px;background:var(--accent)}
+  .pane-body{flex:1;overflow:auto;padding:18px 26px 40px}
+  .divider{height:1px;background:var(--line);margin:16px 0 0}
+
+  /* ---------- bits ---------- */
+  .btn{border:1px solid var(--line);background:var(--card);padding:8px 13px;border-radius:10px;font-weight:600;font-size:13.5px;display:inline-flex;align-items:center;gap:7px;transition:.14s}
+  .btn:hover{border-color:#C6CBDC;background:#FAFBFF}
+  .btn.primary{background:var(--accent);border-color:transparent;color:#fff}
+  .btn.primary:hover{filter:brightness(1.07)}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--ink60)}
+  .btn.ghost:hover{background:#F2F3F8;color:var(--ink)}
+  .btn.sm{padding:5px 9px;font-size:12.5px;border-radius:8px}
+  .btn.danger{color:#C42B5B;border-color:#F2D3DE}
+  .btn.danger:hover{background:#FFF4F7;border-color:#E7B6C7}
+  .chip{border:1px solid var(--line);background:var(--card);padding:5px 11px;border-radius:99px;font-size:12.5px;font-weight:600;color:var(--ink60)}
+  .chip.on{background:var(--accent);border-color:transparent;color:#fff}
+  .row{display:flex;align-items:center;gap:10px}
+  .spread{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink35);font-weight:500}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+  .empty{border:1.5px dashed #D3D8E8;border-radius:var(--r);padding:30px 22px;text-align:center;color:var(--ink60)}
+  .empty b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:16px;color:var(--ink);margin-bottom:5px}
+  .field{display:block;margin-bottom:12px}
+  .field > span{display:block;font-size:12px;font-weight:600;color:var(--ink60);margin-bottom:5px}
+  .field input,.field textarea,.field select{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#FBFBFE;transition:.14s
+  }
+  .field input:focus,.field textarea:focus,.field select:focus{background:#fff;border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+  .field textarea{resize:vertical;min-height:70px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+  .navdate{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:11px;padding:2px;background:var(--card)}
+  .navdate button{border:0;background:transparent;padding:6px 10px;border-radius:8px;color:var(--ink60);font-size:15px;line-height:1}
+  .navdate button:hover{background:#F2F3F8;color:var(--ink)}
+  .navdate .cur{padding:5px 12px;font-weight:700;font-size:13.5px;min-width:150px;text-align:center;font-family:"Bricolage Grotesque",sans-serif}
+
+  /* ---------- modal ---------- */
+  .scrim{position:fixed;inset:0;background:rgba(20,23,42,.42);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:18px;z-index:80;animation:fade .16s ease}
+  @keyframes fade{from{opacity:0}}
+  .modal{background:var(--card);border-radius:18px;width:min(560px,100%);max-height:88vh;overflow:auto;box-shadow:0 30px 70px -20px rgba(20,23,42,.45);animation:pop .18s cubic-bezier(.2,.8,.3,1)}
+  @keyframes pop{from{transform:translateY(10px) scale(.98);opacity:.4}}
+  .modal-head{padding:18px 20px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .modal-head h3{font-size:19px;font-weight:700}
+  .modal-body{padding:16px 20px}
+  .modal-foot{padding:0 20px 18px;display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}
+  .x{border:0;background:transparent;color:var(--ink35);font-size:20px;line-height:1;padding:4px 8px;border-radius:8px}
+  .x:hover{background:#F2F3F8;color:var(--ink)}
+
+  /* ---------- schedule ---------- */
+  .sched-wrap{display:grid;grid-template-columns:1fr 268px;gap:18px;align-items:start}
+  .grid-scroll{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--card)}
+  .grid-inner{position:relative;user-select:none;touch-action:none}
+  .hourrow{display:grid;grid-template-columns:62px 1fr;height:58px;border-top:1px solid var(--line)}
+  .hourrow:first-child{border-top:0}
+  .hourrow .h{font-size:11px;color:var(--ink35);padding:5px 10px 0;text-align:right;border-right:1px solid var(--line)}
+  .hourrow .slot{position:relative}
+  .hourrow .slot::after{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px dashed #EDEFF6}
+  .blocks{position:absolute;inset:0 0 0 62px;pointer-events:none}
+  .block{
+    position:absolute;pointer-events:auto;border-radius:10px;padding:6px 9px;overflow:hidden;
+    background:var(--accent-soft);border-left:3.5px solid var(--accent);cursor:grab;
+    box-shadow:0 1px 2px rgba(20,23,42,.08);transition:box-shadow .14s
+  }
+  .block:hover{box-shadow:0 4px 14px -4px rgba(20,23,42,.28)}
+  .block.dragging{cursor:grabbing;box-shadow:0 10px 24px -8px rgba(20,23,42,.4);z-index:5;opacity:.94}
+  .block .bt{font-weight:600;font-size:13px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .block .bm{font-size:10.5px;color:var(--ink60);margin-top:1px}
+  .block.done .bt{text-decoration:line-through;opacity:.55}
+  .block .grip{position:absolute;left:0;right:0;bottom:0;height:9px;cursor:ns-resize}
+  .block .grip::after{content:"";position:absolute;left:50%;bottom:3px;width:22px;height:2.5px;margin-left:-11px;border-radius:2px;background:currentColor;opacity:.22}
+  .anchor{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;font-size:12.5px;font-weight:600;
+    background:linear-gradient(90deg,var(--accent-soft),transparent);border:1px solid var(--line);cursor:pointer;transition:.14s}
+  .anchor:hover{background:var(--accent-soft)}
+  .anchor.wake{border-radius:var(--r) var(--r) 0 0;border-bottom:0}
+  .anchor.sleep{border-radius:0 0 var(--r) var(--r);border-top:0;background:linear-gradient(90deg,transparent,var(--accent-soft))}
+  .anchor .mono{color:var(--ink60);font-weight:500}
+  .grid-scroll{border-radius:0}
+  .asleep{position:absolute;left:62px;right:0;background:repeating-linear-gradient(135deg,#F4F5FA,#F4F5FA 6px,#EDEFF6 6px,#EDEFF6 12px);pointer-events:none;z-index:1}
+  .nowline{position:absolute;left:62px;right:0;height:2px;background:#E03F7C;z-index:6;pointer-events:none}
+  .nowline::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:99px;background:#E03F7C}
+  .tray{position:sticky;top:0}
+  .tray-item{display:flex;gap:8px;align-items:flex-start;padding:9px 10px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px;background:#FBFBFE;cursor:grab;touch-action:none}
+  .tray-item:hover{border-color:#C6CBDC;background:#fff}
+  .ghost{position:fixed;z-index:90;pointer-events:none;background:var(--accent);color:#fff;padding:7px 11px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 26px -8px rgba(20,23,42,.5);opacity:.95}
+
+  /* ---------- month ---------- */
+  .month{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--line);gap:1px}
+  .dow{background:#F7F8FC;padding:8px 10px;font-size:11px;font-weight:600;color:var(--ink35);text-transform:uppercase;letter-spacing:.08em}
+  .cell{background:var(--card);min-height:104px;padding:7px 8px;text-align:left;border:0;display:block;transition:background .12s}
+  .cell:hover{background:#FAFBFF}
+  .cell .dnum{font-size:12.5px;font-weight:600;color:var(--ink60);font-family:"IBM Plex Mono",monospace}
+  .cell.out{background:#F8F9FC}
+  .cell.out .dnum{color:#C3C8DA}
+  .cell.today .dnum{background:var(--accent);color:#fff;border-radius:7px;padding:1px 6px;display:inline-block}
+  .ev{display:flex;align-items:center;gap:5px;margin-top:4px;font-size:11.5px;line-height:1.25}
+  .ev .dot{width:7px;height:7px;border-radius:99px;flex:none}
+  .ev .evt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink60)}
+  .legend i{width:9px;height:9px;border-radius:99px;display:inline-block;margin-right:5px}
+
+  /* ---------- week ---------- */
+  .week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+  .daycol{border:1px solid var(--line);border-radius:12px;overflow:hidden;min-height:180px;display:flex;flex-direction:column}
+  .daycol h4{background:#F7F8FC;padding:7px 9px;font-size:12px;font-weight:700;border-bottom:1px solid var(--line);font-family:"Bricolage Grotesque",sans-serif}
+  .daycol h4 small{display:block;font-weight:500;color:var(--ink35);font-family:"IBM Plex Mono",monospace;font-size:10px}
+  .daycol.is-today h4{background:var(--accent-soft)}
+  .daycol .inner{padding:8px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .pill{border-radius:8px;padding:5px 7px;font-size:11.5px;line-height:1.3;border-left:3px solid}
+  .wkbottom{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media (max-width:960px){.wkbottom{grid-template-columns:1fr}}
+
+  /* ---------- todo ---------- */
+  .todo{display:flex;align-items:flex-start;gap:11px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card);transition:.14s}
+  .todo:hover{border-color:#CDD2E2}
+  .check{width:21px;height:21px;flex:none;border-radius:7px;border:1.8px solid #C6CBDC;background:#fff;margin-top:1px;display:grid;place-items:center;transition:.14s;padding:0}
+  .check:hover{border-color:var(--accent)}
+  .check.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .todo .txt{flex:1;min-width:0}
+  .todo .txt b{font-weight:600;font-size:14px;display:block;word-break:break-word}
+  .todo.done .txt b{text-decoration:line-through;color:var(--ink35)}
+  .todo .meta{font-size:11.5px;color:var(--ink35);margin-top:2px}
+  .addbar{display:flex;gap:8px;margin-bottom:14px}
+  .addbar input{flex:1;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:#FBFBFE}
+  .addbar input:focus{background:#fff;border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+  .bar{height:6px;border-radius:99px;background:#EEF0F7;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+
+  /* ---------- brag ---------- */
+  .ec{display:grid;grid-template-columns:1fr 230px;gap:0;border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px;overflow:hidden;background:var(--card)}
+  .ec .main{padding:16px 18px}
+  .ec .side{background:#FBFAF6;border-left:1px solid var(--line);padding:14px 16px;font-size:12.5px;color:var(--ink60);line-height:1.5}
+  .ec h3{font-size:17px;font-weight:700}
+  .ec .org{color:var(--ink60);font-size:13px;margin-top:1px}
+  .prio{display:inline-flex;gap:2.5px;align-items:center}
+  .prio i{width:6px;height:13px;border-radius:2px;background:#E2E5EF;display:block}
+  .prio i.on{background:var(--brag)}
+  .tagline-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;background:#EEF7F2;color:#0B7A50}
+  .tagline-badge.past{background:#F2F3F8;color:var(--ink60)}
+  .award{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:4px 9px;border-radius:8px;background:#FDF5E6;color:#96660A;font-weight:600;margin:0 6px 6px 0}
+
+  /* ---------- lock ---------- */
+  .lockgrid{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start}
+  .dial{display:grid;place-items:center;padding:14px 0 4px}
+  .dial-num{font-family:"IBM Plex Mono",monospace;font-size:52px;font-weight:500;letter-spacing:-.03em}
+  .presets{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .shield{position:fixed;inset:0;z-index:70;background:linear-gradient(160deg,#1B1030,#2A123B 60%,#3A1233);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:24px;text-align:center;animation:fade .3s ease}
+  .shield .big{font-family:"IBM Plex Mono",monospace;font-size:min(19vw,120px);font-weight:500;letter-spacing:-.04em;line-height:1}
+  .shield .sub{color:#D6C7E6;max-width:420px;font-size:14px}
+  .shield .btn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.24);color:#fff;margin-top:18px}
+  .shield .btn:hover{background:rgba(255,255,255,.18)}
+  .member{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px}
+  .avatar{width:32px;height:32px;border-radius:99px;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff;flex:none}
+  .status{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:#F2F3F8;color:var(--ink60)}
+  .status.focusing{background:#FDEBF2;color:#B92A61}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:11px;font-size:13.5px;z-index:95;box-shadow:0 14px 30px -10px rgba(20,23,42,.6);animation:pop .2s}
+
+  @media (max-width:960px){
+    .sched-wrap,.lockgrid{grid-template-columns:1fr}
+    .ec{grid-template-columns:1fr}
+    .ec .side{border-left:0;border-top:1px solid var(--line)}
+    .week{grid-template-columns:repeat(2,minmax(0,1fr))}
+  }
+  @media (max-width:720px){
+    .rail{width:66px;padding-left:8px}
+    .brand span,.tab .lbl,.tab .sub,.rail-foot{display:none}
+    .brand{justify-content:center;padding:6px 0 16px}
+    .tab{justify-content:center;padding:12px 0}
+    .pane-head{padding:16px 14px 0}
+    .pane-body{padding:14px 14px 40px}
+    h1{font-size:23px}
+    .month .cell{min-height:74px}
+    .week{grid-template-columns:1fr}
+    .navdate .cur{min-width:110px;font-size:12.5px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const {useState,useEffect,useRef,useMemo,useCallback} = React;
+
+/* ============ date helpers ============ */
+const pad = n => String(n).padStart(2,'0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseISO = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const addMonths = (d,n) => { const x = new Date(d.getFullYear(), d.getMonth()+n, 1); return x; };
+const startOfWeek = d => addDays(d, -d.getDay());
+const weekKey = d => iso(startOfWeek(d));
+const monthKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+const sameDay = (a,b) => iso(a) === iso(b);
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const fmtDay = d => `${DOW[d.getDay()]}, ${MON[d.getMonth()].slice(0,3)} ${d.getDate()}`;
+const fmtWeek = d => { const s = startOfWeek(d), e = addDays(s,6);
+  return `${MON[s.getMonth()].slice(0,3)} ${s.getDate()} – ${MON[e.getMonth()].slice(0,3)} ${e.getDate()}`; };
+const fmtMonth = d => `${MON[d.getMonth()]} ${d.getFullYear()}`;
+const toMin = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
+const toTime = m => `${pad(Math.floor(m/60))}:${pad(m%60)}`;
+const pretty = t => { const [h,m] = t.split(':').map(Number);
+  const ap = h >= 12 ? 'pm' : 'am'; const hh = h%12 === 0 ? 12 : h%12;
+  return m === 0 ? `${hh}${ap}` : `${hh}:${pad(m)}${ap}`; };
+const uid = () => Math.random().toString(36).slice(2,10);
+
+const ROW = 58;
+const DEFAULT_DAY = {wake:'07:00', sleep:'23:00'};
+const EV_TYPES = [
+  {id:'test',     label:'Test or quiz', color:'var(--t-test)'},
+  {id:'deadline', label:'Deadline',     color:'var(--t-deadline)'},
+  {id:'birthday', label:'Birthday',     color:'var(--t-birthday)'},
+  {id:'meeting',  label:'Meeting',      color:'var(--t-meeting)'},
+  {id:'other',    label:'Other',        color:'var(--t-other)'},
+];
+const evColor = t => (EV_TYPES.find(e => e.id === t) || EV_TYPES[4]).color;
+const evLabel = t => (EV_TYPES.find(e => e.id === t) || EV_TYPES[4]).label;
+
+/* ============ storage ============ */
+const KEY = 'planit:data:v1';
+async function loadStore(){
+  try { const r = await window.storage.get(KEY); return r ? JSON.parse(r.value) : null; }
+  catch(e){ return null; }
+}
+async function saveStore(data){
+  try { await window.storage.set(KEY, JSON.stringify(data)); } catch(e){}
+}
+
+function seed(){
+  const t = new Date();
+  const d0 = iso(t), d1 = iso(addDays(t,1)), d3 = iso(addDays(t,3)), d9 = iso(addDays(t,9));
+  return {
+    tasks:[
+      {id:uid(), title:'Read Ch. 12 of Bio', scope:'daily', date:d0, start:'16:00', end:'17:00', done:false},
+      {id:uid(), title:'Cross country practice', scope:'daily', date:d0, start:'18:00', end:'19:30', done:false},
+      {id:uid(), title:'Finish lab write-up', scope:'daily', date:d0, start:null, end:null, done:false},
+      {id:uid(), title:'Email Ms. Rivera about recommendation', scope:'daily', date:d1, start:null, end:null, done:false},
+      {id:uid(), title:'Draft Common App essay', scope:'weekly', anchor:weekKey(t), done:false},
+      {id:uid(), title:'Log 6 volunteer hours', scope:'weekly', anchor:weekKey(t), done:true},
+      {id:uid(), title:'Submit summer program application', scope:'monthly', anchor:monthKey(t), done:false},
+    ],
+    events:[
+      {id:uid(), title:'AP Chem unit test', date:d3, type:'test', note:'Chapters 6–8'},
+      {id:uid(), title:'History essay due', date:d1, type:'deadline', note:''},
+      {id:uid(), title:'Robotics club meeting', date:d0, type:'meeting', note:'Room 214, 3:30pm'},
+      {id:uid(), title:"Amara's birthday", date:d9, type:'birthday', note:''},
+    ],
+    ecs:[
+      {id:uid(), category:'experience', title:'Varsity Cross Country', org:'Northview High School', role:'Team captain',
+       start:'2023-08', end:'', ongoing:true, priority:5, goal:'Break 18:00 in the 5K and lead the team to state.',
+       awards:['All-County 2025'], notes:'6 practices a week, ~12 hrs. Organize the freshman mentor pairings.'},
+      {id:uid(), category:'experience', title:'Summer Research Intern', org:'Georgia Tech BioLab', role:'Intern',
+       start:'2025-06', end:'2025-08', ongoing:false, priority:4, goal:'Ask Dr. Chen about co-authoring the poster.',
+       awards:['Poster presented at symposium'], notes:'8 weeks, 20 hrs/week. Ran PCR assays and cleaned the sample dataset.'},
+      {id:uid(), category:'honor', title:'National Merit Semifinalist', org:'NMSC', role:'',
+       start:'2025-09', end:'', ongoing:false, priority:5, goal:'Submit the finalist application by October.',
+       awards:[], notes:'Based on junior year PSAT.'},
+    ],
+    lock:{ sessions:0, minutes:0, day: iso(t) },
+    day: null   // null means we still need to ask
+  };
+}
+
+/* ============ small components ============ */
+function Modal({title, onClose, children, footer}){
+  useEffect(() => {
+    const k = e => { if(e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
+  }, [onClose]);
+  return (
+    <div className="scrim" onMouseDown={e => { if(e.target === e.currentTarget) onClose(); }}>
+      <div className="modal" role="dialog" aria-modal="true" aria-label={title}>
+        <div className="modal-head"><h3>{title}</h3><button className="x" onClick={onClose} aria-label="Close">×</button></div>
+        <div className="modal-body">{children}</div>
+        {footer && <div className="modal-foot">{footer}</div>}
+      </div>
+    </div>
+  );
+}
+const Field = ({label, children}) => <label className="field"><span>{label}</span>{children}</label>;
+const Empty = ({title, hint}) => <div className="empty"><b>{title}</b>{hint}</div>;
+function DateNav({label, onPrev, onNext, onToday}){
+  return (
+    <div className="row" style={{gap:8}}>
+      <div className="navdate">
+        <button onClick={onPrev} aria-label="Previous">‹</button>
+        <div className="cur">{label}</div>
+        <button onClick={onNext} aria-label="Next">›</button>
+      </div>
+      <button className="btn sm" onClick={onToday}>Today</button>
+    </div>
+  );
+}
+const Check = ({on, onClick}) => (
+  <button className={'check' + (on ? ' on' : '')} onClick={onClick} aria-pressed={on} aria-label="Mark done">
+    {on && <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6.4l2.6 2.6L10 3.4" stroke="currentColor" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+  </button>
+);
+
+/* ============ ORGANIZE IT — daily ============ */
+function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
+  const dk = iso(date);
+  const dayTasks = tasks.filter(t => t.scope === 'daily' && t.date === dk);
+  const tray = dayTasks.filter(t => !t.start);
+  const [drag, setDrag] = useState(null);
+  const [ghost, setGhost] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [dayEdit, setDayEdit] = useState(false);
+  const gridRef = useRef(null);
+  const [nowTop, setNowTop] = useState(null);
+
+  // the day runs from wake to sleep, and can cross midnight
+  const wakeM = toMin(day.wake), sleepRaw = toMin(day.sleep);
+  const startM = Math.floor(wakeM/60)*60;
+  let endM = Math.ceil(sleepRaw/60)*60;
+  if(endM <= startM) endM += 1440;
+  const sleepM = sleepRaw <= wakeM ? sleepRaw + 1440 : sleepRaw;
+  const span = endM - startM;
+
+  const norm = m => m < startM ? m + 1440 : m;             // absolute minute on this day's timeline
+  const clampM = m => Math.max(startM, Math.min(endM, m));
+  const wire = m => toTime(((m % 1440) + 1440) % 1440);    // back to a clock time string
+  const topOf = m => (norm(m) - startM)/60*ROW;
+
+  const scheduled = dayTasks.filter(t => t.start && norm(toMin(t.start)) < endM);
+  const outside = dayTasks.filter(t => t.start && norm(toMin(t.start)) >= endM);
+
+  useEffect(() => {
+    const tick = () => {
+      const n = new Date();
+      if(!sameDay(n, date)) return setNowTop(null);
+      const m = norm(n.getHours()*60 + n.getMinutes());
+      setNowTop(m < startM || m > endM ? null : (m - startM)/60*ROW);
+    };
+    tick(); const i = setInterval(tick, 60000); return () => clearInterval(i);
+  }, [date, startM, endM]);
+
+  const yToMin = y => {
+    const r = gridRef.current.getBoundingClientRect();
+    const raw = startM + ((y - r.top) / ROW) * 60;
+    return clampM(Math.round(raw/5)*5);
+  };
+
+  const onDown = (e, task, mode) => {
+    e.preventDefault();
+    const offset = mode === 'move' ? yToMin(e.clientY) - norm(toMin(task.start)) : 0;
+    setDrag({id:task.id, mode, offset, task});
+    if(mode === 'place') setGhost({x:e.clientX, y:e.clientY, label:task.title});
+  };
+
+  useEffect(() => {
+    if(!drag) return;
+    const move = e => {
+      if(drag.mode === 'place'){ setGhost(g => g && {...g, x:e.clientX, y:e.clientY}); return; }
+      const m = yToMin(e.clientY);
+      if(drag.mode === 'move'){
+        const s0 = norm(toMin(drag.task.start));
+        const dur = Math.max(15, norm(toMin(drag.task.end)) - s0);
+        const s = Math.max(startM, Math.min(endM - dur, m - drag.offset));
+        update(drag.id, {start:wire(s), end:wire(s+dur)});
+      } else {
+        const s = norm(toMin(drag.task.start));
+        update(drag.id, {end:wire(Math.max(s+15, m))});
+      }
+    };
+    const up = e => {
+      if(drag.mode === 'place'){
+        const r = gridRef.current.getBoundingClientRect();
+        const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+        if(inside){
+          const s = yToMin(e.clientY);
+          update(drag.id, {start:wire(s), end:wire(Math.min(endM, s+60))});
+          toast('Added to the schedule');
+        }
+        setGhost(null);
+      }
+      setDrag(null);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+  }, [drag, update, toast, startM, endM]);
+
+  // lane assignment for overlapping blocks
+  const laid = useMemo(() => {
+    const sorted = [...scheduled].sort((a,b) => norm(toMin(a.start)) - norm(toMin(b.start)));
+    const lanes = [];
+    return sorted.map(t => {
+      const s = norm(toMin(t.start));
+      const e = Math.max(norm(toMin(t.end)), s+15);
+      let idx = lanes.findIndex(end => end <= s);
+      if(idx === -1){ idx = lanes.length; lanes.push(e); } else lanes[idx] = e;
+      return {...t, s, e, lane:idx};
+    }).map(t => ({...t, lanes: Math.max(1, lanes.length)}));
+  }, [scheduled, startM]);
+
+  const hours = [];
+  for(let m = startM; m < endM; m += 60) hours.push(m);
+  const mid = clampM(Math.round((startM + span/2)/60)*60);
+  const newBlock = () => setEditing({id:null, title:'', start:wire(mid), end:wire(Math.min(endM, mid+60)), date:dk});
+
+  // shaded strips for the minutes before waking and after sleeping
+  const preTop = (wakeM - startM)/60*ROW;
+  const postTop = (sleepM - startM)/60*ROW;
+
+  return (
+    <div>
+      <div className="spread" style={{marginBottom:14}}>
+        <DateNav label={fmtDay(date)} onPrev={() => setDate(addDays(date,-1))} onNext={() => setDate(addDays(date,1))} onToday={() => setDate(new Date())} />
+        <div className="row" style={{gap:8}}>
+          <button className="btn" onClick={() => setDayEdit(true)} title="Change your wake and sleep times">
+            ☀️ {pretty(day.wake)} → 🌙 {pretty(day.sleep)}
+          </button>
+          <button className="btn primary" onClick={newBlock}>+ New time block</button>
+        </div>
+      </div>
+
+      <div className="sched-wrap">
+        <div>
+          <div className="anchor wake" onClick={() => setDayEdit(true)} role="button" tabIndex={0}
+            onKeyDown={e => e.key === 'Enter' && setDayEdit(true)}>
+            <span>☀️ Wake up</span><span className="mono">{pretty(day.wake)}</span>
+          </div>
+          <div className="grid-scroll">
+            <div className="grid-inner" ref={gridRef}>
+              {hours.map(m => (
+                <div className="hourrow" key={m}>
+                  <div className="h mono">{pretty(wire(m))}</div>
+                  <div className="slot" onDoubleClick={e => {
+                    const s = yToMin(e.clientY);
+                    setEditing({id:null, title:'', start:wire(s), end:wire(Math.min(endM, s+60)), date:dk});
+                  }} />
+                </div>
+              ))}
+              {preTop > 0 && <div className="asleep" style={{top:0, height:preTop}} />}
+              {postTop < span/60*ROW && <div className="asleep" style={{top:postTop, bottom:0}} />}
+              {nowTop !== null && <div className="nowline" style={{top:nowTop}} />}
+              <div className="blocks">
+                {laid.map(t => {
+                  const w = 100/t.lanes;
+                  return (
+                    <div key={t.id}
+                      className={'block' + (drag && drag.id === t.id ? ' dragging' : '') + (t.done ? ' done' : '')}
+                      style={{top:(t.s - startM)/60*ROW + 1, height:Math.max(24, (t.e - t.s)/60*ROW - 2),
+                              left:`calc(${t.lane*w}% + 6px)`, width:`calc(${w}% - 12px)`}}
+                      onPointerDown={e => { if(!e.target.classList.contains('grip')) onDown(e, t, 'move'); }}
+                      onDoubleClick={() => setEditing(t)}>
+                      <div className="bt">{t.title}</div>
+                      <div className="bm mono">{pretty(t.start)} – {pretty(t.end)}</div>
+                      <div className="grip" onPointerDown={e => onDown(e, t, 'resize')} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          <div className="anchor sleep" onClick={() => setDayEdit(true)} role="button" tabIndex={0}
+            onKeyDown={e => e.key === 'Enter' && setDayEdit(true)}>
+            <span>🌙 Sleep</span><span className="mono">{pretty(day.sleep)}</span>
+          </div>
+        </div>
+
+        <div className="tray">
+          <div className="eyebrow" style={{marginBottom:8}}>Unscheduled — from List It</div>
+          {tray.length === 0
+            ? <div className="empty" style={{padding:'18px 14px',fontSize:13}}><b>Nothing waiting</b>Everything on today's list has a time.</div>
+            : tray.map(t => (
+              <div key={t.id} className="tray-item" onPointerDown={e => onDown(e, t, 'place')} title="Drag onto the schedule">
+                <span style={{color:'var(--ink35)',fontSize:13,marginTop:1}}>⠿</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:600,fontSize:13.5}}>{t.title}</div>
+                  <div style={{fontSize:11,color:'var(--ink35)'}}>Drag to place, or</div>
+                  <button className="btn sm" style={{marginTop:5}} onClick={() => {
+                    update(t.id, {start:wire(mid), end:wire(Math.min(endM, mid+60))});
+                    toast(`Placed at ${pretty(wire(mid))} — drag to adjust`);
+                  }}>Auto-place</button>
+                </div>
+              </div>
+            ))}
+
+          {outside.length > 0 && (
+            <div style={{marginTop:14}}>
+              <div className="eyebrow" style={{marginBottom:8}}>Outside your waking hours</div>
+              {outside.map(t => (
+                <div key={t.id} className="tray-item" style={{cursor:'default'}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:600,fontSize:13.5}}>{t.title}</div>
+                    <div className="mono" style={{fontSize:11,color:'var(--ink35)'}}>{pretty(t.start)} – {pretty(t.end)}</div>
+                    <button className="btn sm" style={{marginTop:5}} onClick={() => update(t.id, {start:null, end:null})}>Unschedule</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="card" style={{marginTop:14,background:'#FBFBFE',fontSize:12.5,color:'var(--ink60)'}}>
+            Drag a block to move it, pull the bottom edge to change its length, double-click empty space to add one.
+          </div>
+        </div>
+      </div>
+
+      {ghost && <div className="ghost" style={{left:ghost.x+12, top:ghost.y-14}}>{ghost.label}</div>}
+
+      {dayEdit && <DayEditor day={day} onClose={() => setDayEdit(false)}
+        onSave={d => { setDay(d); setDayEdit(false); toast('Day updated'); }} />}
+
+      {editing && <BlockEditor block={editing} day={day} onClose={() => setEditing(null)}
+        onSave={b => {
+          if(b.id) update(b.id, b); else add({...b, scope:'daily', done:false});
+          setEditing(null);
+        }}
+        onDelete={id => { remove(id); setEditing(null); }} />}
+    </div>
+  );
+}
+
+function DayEditor({day, onClose, onSave, first}){
+  const [f, setF] = useState(day);
+  const set = (k,v) => setF(p => ({...p,[k]:v}));
+  const wm = toMin(f.wake), sm0 = toMin(f.sleep);
+  const awake = ((sm0 <= wm ? sm0 + 1440 : sm0) - wm)/60;
+  const crosses = sm0 <= wm;
+  return (
+    <Modal title={first ? 'When does your day run?' : 'Your wake and sleep times'} onClose={onClose}
+      footer={<>
+        {!first && <button className="btn ghost" onClick={onClose}>Cancel</button>}
+        <button className="btn primary" onClick={() => onSave(f)}>{first ? 'Start planning' : 'Save times'}</button>
+      </>}>
+      <p style={{marginTop:0,color:'var(--ink60)',fontSize:13.5}}>
+        Your daily schedule starts and ends here instead of a fixed 6am to 11pm. These two repeat every day — change them any time from the Daily view.
+      </p>
+      <div className="grid2">
+        <Field label="☀️ I wake up at"><input type="time" value={f.wake} onChange={e => set('wake', e.target.value)} /></Field>
+        <Field label="🌙 I go to sleep at"><input type="time" value={f.sleep} onChange={e => set('sleep', e.target.value)} /></Field>
+      </div>
+      <div className="card" style={{background:'#FBFBFE',fontSize:13,color:'var(--ink60)'}}>
+        That's <b style={{color:'var(--ink)'}}>{awake % 1 === 0 ? awake : awake.toFixed(1)} hours</b> awake
+        {crosses ? ', running past midnight — the grid will keep going into the early hours.' : '.'}
+        {awake < 6 && <span style={{display:'block',marginTop:5,color:'#B92A61'}}>That's a short day. Double-check the times are right.</span>}
+      </div>
+      <div className="row" style={{gap:7,marginTop:12,flexWrap:'wrap'}}>
+        <span className="eyebrow" style={{marginRight:2}}>Quick set</span>
+        {[['Early bird','05:30','21:30'],['School day','07:00','23:00'],['Night owl','09:00','01:30']].map(([l,w,s]) => (
+          <button key={l} className="chip" onClick={() => setF({wake:w, sleep:s})}>{l}</button>
+        ))}
+      </div>
+    </Modal>
+  );
+}
+
+function BlockEditor({block, day, onClose, onSave, onDelete}){
+  const [f, setF] = useState({title:block.title||'', start:block.start||day.wake, end:block.end||day.sleep, date:block.date});
+  const set = (k,v) => setF(p => ({...p,[k]:v}));
+  const save = () => { if(!f.title.trim()) return; onSave({...block, ...f, title:f.title.trim()}); };
+  return (
+    <Modal title={block.id ? 'Edit time block' : 'New time block'} onClose={onClose}
+      footer={<>
+        {block.id && <button className="btn danger" onClick={() => onDelete(block.id)}>Delete</button>}
+        <button className="btn ghost" onClick={onClose}>Cancel</button>
+        <button className="btn primary" onClick={save}>Save block</button>
+      </>}>
+      <Field label="What are you doing?"><input autoFocus value={f.title} onChange={e => set('title', e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && save()} placeholder="Study for chem test" /></Field>
+      <div className="grid2">
+        <Field label="Starts"><input type="time" value={f.start} onChange={e => set('start', e.target.value)} /></Field>
+        <Field label="Ends"><input type="time" value={f.end} onChange={e => set('end', e.target.value)} /></Field>
+      </div>
+      <Field label="Date"><input type="date" value={f.date} onChange={e => set('date', e.target.value)} /></Field>
+      {block.id && <button className="btn sm" onClick={() => onSave({...block, ...f, start:null, end:null})}>Move back to unscheduled</button>}
+    </Modal>
+  );
+}
+
+/* ============ ORGANIZE IT — weekly ============ */
+function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily}){
+  const s = startOfWeek(date);
+  const days = Array.from({length:7}, (_,i) => addDays(s,i));
+  const wk = weekKey(date);
+  const inWeek = d => { const x = parseISO(d); return x >= s && x < addDays(s,7); };
+  const weekEvents = events.filter(e => inWeek(e.date)).sort((a,b) => a.date.localeCompare(b.date));
+  const weekTodos = tasks.filter(t => t.scope === 'weekly' && t.anchor === wk);
+  const [newEv, setNewEv] = useState(null);
+
+  return (
+    <div>
+      <div className="spread" style={{marginBottom:14}}>
+        <DateNav label={fmtWeek(date)} onPrev={() => setDate(addDays(date,-7))} onNext={() => setDate(addDays(date,7))} onToday={() => setDate(new Date())} />
+        <button className="btn primary" onClick={() => setNewEv({title:'', date:iso(date), type:'deadline', note:''})}>+ Add to the week</button>
+      </div>
+
+      <div className="week">
+        {days.map(d => {
+          const dk = iso(d);
+          const evs = events.filter(e => e.date === dk);
+          const blocks = tasks.filter(t => t.scope === 'daily' && t.date === dk);
+          return (
+            <div key={dk} className={'daycol' + (sameDay(d, new Date()) ? ' is-today' : '')}>
+              <h4>{DOW[d.getDay()]}<small>{MON[d.getMonth()].slice(0,3)} {d.getDate()}</small></h4>
+              <div className="inner">
+                {evs.map(e => (
+                  <div key={e.id} className="pill" style={{borderLeftColor:evColor(e.type), background:'#FAFBFE'}}>
+                    <b style={{fontWeight:600}}>{e.title}</b>
+                    <div style={{color:'var(--ink35)',fontSize:10.5}}>{evLabel(e.type)}</div>
+                  </div>
+                ))}
+                {blocks.slice(0,4).map(t => (
+                  <div key={t.id} className="pill" style={{borderLeftColor:'var(--line)', background:'#F7F8FC', color:'var(--ink60)'}}>
+                    {t.start && <span className="mono" style={{fontSize:10}}>{pretty(t.start)} </span>}{t.title}
+                  </div>
+                ))}
+                {evs.length === 0 && blocks.length === 0 && <div style={{fontSize:11.5,color:'var(--ink35)'}}>Clear</div>}
+                <button className="btn sm ghost" style={{marginTop:'auto',alignSelf:'flex-start'}}
+                  onClick={() => { setDaily(d); }}>Open day →</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="divider" style={{margin:'22px 0 18px'}} />
+      <div className="wkbottom">
+        <div>
+          <div className="eyebrow" style={{marginBottom:9}}>Deadlines &amp; meetings this week</div>
+          {weekEvents.length === 0
+            ? <Empty title="Nothing on the calendar yet" hint="Add a due date, test, or meeting to see it here." />
+            : weekEvents.map(e => (
+              <div key={e.id} className="todo" style={{alignItems:'center'}}>
+                <span style={{width:9,height:9,borderRadius:99,background:evColor(e.type),flex:'none'}} />
+                <div className="txt">
+                  <b>{e.title}</b>
+                  <div className="meta">{evLabel(e.type)} · {fmtDay(parseISO(e.date))}{e.note ? ` · ${e.note}` : ''}</div>
+                </div>
+                <button className="btn sm ghost" onClick={() => removeEvent(e.id)} aria-label="Remove">✕</button>
+              </div>
+            ))}
+        </div>
+        <div>
+          <div className="eyebrow" style={{marginBottom:9}}>Week goals — from List It</div>
+          {weekTodos.length === 0
+            ? <Empty title="No weekly goals set" hint="Head to List It → Weekly to add them." />
+            : weekTodos.map(t => (
+              <div key={t.id} className={'todo' + (t.done ? ' done' : '')} style={{alignItems:'center'}}>
+                <div className="txt"><b>{t.title}</b></div>
+                <span className="status">{t.done ? 'Done' : 'Open'}</span>
+              </div>
+            ))}
+        </div>
+      </div>
+
+      {newEv && <EventEditor ev={newEv} onClose={() => setNewEv(null)}
+        onSave={e => { addEvent(e); setNewEv(null); }} />}
+    </div>
+  );
+}
+
+/* ============ ORGANIZE IT — monthly ============ */
+function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, setDaily}){
+  const first = new Date(date.getFullYear(), date.getMonth(), 1);
+  const gridStart = startOfWeek(first);
+  const cells = Array.from({length:42}, (_,i) => addDays(gridStart,i));
+  const [editing, setEditing] = useState(null);
+  const [open, setOpen] = useState(null);
+  const byDay = useMemo(() => {
+    const m = {}; events.forEach(e => { (m[e.date] = m[e.date] || []).push(e); }); return m;
+  }, [events]);
+
+  return (
+    <div>
+      <div className="spread" style={{marginBottom:14}}>
+        <DateNav label={fmtMonth(date)} onPrev={() => setDate(addMonths(date,-1))} onNext={() => setDate(addMonths(date,1))} onToday={() => setDate(new Date())} />
+        <button className="btn primary" onClick={() => setEditing({title:'', date:iso(date), type:'test', note:''})}>+ Add a date</button>
+      </div>
+
+      <div className="month">
+        {DOW.map(d => <div className="dow" key={d}>{d}</div>)}
+        {cells.map(d => {
+          const dk = iso(d);
+          const list = byDay[dk] || [];
+          return (
+            <button key={dk} className={'cell' + (d.getMonth() !== date.getMonth() ? ' out' : '') + (sameDay(d,new Date()) ? ' today' : '')}
+              onClick={() => setOpen(dk)}>
+              <div className="dnum">{d.getDate()}</div>
+              {list.slice(0,3).map(e => (
+                <div className="ev" key={e.id}>
+                  <span className="dot" style={{background:evColor(e.type)}} />
+                  <span className="evt">{e.title}</span>
+                </div>
+              ))}
+              {list.length > 3 && <div className="ev" style={{color:'var(--ink35)',paddingLeft:12}}>+{list.length-3} more</div>}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="legend" style={{marginTop:14}}>
+        {EV_TYPES.map(t => <span key={t.id}><i style={{background:t.color}} />{t.label}</span>)}
+      </div>
+
+      {open && (
+        <Modal title={fmtDay(parseISO(open))} onClose={() => setOpen(null)}
+          footer={<>
+            <button className="btn ghost" onClick={() => { setDaily(parseISO(open)); setOpen(null); }}>Open in Daily</button>
+            <button className="btn primary" onClick={() => { setEditing({title:'', date:open, type:'test', note:''}); setOpen(null); }}>+ Add a date</button>
+          </>}>
+          {(byDay[open] || []).length === 0
+            ? <Empty title="Nothing marked on this day" hint="Add a test, deadline, birthday, or meeting." />
+            : (byDay[open] || []).map(e => (
+              <div key={e.id} className="todo" style={{alignItems:'center'}}>
+                <span style={{width:9,height:9,borderRadius:99,background:evColor(e.type),flex:'none'}} />
+                <div className="txt"><b>{e.title}</b><div className="meta">{evLabel(e.type)}{e.note ? ` · ${e.note}` : ''}</div></div>
+                <button className="btn sm" onClick={() => { setEditing(e); setOpen(null); }}>Edit</button>
+                <button className="btn sm ghost" onClick={() => removeEvent(e.id)} aria-label="Remove">✕</button>
+              </div>
+            ))}
+        </Modal>
+      )}
+
+      {editing && <EventEditor ev={editing} onClose={() => setEditing(null)}
+        onSave={e => { e.id ? updateEvent(e.id, e) : addEvent(e); setEditing(null); }}
+        onDelete={editing.id ? () => { removeEvent(editing.id); setEditing(null); } : null} />}
+    </div>
+  );
+}
+
+function EventEditor({ev, onClose, onSave, onDelete}){
+  const [f, setF] = useState({title:ev.title, date:ev.date, type:ev.type, note:ev.note || ''});
+  const set = (k,v) => setF(p => ({...p,[k]:v}));
+  const save = () => { if(!f.title.trim()) return; onSave({...ev, ...f, title:f.title.trim()}); };
+  return (
+    <Modal title={ev.id ? 'Edit date' : 'Add a date'} onClose={onClose}
+      footer={<>
+        {onDelete && <button className="btn danger" onClick={onDelete}>Delete</button>}
+        <button className="btn ghost" onClick={onClose}>Cancel</button>
+        <button className="btn primary" onClick={save}>Save date</button>
+      </>}>
+      <Field label="What is it?"><input autoFocus value={f.title} onChange={e => set('title', e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && save()} placeholder="AP Chem unit test" /></Field>
+      <div className="grid2">
+        <Field label="Date"><input type="date" value={f.date} onChange={e => set('date', e.target.value)} /></Field>
+        <Field label="Kind">
+          <select value={f.type} onChange={e => set('type', e.target.value)}>
+            {EV_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+          </select>
+        </Field>
+      </div>
+      <Field label="Notes"><input value={f.note} onChange={e => set('note', e.target.value)} placeholder="Chapters 6–8, bring a calculator" /></Field>
+    </Modal>
+  );
+}
+
+/* ============ LIST IT ============ */
+function ListIt({sub, date, setDate, tasks, add, update, remove, setTab}){
+  const [text, setText] = useState('');
+  const anchor = sub === 'daily' ? iso(date) : sub === 'weekly' ? weekKey(date) : monthKey(date);
+  const items = tasks.filter(t => t.scope === sub && (sub === 'daily' ? t.date === anchor : t.anchor === anchor));
+  const doneCount = items.filter(t => t.done).length;
+  const pct = items.length ? Math.round(doneCount/items.length*100) : 0;
+
+  const submit = () => {
+    const v = text.trim(); if(!v) return;
+    add(sub === 'daily'
+      ? {title:v, scope:'daily', date:anchor, start:null, end:null, done:false}
+      : {title:v, scope:sub, anchor, done:false});
+    setText('');
+  };
+
+  const label = sub === 'daily' ? fmtDay(date) : sub === 'weekly' ? fmtWeek(date) : fmtMonth(date);
+  const step = n => sub === 'daily' ? addDays(date,n) : sub === 'weekly' ? addDays(date,7*n) : addMonths(date,n);
+  const placeholder = sub === 'daily' ? 'Add something for today…'
+    : sub === 'weekly' ? 'Add a goal for this week…' : 'Add something for this month…';
+
+  return (
+    <div style={{maxWidth:760}}>
+      <div className="spread" style={{marginBottom:16}}>
+        <DateNav label={label} onPrev={() => setDate(step(-1))} onNext={() => setDate(step(1))} onToday={() => setDate(new Date())} />
+        <div style={{minWidth:170,flex:'0 1 220px'}}>
+          <div className="row" style={{justifyContent:'space-between',fontSize:12,color:'var(--ink60)',marginBottom:5}}>
+            <span>{doneCount} of {items.length} done</span><span className="mono">{pct}%</span>
+          </div>
+          <div className="bar"><i style={{width:pct+'%'}} /></div>
+        </div>
+      </div>
+
+      <div className="addbar">
+        <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} placeholder={placeholder} />
+        <button className="btn primary" onClick={submit}>Add</button>
+      </div>
+
+      {items.length === 0
+        ? <Empty title={sub === 'daily' ? 'Today is wide open' : sub === 'weekly' ? 'No goals for this week yet' : 'Nothing on the month list yet'}
+            hint="Type above and press Enter to start the list." />
+        : items.map(t => (
+          <div key={t.id} className={'todo' + (t.done ? ' done' : '')}>
+            <Check on={t.done} onClick={() => update(t.id, {done:!t.done})} />
+            <div className="txt">
+              <b>{t.title}</b>
+              {sub === 'daily' && <div className="meta">{t.start ? `Scheduled ${pretty(t.start)} – ${pretty(t.end)}` : 'Not on the schedule yet'}</div>}
+            </div>
+            {sub === 'daily' && !t.start && (
+              <button className="btn sm" onClick={() => { update(t.id, {start:'15:00', end:'16:00'}); setTab('organize'); }}>Schedule</button>
+            )}
+            <button className="btn sm ghost" onClick={() => remove(t.id)} aria-label="Delete">✕</button>
+          </div>
+        ))}
+
+      {sub === 'daily' && (
+        <div className="card" style={{marginTop:16,background:'#FBFBFE',color:'var(--ink60)',fontSize:13}}>
+          Anything here shows up in <b style={{color:'var(--ink)'}}>Organize It → Daily</b>. Drag it onto the schedule to give it a time.
+        </div>
+      )}
+      {sub === 'monthly' && (
+        <div className="card" style={{marginTop:16,background:'#FBFBFE',color:'var(--ink60)',fontSize:13}}>
+          This list stays separate from the monthly calendar. Tests, deadlines, and birthdays live in <b style={{color:'var(--ink)'}}>Organize It → Monthly</b>.
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============ BRAG IT ============ */
+function BragIt({sub, ecs, add, update, remove}){
+  const [filter, setFilter] = useState('all');
+  const [sort, setSort] = useState('priority');
+  const [editing, setEditing] = useState(null);
+
+  const list = useMemo(() => {
+    let l = ecs.filter(e => e.category === sub);
+    if(filter === 'ongoing') l = l.filter(e => e.ongoing);
+    if(filter === 'finished') l = l.filter(e => !e.ongoing);
+    if(filter === 'awarded') l = l.filter(e => (e.awards || []).length > 0);
+    const c = [...l];
+    if(sort === 'priority') c.sort((a,b) => b.priority - a.priority);
+    if(sort === 'recent') c.sort((a,b) => (b.start || '').localeCompare(a.start || ''));
+    if(sort === 'az') c.sort((a,b) => a.title.localeCompare(b.title));
+    return c;
+  }, [ecs, sub, filter, sort]);
+
+  const fmtRange = e => {
+    const f = s => { if(!s) return ''; const [y,m] = s.split('-'); return m ? `${MON[+m-1].slice(0,3)} ${y}` : y; };
+    if(e.ongoing) return `${f(e.start)} – present`;
+    return [f(e.start), f(e.end)].filter(Boolean).join(' – ') || 'No dates set';
+  };
+
+  return (
+    <div>
+      <div className="spread" style={{marginBottom:16}}>
+        <div className="row" style={{gap:7,flexWrap:'wrap'}}>
+          {[['all','All'],['ongoing','Ongoing'],['finished','Finished'],['awarded','With awards']].map(([k,l]) => (
+            <button key={k} className={'chip' + (filter === k ? ' on' : '')} onClick={() => setFilter(k)}>{l}</button>
+          ))}
+        </div>
+        <div className="row">
+          <select className="btn" style={{paddingRight:8}} value={sort} onChange={e => setSort(e.target.value)}>
+            <option value="priority">Most important first</option>
+            <option value="recent">Most recent first</option>
+            <option value="az">A – Z</option>
+          </select>
+          <button className="btn primary" onClick={() => setEditing({category:sub, title:'', org:'', role:'', start:'', end:'', ongoing:true, priority:3, goal:'', awards:[], notes:''})}>
+            + Add {sub === 'honor' ? 'an honor' : 'an activity'}
+          </button>
+        </div>
+      </div>
+
+      {list.length === 0
+        ? <Empty title={sub === 'honor' ? 'No honors logged yet' : 'No activities logged yet'}
+            hint={sub === 'honor' ? 'Add an award, scholarship, or recognition while you still remember the date.' : 'Add a club, job, sport, internship, or volunteer role.'} />
+        : list.map(e => (
+          <div key={e.id} className="ec">
+            <div className="main">
+              <div className="spread" style={{alignItems:'flex-start'}}>
+                <div style={{minWidth:0}}>
+                  <h3>{e.title}</h3>
+                  <div className="org">{[e.role, e.org].filter(Boolean).join(' · ')}</div>
+                </div>
+                <div className="row" style={{gap:8}}>
+                  <span className="prio" title={`Importance ${e.priority} of 5`}>
+                    {[1,2,3,4,5].map(n => <i key={n} className={n <= e.priority ? 'on' : ''} />)}
+                  </span>
+                  <button className="btn sm" onClick={() => setEditing(e)}>Edit</button>
+                  <button className="btn sm ghost" onClick={() => remove(e.id)} aria-label="Delete">✕</button>
+                </div>
+              </div>
+
+              <div className="row" style={{gap:9,marginTop:10,flexWrap:'wrap'}}>
+                <span className={'tagline-badge' + (e.ongoing ? '' : ' past')}>{e.ongoing ? '● Ongoing' : 'Finished'}</span>
+                <span className="mono" style={{fontSize:12,color:'var(--ink60)'}}>{fmtRange(e)}</span>
+              </div>
+
+              {(e.awards || []).length > 0 && (
+                <div style={{marginTop:12}}>
+                  <div className="eyebrow" style={{marginBottom:6}}>Awards from this</div>
+                  {e.awards.map((a,i) => <span className="award" key={i}>🏆 {a}</span>)}
+                </div>
+              )}
+
+              {e.goal && (
+                <div style={{marginTop:10}}>
+                  <div className="eyebrow" style={{marginBottom:3}}>Where it's going</div>
+                  <div style={{fontSize:13.5,color:'var(--ink60)'}}>{e.goal}</div>
+                </div>
+              )}
+            </div>
+            <div className="side">
+              <div className="eyebrow" style={{marginBottom:6}}>Notes</div>
+              {e.notes ? e.notes : <span style={{color:'var(--ink35)'}}>Nothing written down yet. Hours, responsibilities, and names go well here.</span>}
+            </div>
+          </div>
+        ))}
+
+      {editing && <EcEditor ec={editing} onClose={() => setEditing(null)}
+        onSave={v => { v.id ? update(v.id, v) : add(v); setEditing(null); }} />}
+    </div>
+  );
+}
+
+function EcEditor({ec, onClose, onSave}){
+  const [f, setF] = useState({...ec, awards:(ec.awards || []).join(', ')});
+  const set = (k,v) => setF(p => ({...p,[k]:v}));
+  const save = () => {
+    if(!f.title.trim()) return;
+    onSave({...f, title:f.title.trim(), awards:f.awards.split(',').map(s => s.trim()).filter(Boolean)});
+  };
+  return (
+    <Modal title={ec.id ? 'Edit entry' : (ec.category === 'honor' ? 'New honor or award' : 'New activity')} onClose={onClose}
+      footer={<><button className="btn ghost" onClick={onClose}>Cancel</button><button className="btn primary" onClick={save}>Save entry</button></>}>
+      <Field label="Name"><input autoFocus value={f.title} onChange={e => set('title', e.target.value)} placeholder="Varsity Cross Country" /></Field>
+      <div className="grid2">
+        <Field label="Organization"><input value={f.org} onChange={e => set('org', e.target.value)} placeholder="Northview High School" /></Field>
+        <Field label="Your position"><input value={f.role} onChange={e => set('role', e.target.value)} placeholder="Team captain" /></Field>
+      </div>
+      <div className="grid2">
+        <Field label="Started"><input type="month" value={f.start} onChange={e => set('start', e.target.value)} /></Field>
+        <Field label="Ended">
+          <input type="month" value={f.end} disabled={f.ongoing} onChange={e => set('end', e.target.value)} />
+        </Field>
+      </div>
+      <label className="row" style={{gap:8,marginBottom:14,fontSize:13.5,fontWeight:500}}>
+        <input type="checkbox" checked={f.ongoing} onChange={e => set('ongoing', e.target.checked)} style={{width:16,height:16}} />
+        Still doing this
+      </label>
+      <Field label="Category">
+        <select value={f.category} onChange={e => set('category', e.target.value)}>
+          <option value="experience">Experience</option>
+          <option value="honor">Honor or award</option>
+        </select>
+      </Field>
+      <Field label={`How important is this to you? (${f.priority} of 5)`}>
+        <input type="range" min="1" max="5" value={f.priority} onChange={e => set('priority', +e.target.value)} style={{padding:0}} />
+      </Field>
+      <Field label="Goal for the future">
+        <textarea value={f.goal} onChange={e => set('goal', e.target.value)} placeholder="Break 18:00 in the 5K and lead the team to state." />
+      </Field>
+      <Field label="Awards achieved through it (separate with commas)">
+        <input value={f.awards} onChange={e => set('awards', e.target.value)} placeholder="All-County 2025, Coach's Award" />
+      </Field>
+      <Field label="Notes">
+        <textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="Hours per week, what you actually do, who to ask for a recommendation…" />
+      </Field>
+    </Modal>
+  );
+}
+
+/* ============ LOCK IT ============ */
+const AV = ['#E03F7C','#5350E8','#0F9E68','#E09A12','#2F80ED','#8A5CF6'];
+const avColor = n => AV[[...n].reduce((a,c) => a + c.charCodeAt(0), 0) % AV.length];
+
+function LockIt({lock, setLock, running, setRunning, left, setLeft, minutes, setMinutes, toast}){
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [room, setRoom] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [roomErr, setRoomErr] = useState('');
+  const pollRef = useRef(null);
+
+  const roomKey = c => `planit:room:${c.toUpperCase()}`;
+
+  const sync = useCallback(async (c, me) => {
+    try{
+      let cur = [];
+      try{ const r = await window.storage.get(roomKey(c), true); cur = r ? JSON.parse(r.value) : []; }catch(e){ cur = []; }
+      const now = Date.now();
+      cur = cur.filter(m => now - m.at < 90000 && m.name !== me.name);
+      if(me.name) cur.push(me);
+      await window.storage.set(roomKey(c), JSON.stringify(cur), true);
+      setMembers(cur.sort((a,b) => b.min - a.min));
+      setRoomErr('');
+    }catch(e){ setRoomErr('Rooms need storage, which is unavailable here. Your timer still works.'); }
+  }, []);
+
+  useEffect(() => {
+    if(!room) return;
+    const me = () => ({name:name.trim() || 'Me', at:Date.now(), focusing:running, min:lock.minutes});
+    sync(room, me());
+    pollRef.current = setInterval(() => sync(room, me()), 8000);
+    return () => clearInterval(pollRef.current);
+  }, [room, running, lock.minutes, name, sync]);
+
+  const join = () => {
+    const c = code.trim().toUpperCase();
+    if(!c || !name.trim()){ toast('Add your name and a room code first'); return; }
+    setRoom(c); toast(`Joined room ${c}`);
+  };
+  const leave = async () => {
+    if(room){
+      try{
+        const r = await window.storage.get(roomKey(room), true);
+        const cur = (r ? JSON.parse(r.value) : []).filter(m => m.name !== name.trim());
+        await window.storage.set(roomKey(room), JSON.stringify(cur), true);
+      }catch(e){}
+    }
+    setRoom(null); setMembers([]);
+  };
+
+  const mm = Math.floor(left/60), ss = left%60;
+
+  return (
+    <div className="lockgrid">
+      <div>
+        <div className="card" style={{textAlign:'center',padding:'26px 20px'}}>
+          <div className="eyebrow">Focus session</div>
+          <div className="dial">
+            <div className="dial-num">{pad(mm)}:{pad(ss)}</div>
+          </div>
+          <div className="presets" style={{marginTop:10}}>
+            {[15,25,50,90].map(m => (
+              <button key={m} className={'chip' + (minutes === m && !running ? ' on' : '')}
+                disabled={running} onClick={() => { setMinutes(m); setLeft(m*60); }}>{m} min</button>
+            ))}
+            <label className="chip" style={{display:'inline-flex',gap:6,alignItems:'center'}}>
+              custom
+              <input type="number" min="1" max="240" value={minutes} disabled={running}
+                onChange={e => { const v = Math.max(1, Math.min(240, +e.target.value || 1)); setMinutes(v); setLeft(v*60); }}
+                style={{width:52,border:0,background:'transparent',padding:0,fontWeight:700}} />
+            </label>
+          </div>
+          <div className="row" style={{justifyContent:'center',marginTop:18,gap:9}}>
+            {!running
+              ? <button className="btn primary" onClick={() => { setLeft(minutes*60); setRunning(true); }}>Lock in for {minutes} min</button>
+              : <button className="btn" onClick={() => setRunning(false)}>Pause</button>}
+            <button className="btn ghost" onClick={() => { setRunning(false); setLeft(minutes*60); }}>Reset</button>
+          </div>
+        </div>
+
+        <div className="row" style={{gap:12,marginTop:14,flexWrap:'wrap'}}>
+          <div className="card" style={{flex:1,minWidth:150}}>
+            <div className="eyebrow">Sessions today</div>
+            <div className="mono" style={{fontSize:26,fontWeight:500}}>{lock.sessions}</div>
+          </div>
+          <div className="card" style={{flex:1,minWidth:150}}>
+            <div className="eyebrow">Minutes focused</div>
+            <div className="mono" style={{fontSize:26,fontWeight:500}}>{lock.minutes}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{marginTop:14,background:'#FBFBFE',color:'var(--ink60)',fontSize:13}}>
+          While a session runs, Plan It covers the screen and the other tabs stay shut until the timer ends or you end it early.
+          A website can't lock the apps outside your browser — that takes a phone app with Screen Time or Digital Wellbeing permissions.
+        </div>
+      </div>
+
+      <div>
+        <div className="eyebrow" style={{marginBottom:9}}>Study room</div>
+        {!room ? (
+          <div className="card">
+            <Field label="Your name"><input value={name} onChange={e => setName(e.target.value)} placeholder="Amara" /></Field>
+            <Field label="Room code"><input value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="BIO101" maxLength={12} /></Field>
+            <button className="btn primary" style={{width:'100%'}} onClick={join}>Join room</button>
+            <div style={{fontSize:12,color:'var(--ink35)',marginTop:10,lineHeight:1.5}}>
+              Share the code with friends and you'll all see the same list. Anyone with the code can see your name and focus minutes.
+            </div>
+          </div>
+        ) : (
+          <div className="card">
+            <div className="spread" style={{marginBottom:12}}>
+              <div><div className="eyebrow">Room</div><b className="mono" style={{fontSize:17}}>{room}</b></div>
+              <button className="btn sm" onClick={leave}>Leave</button>
+            </div>
+            {roomErr && <div style={{fontSize:12.5,color:'#B92A61',marginBottom:10}}>{roomErr}</div>}
+            {members.length === 0
+              ? <div style={{fontSize:13,color:'var(--ink60)'}}>Just you so far. Send the code to a friend.</div>
+              : members.map(m => (
+                <div className="member" key={m.name}>
+                  <div className="avatar" style={{background:avColor(m.name)}}>{m.name.slice(0,1).toUpperCase()}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <b style={{fontSize:13.5}}>{m.name}</b>
+                    <div style={{fontSize:11.5,color:'var(--ink35)'}} className="mono">{m.min} min today</div>
+                  </div>
+                  <span className={'status' + (m.focusing ? ' focusing' : '')}>{m.focusing ? 'Focusing' : 'On a break'}</span>
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============ APP ============ */
+const TABS = [
+  {id:'brag',     emoji:'🏆', label:'Brag It',    sub:'Extracurriculars', color:'var(--brag)',
+   title:'Brag It', tagline:'Everything you have done, written down before you forget it.',
+   subs:[['honor','Honors & awards'],['experience','Experience']]},
+  {id:'list',     emoji:'📓', label:'List It',    sub:'To-do', color:'var(--list)',
+   title:'List It', tagline:'Daily items feed straight into your schedule.',
+   subs:[['daily','Daily'],['weekly','Weekly'],['monthly','Monthly']]},
+  {id:'organize', emoji:'📅', label:'Organize It', sub:'Calendar', color:'var(--org)',
+   title:'Organize It', tagline:'Move your day around, then look up at the week and the month.',
+   subs:[['daily','Daily'],['weekly','Weekly'],['monthly','Monthly']]},
+  {id:'lock',     emoji:'🔒', label:'Lock It',    sub:'Study mode', color:'var(--lock)',
+   title:'Lock It', tagline:'Set a timer, close everything else, bring your friends.',
+   subs:[['focus','Focus timer']]},
+];
+const SOFT = {brag:'rgba(224,154,18,.14)', list:'rgba(15,158,104,.13)', organize:'rgba(83,80,232,.12)', lock:'rgba(224,63,124,.12)'};
+
+function App(){
+  const [ready, setReady] = useState(false);
+  const [tab, setTab] = useState('organize');
+  const [sub, setSub] = useState({brag:'honor', list:'daily', organize:'daily', lock:'focus'});
+  const [date, setDate] = useState(new Date());
+  const [store, setStore] = useState(() => ({tasks:[], events:[], ecs:[], lock:{sessions:0,minutes:0,day:iso(new Date())}}));
+  const [toastMsg, setToastMsg] = useState(null);
+
+  // focus timer state lives here so the shield can cover the whole app
+  const [minutes, setMinutes] = useState(25);
+  const [left, setLeft] = useState(25*60);
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => { (async () => {
+    const d = await loadStore();
+    setStore(d || seed());
+    setReady(true);
+  })(); }, []);
+
+  const firstSave = useRef(true);
+  useEffect(() => {
+    if(!ready) return;
+    if(firstSave.current){ firstSave.current = false; }
+    const t = setTimeout(() => saveStore(store), 400);
+    return () => clearTimeout(t);
+  }, [store, ready]);
+
+  const toast = useCallback(msg => { setToastMsg(msg); setTimeout(() => setToastMsg(null), 2200); }, []);
+
+  useEffect(() => {
+    if(!running) return;
+    const i = setInterval(() => {
+      setLeft(l => {
+        if(l <= 1){
+          setRunning(false);
+          setStore(s => ({...s, lock:{...s.lock, sessions:s.lock.sessions+1, minutes:s.lock.minutes+minutes}}));
+          toast('Session complete. Take a break.');
+          return minutes*60;
+        }
+        return l-1;
+      });
+    }, 1000);
+    return () => clearInterval(i);
+  }, [running, minutes, toast]);
+
+  // mutators
+  const addTask    = t => setStore(s => ({...s, tasks:[...s.tasks, {...t, id:uid()}]}));
+  const updateTask = (id,p) => setStore(s => ({...s, tasks:s.tasks.map(t => t.id === id ? {...t, ...p} : t)}));
+  const removeTask = id => setStore(s => ({...s, tasks:s.tasks.filter(t => t.id !== id)}));
+  const addEvent    = e => setStore(s => ({...s, events:[...s.events, {...e, id:uid()}]}));
+  const updateEvent = (id,p) => setStore(s => ({...s, events:s.events.map(e => e.id === id ? {...e, ...p} : e)}));
+  const removeEvent = id => setStore(s => ({...s, events:s.events.filter(e => e.id !== id)}));
+  const addEc    = e => setStore(s => ({...s, ecs:[...s.ecs, {...e, id:uid()}]}));
+  const updateEc = (id,p) => setStore(s => ({...s, ecs:s.ecs.map(e => e.id === id ? {...e, ...p} : e)}));
+  const removeEc = id => setStore(s => ({...s, ecs:s.ecs.filter(e => e.id !== id)}));
+
+  const meta = TABS.find(t => t.id === tab);
+  const goDaily = d => { setDate(d); setTab('organize'); setSub(p => ({...p, organize:'daily'})); };
+
+  if(!ready) return <div style={{display:'grid',placeItems:'center',height:'100%',color:'var(--ink35)'}}>Opening your planner…</div>;
+
+  return (
+    <div className="app" style={{'--accent':meta.color, '--accent-soft':SOFT[tab]}}>
+      <nav className="rail" aria-label="Sections">
+        <div className="brand"><b>Plan It</b><span>{new Date().getFullYear()}</span></div>
+        {TABS.map(t => (
+          <button key={t.id} className={'tab' + (tab === t.id ? ' on' : '')} style={{'--tabcolor':t.color}}
+            disabled={running && t.id !== 'lock'}
+            title={running && t.id !== 'lock' ? 'Locked until the session ends' : t.label}
+            onClick={() => setTab(t.id)} aria-current={tab === t.id}>
+            <span className="emoji">{t.emoji}</span>
+            <span><span className="lbl">{t.label}</span><span className="sub">{t.sub}</span></span>
+          </button>
+        ))}
+        <div className="rail-foot">
+          {running ? 'Focus session running. Other tabs open when the timer ends.' : 'Everything saves on this device as you type.'}
+        </div>
+      </nav>
+
+      <main className="pane">
+        <div className="pane-head">
+          <div className="title-wrap">
+            <div>
+              <h1>{meta.title}</h1>
+              <div className="tagline">{meta.tagline}</div>
+            </div>
+          </div>
+          <div className="tape" role="tablist">
+            {meta.subs.map(([k,l]) => (
+              <button key={k} role="tab" aria-selected={sub[tab] === k}
+                className={sub[tab] === k ? 'on' : ''} onClick={() => setSub(p => ({...p,[tab]:k}))}>{l}</button>
+            ))}
+          </div>
+          <div className="divider" />
+        </div>
+
+        <div className="pane-body">
+          {tab === 'organize' && sub.organize === 'daily' &&
+            <Daily date={date} setDate={setDate} tasks={store.tasks} add={addTask} update={updateTask} remove={removeTask} toast={toast}
+              day={store.day || DEFAULT_DAY} setDay={d => setStore(s => ({...s, day:d}))} />}
+          {tab === 'organize' && sub.organize === 'weekly' &&
+            <Weekly date={date} setDate={setDate} tasks={store.tasks} events={store.events} addEvent={addEvent} removeEvent={removeEvent} setDaily={goDaily} />}
+          {tab === 'organize' && sub.organize === 'monthly' &&
+            <Monthly date={date} setDate={setDate} events={store.events} addEvent={addEvent} updateEvent={updateEvent} removeEvent={removeEvent} setDaily={goDaily} />}
+
+          {tab === 'list' &&
+            <ListIt sub={sub.list} date={date} setDate={setDate} tasks={store.tasks} add={addTask} update={updateTask} remove={removeTask}
+              setTab={t => { setTab(t); setSub(p => ({...p, organize:'daily'})); }} />}
+
+          {tab === 'brag' &&
+            <BragIt sub={sub.brag} ecs={store.ecs} add={addEc} update={updateEc} remove={removeEc} />}
+
+          {tab === 'lock' &&
+            <LockIt lock={store.lock} setLock={l => setStore(s => ({...s, lock:l}))} running={running} setRunning={setRunning}
+              left={left} setLeft={setLeft} minutes={minutes} setMinutes={setMinutes} toast={toast} />}
+        </div>
+      </main>
+
+      {running && (
+        <div className="shield">
+          <div className="eyebrow" style={{color:'#B79DD0',letterSpacing:'.2em'}}>Locked in</div>
+          <div className="big">{pad(Math.floor(left/60))}:{pad(left%60)}</div>
+          <div className="sub">Plan It is closed until the timer ends. Put the phone face down.</div>
+          <button className="btn" onClick={() => setRunning(false)}>End session early</button>
+        </div>
+      )}
+
+      {!store.day && (
+        <DayEditor first day={DEFAULT_DAY} onClose={() => setStore(s => ({...s, day:DEFAULT_DAY}))}
+          onSave={d => setStore(s => ({...s, day:d}))} />
+      )}
+
+      {toastMsg && <div className="toast">{toastMsg}</div>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
