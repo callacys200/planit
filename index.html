@@ -297,6 +297,12 @@
   .resend:disabled{color:#B7B4E8;cursor:default}
 
   .formerr{background:#FFF3F6;border:1px solid #F3CEDA;color:#B92A61;padding:9px 12px;border-radius:10px;font-size:13px;margin:0 0 14px}
+  .formnote{background:#EEF8F3;border:1px solid #C6E6D6;color:#0B7A50;padding:9px 12px;border-radius:10px;font-size:13px;margin:0 0 14px}
+  .verifybox{background:#FAFAFD;border:1px solid var(--line);border-radius:14px;padding:22px 20px;text-align:center;margin:4px 0 18px}
+  .venvelope{font-size:34px;line-height:1;margin-bottom:12px}
+  .verifybox p{margin:0;color:var(--ink60);font-size:13.5px;line-height:1.55}
+  .forgot{display:block;margin:-6px 0 16px auto;border:0;background:transparent;color:var(--org);font-size:13px;font-weight:600;padding:4px}
+  .forgot:hover{text-decoration:underline}
   .demo{background:#FFF9E9;border:1px solid #F0DEB0;border-radius:12px;padding:12px 14px;font-size:12.5px;color:#7A5A10;line-height:1.55;text-align:center}
   .demo b{display:block;margin-bottom:3px}
   .demo-code{font-size:18px;font-weight:600;letter-spacing:.16em;color:#5A3F05}
@@ -375,7 +381,8 @@
 <body>
 <div id="root"></div>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -384,37 +391,29 @@
 const {useState,useEffect,useRef,useMemo,useCallback} = React;
 
 /* ==========================================================================
-   SETUP — the two things you fill in to make sign-up fully real
-   --------------------------------------------------------------------------
-   1. GOOGLE_CLIENT_ID
-      console.cloud.google.com → APIs & Services → Credentials →
-      Create OAuth client ID → Web application. Add your site's URL under
-      "Authorized JavaScript origins" (http://localhost:8000 while testing).
-      Paste the client ID below. Leave it empty and the Google button
-      explains itself instead of appearing broken.
+   SETUP — paste your Firebase config below and sign-up works.
 
-   2. EMAIL_ENDPOINT
-      A URL that accepts POST {to, code, subject} and sends the email.
-      A whole serverless function is about five lines — with Resend:
+   1. console.firebase.google.com → Add project (turn Analytics off).
+   2. Build → Authentication → Get started.
+      Sign-in method → enable "Email/Password" and "Google".
+   3. Authentication → Settings → Authorized domains → Add domain →
+      your GitHub Pages host, e.g. callacys200.github.io
+   4. Project settings (gear icon) → Your apps → Web (</>) → register the
+      app → copy the firebaseConfig values into the object below.
 
-        export default async (req) => {
-          const {to, code} = await req.json();
-          await fetch('https://api.resend.com/emails', {
-            method:'POST',
-            headers:{Authorization:`Bearer ${process.env.RESEND_KEY}`,'Content-Type':'application/json'},
-            body: JSON.stringify({from:'plan-it@yourdomain.com', to,
-              subject:'Your Plan It confirmation code',
-              html:`<p>Your code is <b>${code}</b>. It expires in 15 minutes.</p>`})
-          });
-          return new Response('ok');
-        };
-
-      Leave it empty and Plan It runs in demo mode: it shows the code on
-      screen instead of emailing it, and says so.
+   Firebase sends the confirmation and password-reset emails itself.
+   No email provider, no API key in this file, no monthly send limit to
+   manage — free for up to 50,000 people a month.
    ========================================================================== */
 const CONFIG = {
-  GOOGLE_CLIENT_ID: '359443170204-tiaulhs5s3scfkgm87bbakim2v8rvbu5.apps.googleusercontent.com',
-  EMAIL_ENDPOINT: ''
+  FIREBASE: {
+    apiKey: 'AIzaSyCw0qtpFhT7-_bhfHK3nRnOPnrS7Fsd0IU',
+    authDomain: 'planit-3692c.firebaseapp.com',
+    projectId: 'planit-3692c',
+    storageBucket: 'planit-3692c.firebasestorage.app',
+    messagingSenderId: '251892096957',
+    appId: '1:251892096957:web:5d43f69563e0318fddbcd4'
+  }
 };
 
 /* ============ date helpers ============ */
@@ -472,53 +471,6 @@ const DB = {
   }
 };
 const dataKey = uid2 => `planit:data:v1:${uid2}`;
-const ACCOUNTS = 'planit:accounts:v1';
-const SESSION  = 'planit:session:v1';
-
-async function loadStore(userId){
-  const raw = await DB.get(dataKey(userId));
-  if(raw){ try { return JSON.parse(raw); } catch(e){ return null; } }
-  // first sign-in on a browser that used Plan It before accounts existed
-  const legacy = await DB.get('planit:data:v1');
-  if(legacy){ try { return JSON.parse(legacy); } catch(e){} }
-  return null;
-}
-async function saveStore(userId, data){ await DB.set(dataKey(userId), JSON.stringify(data)); }
-
-async function getAccounts(){
-  const raw = await DB.get(ACCOUNTS);
-  try { return raw ? JSON.parse(raw) : []; } catch(e){ return []; }
-}
-async function putAccounts(list){ await DB.set(ACCOUNTS, JSON.stringify(list)); }
-
-/* ---- password handling: PBKDF2-SHA256, salted, never stored in the clear ---- */
-const hex = buf => [...new Uint8Array(buf)].map(b => pad(b.toString(16))).join('');
-const unhex = s => new Uint8Array(s.match(/.{2}/g).map(b => parseInt(b,16)));
-const newSalt = () => hex(crypto.getRandomValues(new Uint8Array(16)));
-async function hashPw(pw, salt){
-  if(!(window.crypto && crypto.subtle)){
-    let h = 0; const s = salt + pw;
-    for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) >>> 0; }
-    return 'weak:' + h.toString(16);
-  }
-  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits(
-    {name:'PBKDF2', salt:unhex(salt), iterations:150000, hash:'SHA-256'}, key, 256);
-  return hex(bits);
-}
-
-/* ---- confirmation codes ---- */
-const makeCode = () => String(crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000);
-async function sendCode(email, code){
-  if(!CONFIG.EMAIL_ENDPOINT) return {delivered:false};
-  const r = await fetch(CONFIG.EMAIL_ENDPOINT, {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({to:email, code, subject:'Your Plan It confirmation code'})
-  });
-  if(!r.ok) throw new Error('The confirmation email did not send. Check the endpoint and try again.');
-  return {delivered:true};
-}
-
 function seed(){
   const t = new Date();
   const d0 = iso(t), d1 = iso(addDays(t,1)), d3 = iso(addDays(t,3)), d9 = iso(addDays(t,9));
@@ -1388,8 +1340,47 @@ function LockIt({lock, setLock, running, setRunning, left, setLeft, minutes, set
   );
 }
 
-/* ============ AUTH ============ */
-const LAST_METHOD = 'planit:lastmethod';
+/* ============ AUTH (Firebase) ============ */
+let AUTH = null;
+function initFirebase(){
+  if(AUTH) return AUTH;
+  if(!window.firebase || !CONFIG.FIREBASE.apiKey) return null;
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(CONFIG.FIREBASE);
+    AUTH = firebase.auth();
+    return AUTH;
+  }catch(e){ return null; }
+}
+
+const toUser = u => ({
+  id: u.uid,
+  email: u.email,
+  username: u.displayName || (u.email || '').split('@')[0],
+  provider: (u.providerData[0] && u.providerData[0].providerId === 'google.com') ? 'google' : 'email',
+  picture: u.photoURL || ''
+});
+
+const FB_ERRORS = {
+  'auth/email-already-in-use':'An account already uses that email. Log in instead.',
+  'auth/invalid-email':'That email address is missing something. Check it over.',
+  'auth/weak-password':'Firebase needs at least 6 characters. Aim for 8 or more.',
+  'auth/missing-password':'Enter your password.',
+  'auth/invalid-credential':'That email and password combination is incorrect.',
+  'auth/wrong-password':'That password is incorrect.',
+  'auth/user-not-found':'No account matches that email. Create one instead.',
+  'auth/too-many-requests':'Too many attempts in a row. Wait a minute, then try again.',
+  'auth/popup-closed-by-user':'The Google window closed before it finished.',
+  'auth/popup-blocked':'Your browser blocked the Google popup. Allow popups for this site, then try again.',
+  'auth/cancelled-popup-request':'',
+  'auth/unauthorized-domain':'This site is not in the Firebase authorized domains list. Add it under Authentication → Settings → Authorized domains.',
+  'auth/operation-not-allowed':'That sign-in method is not switched on yet in the Firebase console.',
+  'auth/network-request-failed':'Network problem — check your connection and try again.'
+};
+const fbErr = e => {
+  const code = (e && e.code) || '';
+  if(code in FB_ERRORS) return FB_ERRORS[code];
+  return (e && e.message) || 'Something went wrong. Try again.';
+};
 
 const GMark = () => (
   <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
@@ -1399,85 +1390,6 @@ const GMark = () => (
     <path fill="#34A853" d="M24 48c6.1 0 11.3-2 15-5.5l-7.2-5.6c-2 1.4-4.6 2.2-7.8 2.2-6.3 0-11.7-3.7-13.6-9.4l-7.8 6.1C6.5 42.6 14.6 48 24 48z"/>
   </svg>
 );
-
-function GoogleButton({onUser, setErr, label}){
-  const box = useRef(null);
-  const [state, setState] = useState(CONFIG.GOOGLE_CLIENT_ID ? 'loading' : 'unset');
-
-  useEffect(() => {
-    if(!CONFIG.GOOGLE_CLIENT_ID) return;
-    let tries = 0, alive = true;
-    const go = () => {
-      if(!alive) return;
-      if(window.google && window.google.accounts && box.current){
-        try{
-          window.google.accounts.id.initialize({
-            client_id: CONFIG.GOOGLE_CLIENT_ID,
-            callback: res => {
-              try{
-                const p = JSON.parse(atob(res.credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
-                onUser({email:p.email, name:p.name || (p.email || '').split('@')[0], picture:p.picture, provider:'google'});
-              }catch(e){ setErr('Google sent something we could not read. Try again.'); }
-            }
-          });
-          window.google.accounts.id.renderButton(box.current,
-            {theme:'outline', size:'large', width:340, text:'continue_with', shape:'pill', logo_alignment:'center'});
-          setState('ready');
-        }catch(e){ setState('blocked'); }
-        return;
-      }
-      if(++tries > 40) return setState('blocked');
-      setTimeout(go, 150);
-    };
-    go();
-    return () => { alive = false; };
-  }, [onUser, setErr]);
-
-  if(state === 'ready' || state === 'loading')
-    return <div ref={box} className="gslot" />;
-
-  return (
-    <button className="gbtn" onClick={() => setErr(state === 'blocked'
-      ? "Google's script didn't load. It needs a hosted page — open Plan It from a server, not a file:// path."
-      : 'Google sign-in is switched off. Add your OAuth client ID to CONFIG.GOOGLE_CLIENT_ID at the top of the file.')}>
-      <GMark /> {label}
-    </button>
-  );
-}
-
-function CodeBoxes({value, onChange, onDone}){
-  const refs = useRef([]);
-  const cells = Array.from({length:6}, (_,i) => value[i] || '');
-
-  const put = (i, ch) => {
-    const next = cells.slice();
-    next[i] = ch;
-    const joined = next.join('').slice(0,6);
-    onChange(joined);
-    if(ch && i < 5) refs.current[i+1] && refs.current[i+1].focus();
-    if(joined.length === 6 && !joined.includes('')) onDone && onDone(joined);
-  };
-
-  return (
-    <div className="otp">
-      {cells.map((c,i) => (
-        <input key={i} ref={el => refs.current[i] = el} className="otpbox mono" inputMode="numeric"
-          maxLength={1} value={c} autoFocus={i === 0} aria-label={`Digit ${i+1}`}
-          onChange={e => put(i, e.target.value.replace(/\D/g,'').slice(-1))}
-          onKeyDown={e => {
-            if(e.key === 'Backspace' && !cells[i] && i > 0){ refs.current[i-1].focus(); put(i-1,''); }
-            if(e.key === 'ArrowLeft' && i > 0) refs.current[i-1].focus();
-            if(e.key === 'ArrowRight' && i < 5) refs.current[i+1].focus();
-          }}
-          onPaste={e => {
-            const t = (e.clipboardData.getData('text') || '').replace(/\D/g,'').slice(0,6);
-            if(t){ e.preventDefault(); onChange(t); if(t.length === 6) onDone && onDone(t);
-              const target = refs.current[Math.min(5, t.length)]; target && target.focus(); }
-          }} />
-      ))}
-    </div>
-  );
-}
 
 const PANELS = [
   {eyebrow:'How it fits together', title:'Your list becomes your day',
@@ -1491,27 +1403,83 @@ const PANELS = [
    foot:'Organize It → Daily', emoji:'📅'},
 ];
 
-function Auth({onSignedIn}){
-  const [mode, setMode] = useState('up');
-  const [step, setStep] = useState('email');
+function Mark({size = 22}){
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="2" y="3"  width="20" height="4" rx="2" fill="var(--brag)" />
+      <rect x="2" y="8.5" width="15" height="4" rx="2" fill="var(--list)" />
+      <rect x="2" y="14" width="20" height="4" rx="2" fill="var(--org)" />
+      <rect x="2" y="19.5" width="11" height="3" rx="1.5" fill="var(--lock)" />
+    </svg>
+  );
+}
+
+function SetupNeeded(){
+  return (
+    <div className="authpage">
+      <header className="topnav">
+        <div className="tn-brand"><Mark /><b>Plan It</b><span className="beta">SETUP</span></div>
+      </header>
+      <div className="authsplit">
+        <section className="authleft">
+          <div className="authcard"><div className="cardbody">
+            <h2>Almost there</h2>
+            <p className="csub">Plan It needs your Firebase project before anyone can sign in.</p>
+            <div className="gnote">
+              <b>Add your config</b>
+              Open <code>index.html</code>, find <code>CONFIG.FIREBASE</code> near the top, and paste in the
+              config object from Firebase → Project settings → Your apps → Web app.
+            </div>
+          </div></div>
+        </section>
+        <aside className="authright">
+          <p className="script rscript">one step left</p>
+          <h2 className="rhead">Firebase handles the accounts, so you don't have to.</h2>
+          <p className="rsub">Sign-ups, verification emails, password resets, and Google sign-in all run on Google's
+          servers — free for up to 50,000 people a month.</p>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function Auth(){
+  const auth = initFirebase();
+  const [mode, setMode] = useState('up');            // 'up' | 'in'
+  const [step, setStep] = useState('form');          // 'form' | 'verify'
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [sent, setSent] = useState(null);
   const [username, setUsername] = useState('');
   const [pw, setPw] = useState('');
-  const [pw2, setPw2] = useState('');
   const [showPw, setShowPw] = useState(false);
-  const [who, setWho] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [note, setNote] = useState('');
   const [cool, setCool] = useState(0);
   const [panel, setPanel] = useState(0);
-  const [lastMethod, setLastMethod] = useState('');
 
-  useEffect(() => { (async () => setLastMethod(await DB.get(LAST_METHOD) || ''))(); }, []);
+  // someone reloaded mid-verification: pick the flow back up
+  useEffect(() => {
+    const u = auth && auth.currentUser;
+    if(u && !u.emailVerified){ setEmail(u.email); setStep('verify'); }
+  }, [auth]);
+
   useEffect(() => { if(cool <= 0) return; const t = setTimeout(() => setCool(c => c-1), 1000); return () => clearTimeout(t); }, [cool]);
-  useEffect(() => { setErr(''); }, [mode, step]);
+  useEffect(() => { setErr(''); setNote(''); }, [mode, step]);
   useEffect(() => { const t = setInterval(() => setPanel(p => (p+1) % PANELS.length), 7000); return () => clearInterval(t); }, []);
+
+  // while waiting on the link, quietly check whether they've clicked it
+  useEffect(() => {
+    if(step !== 'verify') return;
+    const t = setInterval(async () => {
+      const u = auth.currentUser;
+      if(!u) return;
+      try{
+        await u.reload();
+        if(u.emailVerified) window.location.reload();
+      }catch(e){}
+    }, 4000);
+    return () => clearInterval(t);
+  }, [step, auth]);
 
   const strength = useMemo(() => {
     let s = 0;
@@ -1524,106 +1492,90 @@ function Auth({onSignedIn}){
   }, [pw]);
   const strengthLabel = ['Too short','Weak','Okay','Strong','Very strong'][strength];
 
-  const finish = useCallback(async (acct, method) => {
-    await DB.set(SESSION, JSON.stringify({id:acct.id, at:Date.now()}));
-    await DB.set(LAST_METHOD, method);
-    onSignedIn(acct);
-  }, [onSignedIn]);
-
-  const startSignup = async () => {
-    const e = email.trim().toLowerCase();
-    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return setErr('That email address is missing something. Check it over.');
+  const signUp = async () => {
+    const u = username.trim();
+    if(u.length < 3) return setErr('Usernames need at least 3 characters.');
+    if(!/^[a-zA-Z0-9_. ]+$/.test(u)) return setErr('Usernames can use letters, numbers, spaces, underscores, and periods.');
+    if(pw.length < 8) return setErr('Passwords need at least 8 characters.');
     setBusy(true); setErr('');
     try{
-      const accts = await getAccounts();
-      if(accts.some(a => a.email === e)){ setBusy(false); return setErr('An account already uses that email. Log in instead.'); }
-      const c = makeCode();
-      const res = await sendCode(e, c);
-      setSent({code:c, expires:Date.now() + 15*60000, delivered:res.delivered});
-      setCode(''); setStep('code'); setCool(30);
-    }catch(ex){ setErr(ex.message); }
+      const cred = await auth.createUserWithEmailAndPassword(email.trim(), pw);
+      await cred.user.updateProfile({displayName:u});
+      await cred.user.sendEmailVerification();
+      setStep('verify'); setCool(45);
+    }catch(e){ setErr(fbErr(e)); }
+    setBusy(false);
+  };
+
+  const logIn = async () => {
+    if(!email.trim() || !pw) return setErr('Enter your email and password.');
+    setBusy(true); setErr('');
+    try{
+      const cred = await auth.signInWithEmailAndPassword(email.trim(), pw);
+      if(!cred.user.emailVerified){ setStep('verify'); setCool(0); }
+      // verified users are picked up by onAuthStateChanged in Root
+    }catch(e){ setErr(fbErr(e)); }
+    setBusy(false);
+  };
+
+  const withGoogle = async () => {
+    setBusy(true); setErr('');
+    try{
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await auth.signInWithPopup(provider);
+    }catch(e){ const m = fbErr(e); if(m) setErr(m); }
     setBusy(false);
   };
 
   const resend = async () => {
     if(cool > 0) return;
-    setBusy(true);
+    setBusy(true); setErr('');
     try{
-      const c = makeCode();
-      const res = await sendCode(email.trim().toLowerCase(), c);
-      setSent({code:c, expires:Date.now() + 15*60000, delivered:res.delivered});
-      setCode(''); setCool(30); setErr('');
-    }catch(ex){ setErr(ex.message); }
+      await auth.currentUser.sendEmailVerification();
+      setNote('Sent. Check your inbox, and your spam folder.');
+      setCool(45);
+    }catch(e){ setErr(fbErr(e)); }
     setBusy(false);
   };
 
-  const confirm = (val) => {
-    const entered = (val || code).trim();
-    if(!sent) return;
-    if(entered.length < 6) return setErr('Enter all six digits.');
-    if(Date.now() > sent.expires) return setErr('That code has expired. Send a new one.');
-    if(entered !== sent.code) return setErr("That code doesn't match. Check the digits and try again.");
-    setErr(''); setStep('details');
-  };
-
-  const createAccount = async () => {
-    const u = username.trim();
-    if(u.length < 3) return setErr('Usernames need at least 3 characters.');
-    if(!/^[a-zA-Z0-9_.]+$/.test(u)) return setErr('Usernames can use letters, numbers, underscores, and periods.');
-    if(pw.length < 8) return setErr('Passwords need at least 8 characters.');
-    if(pw !== pw2) return setErr("The two passwords don't match.");
-    setBusy(true);
+  const checkVerified = async () => {
+    setBusy(true); setErr('');
     try{
-      const accts = await getAccounts();
-      if(accts.some(a => a.username.toLowerCase() === u.toLowerCase())){ setBusy(false); return setErr('That username is taken. Try another.'); }
-      const salt = newSalt();
-      const acct = {id:uid(), email:email.trim().toLowerCase(), username:u, salt,
-        hash: await hashPw(pw, salt), provider:'email', verified:true, createdAt:Date.now()};
-      await putAccounts([...accts, acct]);
-      await finish(acct, 'email');
-    }catch(ex){ setErr('Something went wrong saving the account. Try again.'); setBusy(false); }
+      const u = auth.currentUser;
+      await u.reload();
+      if(u.emailVerified) window.location.reload();
+      else setErr("That email isn't confirmed yet. Click the link in the message, then try again.");
+    }catch(e){ setErr(fbErr(e)); }
+    setBusy(false);
   };
 
-  const signIn = async () => {
-    const q = who.trim().toLowerCase();
-    if(!q || !pw) return setErr('Enter your username or email and your password.');
-    setBusy(true);
-    const accts = await getAccounts();
-    const acct = accts.find(a => a.email === q || a.username.toLowerCase() === q);
-    if(!acct || acct.provider === 'google'){
-      setBusy(false);
-      return setErr(acct ? 'That account uses Google. Use the Google button above.' : 'No account matches that. Check it, or create one.');
-    }
-    const h = await hashPw(pw, acct.salt);
-    if(h !== acct.hash){ setBusy(false); return setErr('That password is incorrect.'); }
-    await finish(acct, 'email');
+  const startOver = async () => {
+    try{ await auth.signOut(); }catch(e){}
+    setStep('form'); setMode('up'); setPw('');
   };
 
-  const googleUser = useCallback(async g => {
-    const accts = await getAccounts();
-    let acct = accts.find(a => a.email === g.email);
-    if(!acct){
-      acct = {id:uid(), email:g.email, username:g.name, provider:'google', picture:g.picture, verified:true, createdAt:Date.now()};
-      await putAccounts([...accts, acct]);
-    }
-    await finish(acct, 'google');
-  }, [finish]);
+  const resetPassword = async () => {
+    if(!email.trim()) return setErr('Type your email address first, then tap this again.');
+    setBusy(true); setErr('');
+    try{
+      await auth.sendPasswordResetEmail(email.trim());
+      setNote('Password reset link sent. Check your email.');
+    }catch(e){ setErr(fbErr(e)); }
+    setBusy(false);
+  };
 
   const Err = () => err ? <div className="formerr" role="alert">{err}</div> : null;
+  const Note = () => note ? <div className="formnote">{note}</div> : null;
   const p = PANELS[panel];
   const script = mode === 'in' ? "welcome back, let's get to work" : "let's get your year in one place";
 
   return (
     <div className="authpage">
       <header className="topnav">
-        <div className="tn-brand">
-          <Mark />
-          <b>Plan It</b>
-          <span className="beta">BETA</span>
-        </div>
+        <div className="tn-brand"><Mark /><b>Plan It</b><span className="beta">BETA</span></div>
         <nav className="tn-actions">
-          <button className={'tn-link' + (mode === 'in' ? ' on' : '')} onClick={() => setMode('in')}>Log in</button>
-          <button className={'tn-link' + (mode === 'up' ? ' on' : '')} onClick={() => { setMode('up'); setStep('email'); }}>Sign up</button>
+          <button className={'tn-link' + (mode === 'in' ? ' on' : '')} onClick={() => { setMode('in'); setStep('form'); }}>Log in</button>
+          <button className={'tn-link' + (mode === 'up' ? ' on' : '')} onClick={() => { setMode('up'); setStep('form'); }}>Sign up</button>
         </nav>
       </header>
 
@@ -1638,53 +1590,42 @@ function Auth({onSignedIn}){
           <div className="authcard">
             <div className="cardbody">
 
-              {mode === 'up' && step === 'email' && (
-                <>
-                  <h2>Create your account</h2>
-                  <p className="csub">Start with an email and we'll confirm it's yours</p>
-                  {lastMethod === 'google' && <div className="lastused">Last used</div>}
-                  <GoogleButton onUser={googleUser} setErr={setErr} label="Continue with Google" />
-                  <div className="or"><span>OR</span></div>
-                  <label className="flabel">Email address</label>
-                  <input className="finput" type="email" value={email} onChange={e => setEmail(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && startSignup()} placeholder="Enter your email address" autoComplete="email" />
-                  <Err />
-                  <button className="pillbtn" disabled={busy} onClick={startSignup}>{busy ? 'Sending…' : 'Continue'} <span>▸</span></button>
-                </>
-              )}
-
-              {mode === 'up' && step === 'code' && (
+              {step === 'verify' && (
                 <>
                   <h2>Check your email</h2>
-                  <p className="csub">to continue to Plan It</p>
-                  <p className="cmail">{email} <button className="editmail" onClick={() => setStep('email')} aria-label="Change email">✎</button></p>
-                  {sent && !sent.delivered && (
-                    <div className="demo">
-                      <b>Demo mode — no email was sent</b>
-                      Your code is <span className="mono demo-code">{sent.code}</span>. Set <code>CONFIG.EMAIL_ENDPOINT</code> to send it for real.
-                    </div>
-                  )}
-                  <CodeBoxes value={code} onChange={setCode} onDone={confirm} />
-                  <button className="resend" disabled={cool > 0 || busy} onClick={resend}>
-                    Didn't receive a code? Resend{cool > 0 ? ` (${cool})` : ''}
-                  </button>
+                  <p className="csub">to finish setting up Plan It</p>
+                  <p className="cmail">{email}</p>
+                  <div className="verifybox">
+                    <div className="venvelope">✉️</div>
+                    <p>Click the confirmation link we just sent. This page picks it up on its own — you can leave it open.</p>
+                  </div>
+                  <Note />
                   <Err />
-                  <button className="pillbtn" onClick={() => confirm()}>Continue <span>▸</span></button>
-                  <button className="undertext" onClick={() => { setMode('in'); setStep('email'); }}>Use another method</button>
+                  <button className="pillbtn" disabled={busy} onClick={checkVerified}>
+                    {busy ? 'Checking…' : "I've clicked the link"} <span>▸</span>
+                  </button>
+                  <button className="resend" disabled={cool > 0 || busy} onClick={resend}>
+                    Didn't get it? Resend{cool > 0 ? ` (${cool})` : ''}
+                  </button>
+                  <button className="undertext" onClick={startOver}>Use a different email</button>
                 </>
               )}
 
-              {mode === 'up' && step === 'details' && (
+              {step === 'form' && mode === 'up' && (
                 <>
-                  <h2>Pick a username</h2>
-                  <p className="csub"><span className="ok">✓</span> {email} confirmed</p>
+                  <h2>Create your account</h2>
+                  <p className="csub">Free, and it takes about a minute</p>
+                  <button className="gbtn" disabled={busy} onClick={withGoogle}><GMark /> Continue with Google</button>
+                  <div className="or"><span>OR</span></div>
                   <label className="flabel">Username</label>
-                  <input className="finput" autoFocus value={username} onChange={e => setUsername(e.target.value)}
-                    placeholder="amara.r" autoComplete="username" />
+                  <input className="finput" value={username} onChange={e => setUsername(e.target.value)} placeholder="amara.r" autoComplete="username" />
+                  <label className="flabel">Email address</label>
+                  <input className="finput" type="email" value={email} onChange={e => setEmail(e.target.value)}
+                    placeholder="you@school.edu" autoComplete="email" />
                   <label className="flabel">Password</label>
                   <div className="pwwrap">
                     <input className="finput" type={showPw ? 'text' : 'password'} value={pw} onChange={e => setPw(e.target.value)}
-                      placeholder="At least 8 characters" autoComplete="new-password" />
+                      onKeyDown={e => e.key === 'Enter' && signUp()} placeholder="At least 8 characters" autoComplete="new-password" />
                     <button className="peek" type="button" onClick={() => setShowPw(v => !v)}>{showPw ? 'Hide' : 'Show'}</button>
                   </div>
                   {pw && (
@@ -1693,45 +1634,46 @@ function Auth({onSignedIn}){
                       <span>{strengthLabel}</span>
                     </div>
                   )}
-                  <label className="flabel">Password again</label>
-                  <input className="finput" type={showPw ? 'text' : 'password'} value={pw2} onChange={e => setPw2(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && createAccount()} autoComplete="new-password" />
                   <Err />
-                  <button className="pillbtn" disabled={busy} onClick={createAccount}>{busy ? 'Creating…' : 'Create account'} <span>▸</span></button>
+                  <button className="pillbtn" disabled={busy} onClick={signUp}>{busy ? 'Creating…' : 'Continue'} <span>▸</span></button>
                 </>
               )}
 
-              {mode === 'in' && (
+              {step === 'form' && mode === 'in' && (
                 <>
                   <h2>Log in to Plan It</h2>
-                  <p className="csub">Welcome back — your planner is where you left it</p>
-                  {lastMethod === 'google' && <div className="lastused">Last used</div>}
-                  <GoogleButton onUser={googleUser} setErr={setErr} label="Continue with Google" />
+                  <p className="csub">Your planner is where you left it</p>
+                  <button className="gbtn" disabled={busy} onClick={withGoogle}><GMark /> Continue with Google</button>
                   <div className="or"><span>OR</span></div>
-                  <label className="flabel">Username or email</label>
-                  <input className="finput" value={who} onChange={e => setWho(e.target.value)} placeholder="you@school.edu" autoComplete="username" />
+                  <label className="flabel">Email address</label>
+                  <input className="finput" type="email" value={email} onChange={e => setEmail(e.target.value)}
+                    placeholder="you@school.edu" autoComplete="email" />
                   <label className="flabel">Password</label>
                   <div className="pwwrap">
                     <input className="finput" type={showPw ? 'text' : 'password'} value={pw} onChange={e => setPw(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && signIn()} autoComplete="current-password" />
+                      onKeyDown={e => e.key === 'Enter' && logIn()} autoComplete="current-password" />
                     <button className="peek" type="button" onClick={() => setShowPw(v => !v)}>{showPw ? 'Hide' : 'Show'}</button>
                   </div>
+                  <button className="forgot" onClick={resetPassword}>Forgot password?</button>
+                  <Note />
                   <Err />
-                  <button className="pillbtn" disabled={busy} onClick={signIn}>{busy ? 'Checking…' : 'Continue'} <span>▸</span></button>
+                  <button className="pillbtn" disabled={busy} onClick={logIn}>{busy ? 'Checking…' : 'Continue'} <span>▸</span></button>
                 </>
               )}
             </div>
 
-            <div className="cardfoot">
-              {mode === 'up'
-                ? <>Already have an account? <button onClick={() => setMode('in')}>Log in</button></>
-                : <>Don't have an account? <button onClick={() => { setMode('up'); setStep('email'); }}>Sign up</button></>}
-            </div>
+            {step === 'form' && (
+              <div className="cardfoot">
+                {mode === 'up'
+                  ? <>Already have an account? <button onClick={() => setMode('in')}>Log in</button></>
+                  : <>Don't have an account? <button onClick={() => setMode('up')}>Sign up</button></>}
+              </div>
+            )}
           </div>
 
           <p className="fineprint">
-            Accounts live in this browser, so they survive a reload but don't follow you to another device.
-            Passwords are salted and hashed, never stored as text.
+            Accounts are handled by Firebase, so your password never touches this page.
+            Your planner entries are saved in this browser.
           </p>
         </section>
 
@@ -1759,17 +1701,6 @@ function Auth({onSignedIn}){
         </aside>
       </div>
     </div>
-  );
-}
-
-function Mark({size = 22}){
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="2" y="3"  width="20" height="4" rx="2" fill="var(--brag)" />
-      <rect x="2" y="8.5" width="15" height="4" rx="2" fill="var(--list)" />
-      <rect x="2" y="14" width="20" height="4" rx="2" fill="var(--org)" />
-      <rect x="2" y="19.5" width="11" height="3" rx="1.5" fill="var(--lock)" />
-    </svg>
   );
 }
 
@@ -1942,23 +1873,24 @@ function Root(){
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
 
-  useEffect(() => { (async () => {
-    try{
-      const raw = await DB.get(SESSION);
-      if(raw){
-        const s = JSON.parse(raw);
-        const accts = await getAccounts();
-        const a = accts.find(x => x.id === s.id);
-        if(a) setUser(a);
-      }
-    }catch(e){}
-    setChecking(false);
-  })(); }, []);
+  useEffect(() => {
+    const auth = initFirebase();
+    if(!auth){ setChecking(false); return; }
+    return auth.onAuthStateChanged(u => {
+      setUser(u && u.emailVerified ? toUser(u) : null);
+      setChecking(false);
+    });
+  }, []);
 
-  const signOut = async () => { await DB.del(SESSION); setUser(null); };
+  const signOut = async () => {
+    const auth = initFirebase();
+    try{ await auth.signOut(); }catch(e){}
+    setUser(null);
+  };
 
+  if(!CONFIG.FIREBASE.apiKey) return <SetupNeeded />;
   if(checking) return <div className="booting">Opening your planner…</div>;
-  if(!user) return <Auth onSignedIn={setUser} />;
+  if(!user) return <Auth />;
   return <App key={user.id} user={user} onSignOut={signOut} />;
 }
 
