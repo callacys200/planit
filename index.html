@@ -4,6 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Plan It</title>
+<link rel="icon" type="image/png" href="logo.png?v=2">
+<link rel="shortcut icon" type="image/png" href="logo.png?v=2">
+<link rel="apple-touch-icon" href="logo.png?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Caveat:wght@600&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -11,6 +14,7 @@
   :root{
     --paper:#ECEEF5;
     --card:#FFFFFF;
+    --soft:#FBFBFE;
     --ink:#14172A;
     --ink60:#585D78;
     --ink35:#9298B2;
@@ -19,6 +23,7 @@
     --list:#0F9E68;
     --org:#5350E8;
     --lock:#E03F7C;
+    --set:#5A6178;
     --accent:var(--org);
     --accent-soft:rgba(83,80,232,.12);
     --t-test:#E23D6D;
@@ -26,11 +31,19 @@
     --t-birthday:#8A5CF6;
     --t-meeting:#2F80ED;
     --t-other:#6B7280;
+    --gut:62px;
     --r:14px;
     --shadow:0 1px 2px rgba(20,23,42,.06), 0 8px 24px -12px rgba(20,23,42,.18);
   }
   *{box-sizing:border-box}
   html,body,#root{height:100%}
+  html,body{max-width:100%;overflow-x:hidden}
+  svg,img{max-width:100%}
+  input,textarea,select{max-width:100%}
+  @supports (height:100dvh){ html,body,#root{height:100dvh} }
+  body.dragging{overflow:hidden;touch-action:none}
+  body.dragging .grid-inner,body.dragging .block,body.dragging .tray-item{touch-action:none}
+  button{touch-action:manipulation}
   body{
     margin:0; background:var(--paper); color:var(--ink);
     font-family:"Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -47,11 +60,12 @@
   ::-webkit-scrollbar-thumb:hover{background:#AAB0C6;background-clip:content-box;border:3px solid transparent}
 
   /* ---------- shell ---------- */
-  .app{display:flex;height:100%;overflow:hidden}
+  .app{display:flex;height:100%;overflow:hidden;max-width:100vw}
   .rail{
     width:210px;flex:none;padding:18px 0 18px 14px;display:flex;flex-direction:column;gap:6px;
   }
-  .brand{display:flex;align-items:baseline;gap:7px;padding:6px 10px 18px 12px}
+  .brand{display:flex;align-items:center;gap:8px;padding:6px 10px 18px 12px}
+  .logomark{flex:none;object-fit:contain;border-radius:5px}
   .brand b{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:21px;letter-spacing:-.03em}
   .brand span{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink35);font-family:"IBM Plex Mono",monospace}
   .tab{
@@ -59,7 +73,7 @@
     padding:11px 12px;margin-right:0;border:0;background:transparent;text-align:left;
     border-radius:12px 0 0 12px;color:var(--ink60);font-weight:500;transition:background .16s, color .16s;
   }
-  .tab .emoji{font-size:18px;line-height:1;filter:saturate(1.05)}
+  .tab .emoji{font-size:18px;line-height:1}
   .tab .lbl{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:15px;letter-spacing:-.01em}
   .tab .sub{display:block;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink35);font-weight:400}
   .tab:hover{background:rgba(255,255,255,.6);color:var(--ink)}
@@ -87,14 +101,14 @@
   }
   .tape button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(20,23,42,.14);position:relative}
   .tape button.on::after{content:"";position:absolute;left:14px;right:14px;bottom:4px;height:2.5px;border-radius:2px;background:var(--accent)}
-  .pane-body{flex:1;overflow:auto;padding:18px 26px 40px}
+  .pane-body{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:18px 26px 40px}
   .divider{height:1px;background:var(--line);margin:16px 0 0}
 
   /* ---------- bits ---------- */
   .btn{border:1px solid var(--line);background:var(--card);padding:8px 13px;border-radius:10px;font-weight:600;font-size:13.5px;display:inline-flex;align-items:center;gap:7px;transition:.14s}
   .btn:hover{border-color:#C6CBDC;background:#FAFBFF}
   .btn.primary{background:var(--accent);border-color:transparent;color:#fff}
-  .btn.primary:hover{filter:brightness(1.07)}
+  .btn.primary:hover{opacity:.9}
   .btn.ghost{border-color:transparent;background:transparent;color:var(--ink60)}
   .btn.ghost:hover{background:#F2F3F8;color:var(--ink)}
   .btn.sm{padding:5px 9px;font-size:12.5px;border-radius:8px}
@@ -106,6 +120,7 @@
   .spread{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
   .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink35);font-weight:500}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+  .card.soft{background:var(--soft)}
   .empty{border:1.5px dashed #D3D8E8;border-radius:var(--r);padding:30px 22px;text-align:center;color:var(--ink60)}
   .empty b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:16px;color:var(--ink);margin-bottom:5px}
   .field{display:block;margin-bottom:12px}
@@ -122,7 +137,7 @@
   .navdate .cur{padding:5px 12px;font-weight:700;font-size:13.5px;min-width:150px;text-align:center;font-family:"Bricolage Grotesque",sans-serif}
 
   /* ---------- modal ---------- */
-  .scrim{position:fixed;inset:0;background:rgba(20,23,42,.42);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:18px;z-index:80;animation:fade .16s ease}
+  .scrim{position:fixed;inset:0;background:rgba(20,23,42,.52);display:flex;align-items:center;justify-content:center;padding:18px;z-index:80;animation:fade .16s ease}
   @keyframes fade{from{opacity:0}}
   .modal{background:var(--card);border-radius:18px;width:min(560px,100%);max-height:88vh;overflow:auto;box-shadow:0 30px 70px -20px rgba(20,23,42,.45);animation:pop .18s cubic-bezier(.2,.8,.3,1)}
   @keyframes pop{from{transform:translateY(10px) scale(.98);opacity:.4}}
@@ -130,22 +145,24 @@
   .modal-head h3{font-size:19px;font-weight:700}
   .modal-body{padding:16px 20px}
   .modal-foot{padding:0 20px 18px;display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}
+  .modal-foot > *{flex:none}
   .x{border:0;background:transparent;color:var(--ink35);font-size:20px;line-height:1;padding:4px 8px;border-radius:8px}
   .x:hover{background:#F2F3F8;color:var(--ink)}
 
   /* ---------- schedule ---------- */
-  .sched-wrap{display:grid;grid-template-columns:1fr 268px;gap:18px;align-items:start}
+  .sched-wrap{display:grid;grid-template-columns:minmax(0,1fr) 268px;gap:18px;align-items:start}
+  .sched-wrap > *{min-width:0}
   .grid-scroll{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--card)}
-  .grid-inner{position:relative;user-select:none;touch-action:none}
-  .hourrow{display:grid;grid-template-columns:62px 1fr;height:58px;border-top:1px solid var(--line)}
+  .grid-inner{position:relative;user-select:none;touch-action:pan-y}
+  .hourrow{display:grid;grid-template-columns:var(--gut) 1fr;height:58px;border-top:1px solid var(--line)}
   .hourrow:first-child{border-top:0}
   .hourrow .h{font-size:11px;color:var(--ink35);padding:5px 10px 0;text-align:right;border-right:1px solid var(--line)}
   .hourrow .slot{position:relative}
   .hourrow .slot::after{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px dashed #EDEFF6}
-  .blocks{position:absolute;inset:0 0 0 62px;pointer-events:none}
+  .blocks{position:absolute;inset:0 0 0 var(--gut);pointer-events:none}
   .block{
     position:absolute;pointer-events:auto;border-radius:10px;padding:6px 9px;overflow:hidden;
-    background:var(--accent-soft);border-left:3.5px solid var(--accent);cursor:grab;
+    background:var(--accent-soft);border-left:3.5px solid var(--accent);cursor:grab;touch-action:pan-y;
     box-shadow:0 1px 2px rgba(20,23,42,.08);transition:box-shadow .14s
   }
   .block:hover{box-shadow:0 4px 14px -4px rgba(20,23,42,.28)}
@@ -153,7 +170,8 @@
   .block .bt{font-weight:600;font-size:13px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .block .bm{font-size:10.5px;color:var(--ink60);margin-top:1px}
   .block.done .bt{text-decoration:line-through;opacity:.55}
-  .block .grip{position:absolute;left:0;right:0;bottom:0;height:9px;cursor:ns-resize}
+  .block .grip{position:absolute;left:0;right:0;bottom:0;height:9px;cursor:ns-resize;touch-action:none}
+  @media (pointer:coarse){ .block .grip{height:18px} }
   .block .grip::after{content:"";position:absolute;left:50%;bottom:3px;width:22px;height:2.5px;margin-left:-11px;border-radius:2px;background:currentColor;opacity:.22}
   .anchor{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;font-size:12.5px;font-weight:600;
     background:linear-gradient(90deg,var(--accent-soft),transparent);border:1px solid var(--line);cursor:pointer;transition:.14s}
@@ -162,11 +180,11 @@
   .anchor.sleep{border-radius:0 0 var(--r) var(--r);border-top:0;background:linear-gradient(90deg,transparent,var(--accent-soft))}
   .anchor .mono{color:var(--ink60);font-weight:500}
   .grid-scroll{border-radius:0}
-  .asleep{position:absolute;left:62px;right:0;background:repeating-linear-gradient(135deg,#F4F5FA,#F4F5FA 6px,#EDEFF6 6px,#EDEFF6 12px);pointer-events:none;z-index:1}
-  .nowline{position:absolute;left:62px;right:0;height:2px;background:#E03F7C;z-index:6;pointer-events:none}
+  .asleep{position:absolute;left:var(--gut);right:0;background:repeating-linear-gradient(135deg,#F4F5FA,#F4F5FA 6px,#EDEFF6 6px,#EDEFF6 12px);pointer-events:none;z-index:1}
+  .nowline{position:absolute;left:var(--gut);right:0;height:2px;background:#E03F7C;z-index:6;pointer-events:none}
   .nowline::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:99px;background:#E03F7C}
   .tray{position:sticky;top:0}
-  .tray-item{display:flex;gap:8px;align-items:flex-start;padding:9px 10px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px;background:#FBFBFE;cursor:grab;touch-action:none}
+  .tray-item{display:flex;gap:8px;align-items:flex-start;padding:9px 10px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px;background:#FBFBFE;cursor:grab;touch-action:pan-y}
   .tray-item:hover{border-color:#C6CBDC;background:#fff}
   .ghost{position:fixed;z-index:90;pointer-events:none;background:var(--accent);color:#fff;padding:7px 11px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 26px -8px rgba(20,23,42,.5);opacity:.95}
 
@@ -175,6 +193,7 @@
   .dow{background:#F7F8FC;padding:8px 10px;font-size:11px;font-weight:600;color:var(--ink35);text-transform:uppercase;letter-spacing:.08em}
   .cell{background:var(--card);min-height:104px;padding:7px 8px;text-align:left;border:0;display:block;transition:background .12s}
   .cell:hover{background:#FAFBFF}
+  .cell{min-width:0}
   .cell .dnum{font-size:12.5px;font-weight:600;color:var(--ink60);font-family:"IBM Plex Mono",monospace}
   .cell.out{background:#F8F9FC}
   .cell.out .dnum{color:#C3C8DA}
@@ -187,19 +206,25 @@
 
   /* ---------- week ---------- */
   .week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
-  .daycol{border:1px solid var(--line);border-radius:12px;overflow:hidden;min-height:180px;display:flex;flex-direction:column}
+  .daycol{min-width:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;min-height:180px;display:flex;flex-direction:column}
   .daycol h4{background:#F7F8FC;padding:7px 9px;font-size:12px;font-weight:700;border-bottom:1px solid var(--line);font-family:"Bricolage Grotesque",sans-serif}
   .daycol h4 small{display:block;font-weight:500;color:var(--ink35);font-family:"IBM Plex Mono",monospace;font-size:10px}
   .daycol.is-today h4{background:var(--accent-soft)}
-  .daycol .inner{padding:8px;display:flex;flex-direction:column;gap:6px;flex:1}
-  .pill{border-radius:8px;padding:5px 7px;font-size:11.5px;line-height:1.3;border-left:3px solid}
-  .wkbottom{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .daycol .inner{padding:8px;display:flex;flex-direction:column;gap:6px;flex:1;min-height:0}
+  .daycol .inner > *{flex:none}
+  .openday{margin-top:auto;align-self:flex-start}
+  .pill{border-radius:8px;padding:5px 7px;font-size:11.5px;line-height:1.3;border-left:3px solid;overflow-wrap:anywhere}
+  .wkbottom{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
   @media (max-width:960px){.wkbottom{grid-template-columns:1fr}}
 
   /* ---------- todo ---------- */
-  .todo{display:flex;align-items:flex-start;gap:11px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card);transition:.14s}
+  .todo{display:flex;align-items:center;gap:11px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card);transition:.14s}
+  .todo-actions{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}
+  .ec-actions{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
   .todo:hover{border-color:#CDD2E2}
-  .check{width:21px;height:21px;flex:none;border-radius:7px;border:1.8px solid #C6CBDC;background:#fff;margin-top:1px;display:grid;place-items:center;transition:.14s;padding:0}
+  .check{width:21px;height:21px;flex:none;align-self:center;border-radius:7px;border:1.8px solid #C6CBDC;background:#fff;display:grid;place-items:center;transition:.14s;padding:0;line-height:0}
+  .iconbtn{width:28px;height:28px;flex:none;padding:0;display:grid;place-items:center;border:0;background:transparent;color:var(--ink35);border-radius:8px;line-height:0;transition:.14s}
+  .iconbtn:hover{background:#FBEEF3;color:#B92A61}
   .check:hover{border-color:var(--accent)}
   .check.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .todo .txt{flex:1;min-width:0}
@@ -213,30 +238,47 @@
   .bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
 
   /* ---------- brag ---------- */
-  .ec{display:grid;grid-template-columns:1fr 230px;gap:0;border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px;overflow:hidden;background:var(--card)}
-  .ec .main{padding:16px 18px}
+  .ec{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:0;border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px;overflow:hidden;background:var(--card)}
+  .ec .main{padding:16px 18px;min-width:0}
   .ec .side{background:#FBFAF6;border-left:1px solid var(--line);padding:14px 16px;font-size:12.5px;color:var(--ink60);line-height:1.5}
-  .ec h3{font-size:17px;font-weight:700}
+  .ec h3{font-size:17px;font-weight:700;overflow-wrap:anywhere}
   .ec .org{color:var(--ink60);font-size:13px;margin-top:1px}
-  .prio{display:inline-flex;gap:2.5px;align-items:center}
-  .prio i{width:6px;height:13px;border-radius:2px;background:#E2E5EF;display:block}
+  .prio{display:inline-flex;gap:2.5px;align-items:center;flex:none}
+  .prio i{width:6px;height:13px;flex:none;border-radius:2px;background:#E2E5EF;display:block}
   .prio i.on{background:var(--brag)}
   .tagline-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;background:#EEF7F2;color:#0B7A50}
   .tagline-badge.past{background:#F2F3F8;color:var(--ink60)}
   .award{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:4px 9px;border-radius:8px;background:#FDF5E6;color:#96660A;font-weight:600;margin:0 6px 6px 0}
 
   /* ---------- lock ---------- */
-  .lockgrid{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start}
+  .lockgrid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+  .lockgrid > *{min-width:0}
   .dial{display:grid;place-items:center;padding:14px 0 4px}
   .dial-num{font-family:"IBM Plex Mono",monospace;font-size:52px;font-weight:500;letter-spacing:-.03em}
   .presets{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .modeswitch{display:inline-flex;gap:3px;padding:3px;background:var(--soft);border:1px solid var(--line);border-radius:11px}
+  .modeswitch button{border:0;background:transparent;padding:7px 18px;border-radius:8px;font-weight:600;font-size:13px;color:var(--ink60)}
+  .modeswitch button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(20,23,42,.14)}
+  .modeswitch button:disabled{opacity:.5;cursor:not-allowed}
+  .dial-num.onbreak{color:var(--list)}
+  .cycledots{display:flex;gap:5px;justify-content:center;align-items:center;margin:-4px 0 14px}
+  .cycledots i{width:9px;height:9px;border-radius:99px;background:#DDE1EE;display:block}
+  .cycledots i.done{background:var(--accent)}
+  .cycledots i.now{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .pomofields{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+  .pomofield{display:flex;flex-direction:column;gap:5px;align-items:center}
+  .pomofield span{font-size:11px;font-weight:600;color:var(--ink35);text-transform:uppercase;letter-spacing:.08em}
+  .pomofield input{width:74px;text-align:center;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--soft);font-weight:700;font-size:15px}
+  .pomofield input:disabled{opacity:.55}
+  .timerbtns{display:flex;justify-content:center;align-items:center;gap:9px;margin-top:18px;flex-wrap:wrap}
+  .timerbtns > *{flex:none;position:static}
   .shield{position:fixed;inset:0;z-index:70;background:linear-gradient(160deg,#1B1030,#2A123B 60%,#3A1233);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:24px;text-align:center;animation:fade .3s ease}
   .shield .big{font-family:"IBM Plex Mono",monospace;font-size:min(19vw,120px);font-weight:500;letter-spacing:-.04em;line-height:1}
   .shield .sub{color:#D6C7E6;max-width:420px;font-size:14px}
   .shield .btn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.24);color:#fff;margin-top:18px}
   .shield .btn:hover{background:rgba(255,255,255,.18)}
   .member{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px}
-  .avatar{width:32px;height:32px;border-radius:99px;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff;flex:none}
+  .avatar{width:32px;height:32px;border-radius:99px;display:grid;place-items:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:14px;line-height:1;color:#fff;flex:none;overflow:hidden;text-transform:uppercase}
   .status{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:#F2F3F8;color:var(--ink60)}
   .status.focusing{background:#FDEBF2;color:#B92A61}
 
@@ -247,7 +289,7 @@
   .bootslow{max-width:380px;font-size:13px;line-height:1.55;color:var(--ink60);background:#FFF9E9;border:1px solid #F0DEB0;border-radius:12px;padding:12px 14px}
   .dbwarn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:96;background:#FFF9E9;border:1px solid #F0DEB0;color:#7A5A10;font-size:12.5px;padding:8px 14px;border-radius:99px;box-shadow:var(--shadow)}
   .authpage{--accent:var(--org);--accent-soft:rgba(83,80,232,.12);height:100%;overflow:auto;background:#fff;display:flex;flex-direction:column}
-  .topnav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);z-index:10}
+  .topnav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:10}
   .tn-brand{display:flex;align-items:center;gap:9px}
   .tn-brand b{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:20px;letter-spacing:-.03em}
   .beta{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;padding:3px 9px;border-radius:99px;background:var(--accent-soft);color:var(--org);font-weight:600}
@@ -282,7 +324,7 @@
   .finput::placeholder{color:#A6ACC2}
   .finput:focus{border-color:var(--org);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
   .pillbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;padding:14px;border:0;border-radius:99px;background:var(--org);color:#fff;font-weight:600;font-size:15.5px;margin-top:6px;transition:.14s}
-  .pillbtn:hover{filter:brightness(1.08)}
+  .pillbtn:hover{opacity:.9}
   .pillbtn:disabled{opacity:.55;cursor:not-allowed}
   .pillbtn span{opacity:.7;font-size:12px}
   .undertext{display:block;width:100%;margin-top:14px;border:0;background:transparent;color:var(--org);font-weight:600;font-size:15px;padding:6px}
@@ -338,12 +380,16 @@
   .dots button{width:11px;height:11px;padding:0;border:0;border-radius:99px;background:#D3CFEA;transition:.2s}
   .dots button.on{width:34px;background:var(--org)}
 
-  .rail-account{display:flex;align-items:center;gap:9px;margin-top:auto;padding:9px 10px;border-radius:12px}
+  .rail-bottom{margin-top:auto;display:flex;flex-direction:column;gap:6px}
+  .rail-bottom .tab{margin-bottom:2px}
+  .rail-account{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:12px;border-top:1px solid var(--line);margin-top:4px;padding-top:12px}
   .rail-account:hover{background:rgba(255,255,255,.6)}
   .rail-account .who{flex:1;min-width:0}
   .rail-account .who b{display:block;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .rail-account .who small{display:block;font-size:10.5px;color:var(--ink35);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .rail-foot{margin-top:0;padding:4px 12px 12px;font-size:11.5px;color:var(--ink35);line-height:1.5}
+  .resetlink{display:block;margin-top:8px;border:0;background:transparent;padding:0;font-size:11.5px;color:var(--ink35);text-decoration:underline}
+  .resetlink:hover{color:#B92A61}
 
   @media (max-width:1000px){
     .authsplit{grid-template-columns:1fr}
@@ -363,6 +409,102 @@
     .rail-account{justify-content:center;padding:9px 0}
   }
 
+
+  /* ---------- settings ---------- */
+  .setblock{margin-bottom:26px}
+  .sethint{color:var(--ink60);font-size:13px;margin:6px 0 10px}
+  .setblock .eyebrow{margin-bottom:8px}
+  .switchrow{display:flex;align-items:center;justify-content:space-between;gap:14px;cursor:pointer}
+  .switchrow b{display:block;font-size:14px}
+  .switchrow small{display:block;color:var(--ink35);font-size:12px;margin-top:2px}
+  .switchrow input{width:18px;height:18px;flex:none}
+  .colorrow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;font-weight:500}
+  .colorrow:last-of-type{border-bottom:0}
+  .colorrow input[type=color]{width:44px;height:28px;padding:0;border:1px solid var(--line);border-radius:8px;background:none;cursor:pointer}
+  .palette{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);padding:7px 12px;border-radius:99px;font-size:13px;font-weight:600}
+  .palette:hover{border-color:#C6CBDC}
+  .swatches{display:flex;gap:2px}
+  .swatches i{width:9px;height:14px;border-radius:2px;display:block}
+  .lockednote{background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:12px 14px;font-size:13px;color:var(--ink60);line-height:1.55}
+  .legalrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .legalrow:last-child{border-bottom:0}
+  .legalrow b{font-size:14px}
+  .legalrow small{display:block;color:var(--ink35);font-size:12px;margin-top:2px}
+  .legaldoc{font-size:13.5px;line-height:1.65;color:var(--ink60)}
+  .legaldoc h4{font-family:"Bricolage Grotesque",sans-serif;font-size:14.5px;color:var(--ink);margin:18px 0 4px}
+  .legaldoc p{margin:0}
+  .procard{border:1px solid var(--line);border-radius:var(--r);padding:22px;background:var(--card)}
+  .prohead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
+  .prohead h3{font-family:"Bricolage Grotesque",sans-serif;font-size:22px;font-weight:800;margin-top:2px}
+  .proprice{font-family:"Bricolage Grotesque",sans-serif;font-size:26px;font-weight:800}
+  .proprice small{font-size:13px;font-weight:500;color:var(--ink35)}
+  .prolist{list-style:none;padding:0;margin:0 0 20px;font-size:14px;color:var(--ink60)}
+  .prolist li{padding:7px 0 7px 24px;position:relative;line-height:1.5}
+  .prolist li::before{content:"✓";position:absolute;left:0;color:var(--accent);font-weight:700}
+  a.btn.wide{text-decoration:none}
+
+  /* ---------- dark theme ---------- */
+  [data-theme="dark"]{
+    --paper:#0D0F17;
+    --card:#161925;
+    --soft:#1C2030;
+    --ink:#EDEFF7;
+    --ink60:#A3AABF;
+    --ink35:#6E7590;
+    --line:#282D40;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+  }
+  [data-theme="dark"] body{background:var(--paper)}
+  [data-theme="dark"] .pane,[data-theme="dark"] .card,[data-theme="dark"] .modal,
+  [data-theme="dark"] .todo,[data-theme="dark"] .ec,[data-theme="dark"] .procard,
+  [data-theme="dark"] .grid-scroll,[data-theme="dark"] .authcard{background:var(--card)}
+  [data-theme="dark"] .btn{background:var(--card);border-color:var(--line)}
+  [data-theme="dark"] .btn:hover{background:#212637;border-color:#39405A}
+  [data-theme="dark"] .btn.ghost{background:transparent;border-color:transparent}
+  [data-theme="dark"] .btn.ghost:hover{background:#212637}
+  [data-theme="dark"] .field input,[data-theme="dark"] .field textarea,[data-theme="dark"] .field select,
+  [data-theme="dark"] .finput,[data-theme="dark"] .addbar input,[data-theme="dark"] .tray-item,
+  [data-theme="dark"] .lockednote{background:var(--soft);border-color:var(--line);color:var(--ink)}
+  [data-theme="dark"] .field input:focus,[data-theme="dark"] .finput:focus{background:#20253a}
+  [data-theme="dark"] .tape,[data-theme="dark"] .auth-switch{background:var(--soft)}
+  [data-theme="dark"] .tape button.on{background:var(--card)}
+  [data-theme="dark"] .check{background:var(--soft);border-color:#3A415C}
+  [data-theme="dark"] .dow,[data-theme="dark"] .daycol h4{background:var(--soft)}
+  [data-theme="dark"] .month{background:var(--line)}
+  [data-theme="dark"] .cell{background:var(--card)}
+  [data-theme="dark"] .cell.out{background:#12141F}
+  [data-theme="dark"] .cell:hover{background:var(--soft)}
+  [data-theme="dark"] .cell.out .dnum{color:#454B66}
+  [data-theme="dark"] .hourrow .slot::after{border-color:#20243A}
+  [data-theme="dark"] .asleep{background:repeating-linear-gradient(135deg,#141726,#141726 6px,#191D2E 6px,#191D2E 12px)}
+  [data-theme="dark"] .pill{background:var(--soft) !important;color:var(--ink60)}
+  [data-theme="dark"] .ec .side{background:#1A1D2B}
+  [data-theme="dark"] .empty{border-color:#333952}
+  [data-theme="dark"] .bar,[data-theme="dark"] .sbar i,[data-theme="dark"] .prio i,[data-theme="dark"] .cycledots i{background:#2A3048}
+  [data-theme="dark"] .modeswitch button.on{background:var(--card)}
+  [data-theme="dark"] .pomofield input{background:var(--soft);color:var(--ink)}
+  [data-theme="dark"] .iconbtn:hover{background:#3A2030;color:#F58BAE}
+  [data-theme="dark"] .tab:hover,[data-theme="dark"] .rail-account:hover{background:rgba(255,255,255,.06)}
+  [data-theme="dark"] .tab.on{box-shadow:-1px 0 0 var(--line) inset,0 -1px 0 var(--line),0 1px 0 var(--line)}
+  [data-theme="dark"] .authpage,[data-theme="dark"] .authleft{background:var(--paper)}
+  [data-theme="dark"] .authright{background:linear-gradient(165deg,#161A2C,#1B1730 60%,#221A2E)}
+  [data-theme="dark"] .topnav{background:var(--paper)}
+  [data-theme="dark"] .cardfoot{background:var(--soft)}
+  [data-theme="dark"] .verifybox,[data-theme="dark"] .gnote{background:var(--soft);border-color:var(--line)}
+  [data-theme="dark"] .gbtn{background:var(--card);border-color:var(--line);color:var(--ink)}
+  [data-theme="dark"] .demo{background:#2A2413;border-color:#4A4021;color:#E7D9A8}
+  [data-theme="dark"] .demo-code{color:#FFE9A8}
+  [data-theme="dark"] code{background:#252A3D;color:var(--ink60)}
+  [data-theme="dark"] .formnote{background:#12271F;border-color:#1F4536;color:#6FD3A6}
+  [data-theme="dark"] .formerr{background:#2C1520;border-color:#4E2337;color:#F58BAE}
+  [data-theme="dark"] .award{background:#2C2415;color:#E3BC6A}
+  [data-theme="dark"] .tagline-badge{background:#14291F;color:#63C79A}
+  [data-theme="dark"] .tagline-badge.past{background:var(--soft);color:var(--ink60)}
+  [data-theme="dark"] .status{background:var(--soft);color:var(--ink60)}
+  [data-theme="dark"] .palette{background:var(--card)}
+  [data-theme="dark"] .bootslow{background:#2A2413;border-color:#4A4021;color:#E7D9A8}
+  [data-theme="dark"] ::-webkit-scrollbar-thumb{background:#333952;background-clip:content-box}
+
   @media (max-width:960px){
     .sched-wrap,.lockgrid{grid-template-columns:1fr}
     .ec{grid-template-columns:1fr}
@@ -380,6 +522,26 @@
     .month .cell{min-height:74px}
     .week{grid-template-columns:1fr}
     .navdate .cur{min-width:110px;font-size:12.5px}
+  }
+  @media (max-width:560px){
+    :root{--gut:46px}
+    .pane-head{padding:14px 12px 0}
+    .pane-body{padding:12px 12px 40px}
+    .pane{border-radius:14px 0 0 14px}
+    .grid2{grid-template-columns:1fr}
+    .modal-body{padding:14px 16px}
+    .modal-head{padding:16px 16px 0}
+    .modal-foot{padding:0 16px 16px}
+    .hourrow .h{font-size:10px;padding:4px 6px 0}
+    .cell{min-height:66px;padding:5px 5px}
+    .cell .ev{font-size:10px;gap:3px;margin-top:3px}
+    .cell .dnum{font-size:11px}
+    .dow{padding:6px 5px;font-size:10px}
+    .dial-num{font-size:44px}
+    .spread{gap:10px}
+    .navdate .cur{min-width:96px}
+    h1{font-size:21px}
+    .ec .side{padding:12px 14px}
   }
   @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
 </style>
@@ -420,7 +582,14 @@ const CONFIG = {
     storageBucket: 'planit-3692c.firebasestorage.app',
     messagingSenderId: '251892096957',
     appId: '1:251892096957:web:5d43f69563e0318fddbcd4'
-  }
+  },
+  // Optional. A Stripe Payment Link makes the Pro button live — Stripe hosts
+  // the checkout page, so no server is needed. Leave empty to show it as
+  // "not available yet" instead of pretending to sell something.
+  PRO_CHECKOUT_URL: '',
+  PRO_PRICE: '$3',
+  // Shown at the bottom of the privacy policy and terms.
+  CONTACT_EMAIL: ''
 };
 
 /* ============ date helpers ============ */
@@ -448,6 +617,7 @@ const uid = () => Math.random().toString(36).slice(2,10);
 
 const ROW = 58;
 const DEFAULT_DAY = {wake:'07:00', sleep:'23:00'};
+const DEFAULT_SETTINGS = {theme:'light', accents:null, notify:{on:false, before:10}};
 const EV_TYPES = [
   {id:'test',     label:'Test or quiz', color:'var(--t-test)'},
   {id:'deadline', label:'Deadline',     color:'var(--t-deadline)'},
@@ -492,37 +662,13 @@ async function saveStore(userId, data){
   await DB.set(dataKey(userId), JSON.stringify(data));
 }
 function seed(){
-  const t = new Date();
-  const d0 = iso(t), d1 = iso(addDays(t,1)), d3 = iso(addDays(t,3)), d9 = iso(addDays(t,9));
   return {
-    tasks:[
-      {id:uid(), title:'Read Ch. 12 of Bio', scope:'daily', date:d0, start:'16:00', end:'17:00', done:false},
-      {id:uid(), title:'Cross country practice', scope:'daily', date:d0, start:'18:00', end:'19:30', done:false},
-      {id:uid(), title:'Finish lab write-up', scope:'daily', date:d0, start:null, end:null, done:false},
-      {id:uid(), title:'Email Ms. Rivera about recommendation', scope:'daily', date:d1, start:null, end:null, done:false},
-      {id:uid(), title:'Draft Common App essay', scope:'weekly', anchor:weekKey(t), done:false},
-      {id:uid(), title:'Log 6 volunteer hours', scope:'weekly', anchor:weekKey(t), done:true},
-      {id:uid(), title:'Submit summer program application', scope:'monthly', anchor:monthKey(t), done:false},
-    ],
-    events:[
-      {id:uid(), title:'AP Chem unit test', date:d3, type:'test', note:'Chapters 6–8'},
-      {id:uid(), title:'History essay due', date:d1, type:'deadline', note:''},
-      {id:uid(), title:'Robotics club meeting', date:d0, type:'meeting', note:'Room 214, 3:30pm'},
-      {id:uid(), title:"Amara's birthday", date:d9, type:'birthday', note:''},
-    ],
-    ecs:[
-      {id:uid(), category:'experience', title:'Varsity Cross Country', org:'Northview High School', role:'Team captain',
-       start:'2023-08', end:'', ongoing:true, priority:5, goal:'Break 18:00 in the 5K and lead the team to state.',
-       awards:['All-County 2025'], notes:'6 practices a week, ~12 hrs. Organize the freshman mentor pairings.'},
-      {id:uid(), category:'experience', title:'Summer Research Intern', org:'Georgia Tech BioLab', role:'Intern',
-       start:'2025-06', end:'2025-08', ongoing:false, priority:4, goal:'Ask Dr. Chen about co-authoring the poster.',
-       awards:['Poster presented at symposium'], notes:'8 weeks, 20 hrs/week. Ran PCR assays and cleaned the sample dataset.'},
-      {id:uid(), category:'honor', title:'National Merit Semifinalist', org:'NMSC', role:'',
-       start:'2025-09', end:'', ongoing:false, priority:5, goal:'Submit the finalist application by October.',
-       awards:[], notes:'Based on junior year PSAT.'},
-    ],
-    lock:{ sessions:0, minutes:0, day: iso(t) },
-    day: null   // null means we still need to ask
+    tasks:  [],
+    events: [],
+    ecs:    [],
+    lock:   { sessions:0, minutes:0, seconds:0, day: iso(new Date()) },
+    settings: {...DEFAULT_SETTINGS},
+    day:    null   // null means we still need to ask
   };
 }
 
@@ -556,6 +702,14 @@ function DateNav({label, onPrev, onNext, onToday}){
     </div>
   );
 }
+const XBtn = ({onClick, label = 'Delete'}) => (
+  <button className="iconbtn" onClick={onClick} aria-label={label} title={label}>
+    <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
+      <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  </button>
+);
+
 const Check = ({on, onClick}) => (
   <button className={'check' + (on ? ' on' : '')} onClick={onClick} aria-pressed={on} aria-label="Mark done">
     {on && <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6.4l2.6 2.6L10 3.4" stroke="currentColor" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
@@ -606,11 +760,42 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
     return clampM(Math.round(raw/5)*5);
   };
 
-  const onDown = (e, task, mode) => {
-    e.preventDefault();
-    const offset = mode === 'move' ? yToMin(e.clientY) - norm(toMin(task.start)) : 0;
+  const pending = useRef(null);
+
+  const beginDrag = (pt, task, mode) => {
+    const offset = mode === 'move' ? yToMin(pt.clientY) - norm(toMin(task.start)) : 0;
+    document.body.classList.add('dragging');
     setDrag({id:task.id, mode, offset, task});
-    if(mode === 'place') setGhost({x:e.clientX, y:e.clientY, label:task.title});
+    if(mode === 'place') setGhost({x:pt.clientX, y:pt.clientY, label:task.title});
+  };
+
+  // On a phone a swipe has to scroll the day, so only a press-and-hold picks a
+  // block up. Moving before the hold completes means you meant to scroll.
+  const onDown = (e, task, mode) => {
+    if(e.pointerType === 'touch'){
+      const sx = e.clientX, sy = e.clientY;
+      const stop = () => {
+        if(pending.current) clearTimeout(pending.current);
+        pending.current = null;
+        window.removeEventListener('pointermove', watch);
+        window.removeEventListener('pointerup', stop);
+        window.removeEventListener('pointercancel', stop);
+      };
+      const watch = m => {
+        if(Math.abs(m.clientY - sy) > 10 || Math.abs(m.clientX - sx) > 10) stop();
+      };
+      window.addEventListener('pointermove', watch);
+      window.addEventListener('pointerup', stop);
+      window.addEventListener('pointercancel', stop);
+      pending.current = setTimeout(() => {
+        stop();
+        if(navigator.vibrate) navigator.vibrate(8);
+        beginDrag({clientX:sx, clientY:sy}, task, mode);
+      }, 260);
+      return;
+    }
+    e.preventDefault();
+    beginDrag(e, task, mode);
   };
 
   useEffect(() => {
@@ -639,11 +824,21 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
         }
         setGhost(null);
       }
+      document.body.classList.remove('dragging');
       setDrag(null);
     };
+    const hold = ev => ev.preventDefault();
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
-    return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointercancel', up);
+    document.addEventListener('touchmove', hold, {passive:false});
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      document.removeEventListener('touchmove', hold);
+      document.body.classList.remove('dragging');
+    };
   }, [drag, update, toast, startM, endM]);
 
   // lane assignment for overlapping blocks
@@ -758,8 +953,8 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
             </div>
           )}
 
-          <div className="card" style={{marginTop:14,background:'#FBFBFE',fontSize:12.5,color:'var(--ink60)'}}>
-            Drag a block to move it, pull the bottom edge to change its length, double-click empty space to add one.
+          <div className="card soft" style={{marginTop:14,fontSize:12.5,color:'var(--ink60)'}}>
+            Drag a block to move it, pull the bottom edge to change its length, double-click empty space to add one. On a phone, press and hold a block first, then drag — a normal swipe scrolls the day.
           </div>
         </div>
       </div>
@@ -798,7 +993,7 @@ function DayEditor({day, onClose, onSave, first}){
         <Field label="☀️ I wake up at"><input type="time" value={f.wake} onChange={e => set('wake', e.target.value)} /></Field>
         <Field label="🌙 I go to sleep at"><input type="time" value={f.sleep} onChange={e => set('sleep', e.target.value)} /></Field>
       </div>
-      <div className="card" style={{background:'#FBFBFE',fontSize:13,color:'var(--ink60)'}}>
+      <div className="card" style={{fontSize:13,color:'var(--ink60)'}}>
         That's <b style={{color:'var(--ink)'}}>{awake % 1 === 0 ? awake : awake.toFixed(1)} hours</b> awake
         {crosses ? ', running past midnight — the grid will keep going into the early hours.' : '.'}
         {awake < 6 && <span style={{display:'block',marginTop:5,color:'#B92A61'}}>That's a short day. Double-check the times are right.</span>}
@@ -863,19 +1058,18 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily})
               <h4>{DOW[d.getDay()]}<small>{MON[d.getMonth()].slice(0,3)} {d.getDate()}</small></h4>
               <div className="inner">
                 {evs.map(e => (
-                  <div key={e.id} className="pill" style={{borderLeftColor:evColor(e.type), background:'#FAFBFE'}}>
+                  <div key={e.id} className="pill" style={{borderLeftColor:evColor(e.type), background:'var(--soft)'}}>
                     <b style={{fontWeight:600}}>{e.title}</b>
                     <div style={{color:'var(--ink35)',fontSize:10.5}}>{evLabel(e.type)}</div>
                   </div>
                 ))}
                 {blocks.slice(0,4).map(t => (
-                  <div key={t.id} className="pill" style={{borderLeftColor:'var(--line)', background:'#F7F8FC', color:'var(--ink60)'}}>
+                  <div key={t.id} className="pill" style={{borderLeftColor:'var(--line)', background:'var(--soft)', color:'var(--ink60)'}}>
                     {t.start && <span className="mono" style={{fontSize:10}}>{pretty(t.start)} </span>}{t.title}
                   </div>
                 ))}
                 {evs.length === 0 && blocks.length === 0 && <div style={{fontSize:11.5,color:'var(--ink35)'}}>Clear</div>}
-                <button className="btn sm ghost" style={{marginTop:'auto',alignSelf:'flex-start'}}
-                  onClick={() => { setDaily(d); }}>Open day →</button>
+                <button className="btn sm ghost openday" onClick={() => { setDaily(d); }}>Open day →</button>
               </div>
             </div>
           );
@@ -895,7 +1089,7 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily})
                   <b>{e.title}</b>
                   <div className="meta">{evLabel(e.type)} · {fmtDay(parseISO(e.date))}{e.note ? ` · ${e.note}` : ''}</div>
                 </div>
-                <button className="btn sm ghost" onClick={() => removeEvent(e.id)} aria-label="Remove">✕</button>
+                <div className="todo-actions"><XBtn onClick={() => removeEvent(e.id)} label="Remove" /></div>
               </div>
             ))}
         </div>
@@ -973,8 +1167,10 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
               <div key={e.id} className="todo" style={{alignItems:'center'}}>
                 <span style={{width:9,height:9,borderRadius:99,background:evColor(e.type),flex:'none'}} />
                 <div className="txt"><b>{e.title}</b><div className="meta">{evLabel(e.type)}{e.note ? ` · ${e.note}` : ''}</div></div>
-                <button className="btn sm" onClick={() => { setEditing(e); setOpen(null); }}>Edit</button>
-                <button className="btn sm ghost" onClick={() => removeEvent(e.id)} aria-label="Remove">✕</button>
+                <div className="todo-actions">
+                  <button className="btn sm" onClick={() => { setEditing(e); setOpen(null); }}>Edit</button>
+                  <XBtn onClick={() => removeEvent(e.id)} label="Remove" />
+                </div>
               </div>
             ))}
         </Modal>
@@ -1061,20 +1257,22 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab}){
               <b>{t.title}</b>
               {sub === 'daily' && <div className="meta">{t.start ? `Scheduled ${pretty(t.start)} – ${pretty(t.end)}` : 'Not on the schedule yet'}</div>}
             </div>
-            {sub === 'daily' && !t.start && (
-              <button className="btn sm" onClick={() => { update(t.id, {start:'15:00', end:'16:00'}); setTab('organize'); }}>Schedule</button>
-            )}
-            <button className="btn sm ghost" onClick={() => remove(t.id)} aria-label="Delete">✕</button>
+            <div className="todo-actions">
+              {sub === 'daily' && !t.start && (
+                <button className="btn sm" onClick={() => { update(t.id, {start:'15:00', end:'16:00'}); setTab('organize'); }}>Schedule</button>
+              )}
+              <XBtn onClick={() => remove(t.id)} />
+            </div>
           </div>
         ))}
 
       {sub === 'daily' && (
-        <div className="card" style={{marginTop:16,background:'#FBFBFE',color:'var(--ink60)',fontSize:13}}>
+        <div className="card soft" style={{marginTop:16,color:'var(--ink60)',fontSize:13}}>
           Anything here shows up in <b style={{color:'var(--ink)'}}>Organize It → Daily</b>. Drag it onto the schedule to give it a time.
         </div>
       )}
       {sub === 'monthly' && (
-        <div className="card" style={{marginTop:16,background:'#FBFBFE',color:'var(--ink60)',fontSize:13}}>
+        <div className="card soft" style={{marginTop:16,color:'var(--ink60)',fontSize:13}}>
           This list stays separate from the monthly calendar. Tests, deadlines, and birthdays live in <b style={{color:'var(--ink)'}}>Organize It → Monthly</b>.
         </div>
       )}
@@ -1087,6 +1285,8 @@ function BragIt({sub, ecs, add, update, remove}){
   const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('priority');
   const [editing, setEditing] = useState(null);
+
+  useEffect(() => { if(sub !== 'experience' && filter === 'awarded') setFilter('all'); }, [sub, filter]);
 
   const list = useMemo(() => {
     let l = ecs.filter(e => e.category === sub);
@@ -1110,7 +1310,8 @@ function BragIt({sub, ecs, add, update, remove}){
     <div>
       <div className="spread" style={{marginBottom:16}}>
         <div className="row" style={{gap:7,flexWrap:'wrap'}}>
-          {[['all','All'],['ongoing','Ongoing'],['finished','Finished'],['awarded','With awards']].map(([k,l]) => (
+          {[['all','All'],['ongoing','Ongoing'],['finished','Finished'],
+            ...(sub === 'experience' ? [['awarded','With awards']] : [])].map(([k,l]) => (
             <button key={k} className={'chip' + (filter === k ? ' on' : '')} onClick={() => setFilter(k)}>{l}</button>
           ))}
         </div>
@@ -1137,12 +1338,12 @@ function BragIt({sub, ecs, add, update, remove}){
                   <h3>{e.title}</h3>
                   <div className="org">{[e.role, e.org].filter(Boolean).join(' · ')}</div>
                 </div>
-                <div className="row" style={{gap:8}}>
+                <div className="ec-actions">
                   <span className="prio" title={`Importance ${e.priority} of 5`}>
                     {[1,2,3,4,5].map(n => <i key={n} className={n <= e.priority ? 'on' : ''} />)}
                   </span>
                   <button className="btn sm" onClick={() => setEditing(e)}>Edit</button>
-                  <button className="btn sm ghost" onClick={() => remove(e.id)} aria-label="Delete">✕</button>
+                  <XBtn onClick={() => remove(e.id)} />
                 </div>
               </div>
 
@@ -1229,7 +1430,8 @@ function EcEditor({ec, onClose, onSave}){
 const AV = ['#E03F7C','#5350E8','#0F9E68','#E09A12','#2F80ED','#8A5CF6'];
 const avColor = n => AV[[...n].reduce((a,c) => a + c.charCodeAt(0), 0) % AV.length];
 
-function LockIt({lock, setLock, running, setRunning, left, setLeft, minutes, setMinutes, toast}){
+function LockIt({lock, running, left, minutes, start, pause, reset, toast,
+                 mode, setMode, pomo, setPomo, phase, cycle, addCycle}){
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [room, setRoom] = useState(null);
@@ -1282,33 +1484,77 @@ function LockIt({lock, setLock, running, setRunning, left, setLeft, minutes, set
     <div className="lockgrid">
       <div>
         <div className="card" style={{textAlign:'center',padding:'26px 20px'}}>
-          <div className="eyebrow">Focus session</div>
+          <div className="modeswitch">
+            <button className={mode === 'timer' ? 'on' : ''} disabled={running} onClick={() => setMode('timer')}>Timer</button>
+            <button className={mode === 'pomo' ? 'on' : ''} disabled={running} onClick={() => setMode('pomo')}>Pomodoro</button>
+          </div>
+
+          <div className="eyebrow" style={{marginTop:16}}>
+            {mode === 'pomo'
+              ? (phase === 'work' ? `Work · cycle ${cycle} of ${pomo.cycles}`
+                : phase === 'break' ? `Break · cycle ${cycle} of ${pomo.cycles}`
+                : `${pomo.cycles} cycles · ${pomo.work} on, ${pomo.brk} off`)
+              : 'Focus session'}
+          </div>
+
           <div className="dial">
-            <div className="dial-num">{pad(mm)}:{pad(ss)}</div>
+            <div className={'dial-num' + (phase === 'break' ? ' onbreak' : '')}>{pad(mm)}:{pad(ss)}</div>
           </div>
-          <div className="presets" style={{marginTop:10}}>
-            {[15,25,50,90].map(m => (
-              <button key={m} className={'chip' + (minutes === m && !running ? ' on' : '')}
-                disabled={running} onClick={() => { setMinutes(m); setLeft(m*60); }}>{m} min</button>
-            ))}
-            <label className="chip" style={{display:'inline-flex',gap:6,alignItems:'center'}}>
-              custom
-              <input type="number" min="1" max="240" value={minutes} disabled={running}
-                onChange={e => { const v = Math.max(1, Math.min(240, +e.target.value || 1)); setMinutes(v); setLeft(v*60); }}
-                style={{width:52,border:0,background:'transparent',padding:0,fontWeight:700}} />
-            </label>
-          </div>
-          <div className="row" style={{justifyContent:'center',marginTop:18,gap:9}}>
+
+          {mode === 'pomo' && (
+            <div className="cycledots">
+              {Array.from({length:Math.min(pomo.cycles, 12)}, (_,i) => (
+                <i key={i} className={i + 1 < cycle ? 'done' : i + 1 === cycle && phase ? 'now' : ''} />
+              ))}
+              {pomo.cycles > 12 && <span className="mono" style={{fontSize:11,color:'var(--ink35)'}}>+{pomo.cycles-12}</span>}
+            </div>
+          )}
+
+          {mode === 'timer' ? (
+            <div className="presets" style={{marginTop:10}}>
+              {[15,30,60].map(m => (
+                <button key={m} className={'chip' + (minutes === m && !running ? ' on' : '')}
+                  disabled={running} onClick={() => reset(m)}>{m} min</button>
+              ))}
+              <label className={'chip' + ([15,30,60].includes(minutes) ? '' : ' on')}
+                style={{display:'inline-flex',gap:6,alignItems:'center'}}>
+                custom
+                <input type="number" min="1" max="240" value={minutes} disabled={running}
+                  onChange={e => reset(Math.max(1, Math.min(240, +e.target.value || 1)))}
+                  style={{width:48,border:0,background:'transparent',padding:0,fontWeight:700,color:'inherit'}} />
+              </label>
+            </div>
+          ) : (
+            <div className="pomofields">
+              {[['work','Work','1','120'],['brk','Break','1','60'],['cycles','Cycles','1','12']].map(([k,label,min,max]) => (
+                <label key={k} className="pomofield">
+                  <span>{label}</span>
+                  <input type="number" min={min} max={max} value={pomo[k]} disabled={running && k !== 'cycles'}
+                    onChange={e => setPomo({...pomo, [k]:Math.max(+min, Math.min(+max, +e.target.value || +min))})} />
+                </label>
+              ))}
+            </div>
+          )}
+
+          <div className="timerbtns">
             {!running
-              ? <button className="btn primary" onClick={() => { setLeft(minutes*60); setRunning(true); }}>Lock in for {minutes} min</button>
-              : <button className="btn" onClick={() => setRunning(false)}>Pause</button>}
-            <button className="btn ghost" onClick={() => { setRunning(false); setLeft(minutes*60); }}>Reset</button>
+              ? <button className="btn primary" onClick={start}>
+                  {left > 0 && phase ? `Resume ${pad(Math.floor(left/60))}:${pad(left%60)}`
+                    : mode === 'pomo' ? `Start ${pomo.cycles} cycles`
+                    : left > 0 && left < minutes*60 ? `Resume ${pad(Math.floor(left/60))}:${pad(left%60)}`
+                    : `Lock in for ${minutes} min`}
+                </button>
+              : <button className="btn" onClick={pause}>Pause</button>}
+            <button className="btn ghost" onClick={() => reset()}>Reset</button>
+            {mode === 'pomo' && running && (
+              <button className="btn" onClick={addCycle} title="Adds one more work and break round">+ Add a cycle</button>
+            )}
           </div>
         </div>
 
         <div className="row" style={{gap:12,marginTop:14,flexWrap:'wrap'}}>
           <div className="card" style={{flex:1,minWidth:150}}>
-            <div className="eyebrow">Sessions today</div>
+            <div className="eyebrow">Sessions finished</div>
             <div className="mono" style={{fontSize:26,fontWeight:500}}>{lock.sessions}</div>
           </div>
           <div className="card" style={{flex:1,minWidth:150}}>
@@ -1317,7 +1563,10 @@ function LockIt({lock, setLock, running, setRunning, left, setLeft, minutes, set
           </div>
         </div>
 
-        <div className="card" style={{marginTop:14,background:'#FBFBFE',color:'var(--ink60)',fontSize:13}}>
+        <div className="card" style={{marginTop:14,color:'var(--ink60)',fontSize:13}}>
+          {mode === 'pomo'
+            ? 'Each work stretch counts as a finished session. Breaks are not counted as focus minutes, and the next stretch starts on its own.'
+            : 'The countdown runs off the clock, so it keeps time even if you switch tabs or close the laptop.'}
           While a session runs, Plan It covers the screen and the other tabs stay shut until the timer ends or you end it early.
           A website can't lock the apps outside your browser — that takes a phone app with Screen Time or Digital Wellbeing permissions.
         </div>
@@ -1469,15 +1718,22 @@ const PANELS = [
    foot:'Organize It → Daily', emoji:'📅'},
 ];
 
+// Your logo file, sitting next to index.html in the repo. If it's missing or
+// fails to load, the drawn mark below is used instead so nothing looks broken.
+const LOGO_SRC = 'logo.png';
+
 function Mark({size = 22}){
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+  const [broken, setBroken] = useState(false);
+  if(broken || !LOGO_SRC) return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{flex:'none'}}>
       <rect x="2" y="3"  width="20" height="4" rx="2" fill="var(--brag)" />
       <rect x="2" y="8.5" width="15" height="4" rx="2" fill="var(--list)" />
       <rect x="2" y="14" width="20" height="4" rx="2" fill="var(--org)" />
       <rect x="2" y="19.5" width="11" height="3" rx="1.5" fill="var(--lock)" />
     </svg>
   );
+  return <img className="logomark" src={LOGO_SRC} alt="" width={size} height={size}
+    style={{width:size, height:size}} onError={() => setBroken(true)} />;
 }
 
 function SetupNeeded(){
@@ -1845,6 +2101,452 @@ function Auth(){
   );
 }
 
+/* ============ SETTINGS ============ */
+const WEEK_MS = 7*24*60*60*1000;
+const daysUntil = ts => Math.max(1, Math.ceil((WEEK_MS - (Date.now() - ts))/86400000));
+const freeToChange = ts => !ts || (Date.now() - ts) >= WEEK_MS;
+
+const ACCENT_PRESETS = [
+  {id:'default', label:'Default',  c:{brag:'#E09A12', list:'#0F9E68', organize:'#5350E8', lock:'#E03F7C'}},
+  {id:'citrus',  label:'Citrus',   c:{brag:'#E8A004', list:'#3FA34D', organize:'#F2683C', lock:'#D2306A'}},
+  {id:'ocean',   label:'Ocean',    c:{brag:'#0E9AA7', list:'#3DA35D', organize:'#2C6BED', lock:'#7A4FE0'}},
+  {id:'berry',   label:'Berry',    c:{brag:'#D8842B', list:'#B0407C', organize:'#7A3BD6', lock:'#E0426B'}},
+  {id:'mono',    label:'Slate',    c:{brag:'#7A7F99', list:'#5E6580', organize:'#454B66', lock:'#8A6478'}},
+];
+const ACCENT_KEYS = [
+  ['brag','Brag It'], ['list','List It'], ['organize','Organize It'], ['lock','Lock It']
+];
+
+async function saveProfile(uid, fields){
+  await withTimeout(db().collection('users').doc(uid).set(fields, {merge:true}), 10000);
+}
+
+async function changeUsername(newName, user, oldName){
+  const clean = newName.trim();
+  const batch = db().batch();
+  batch.set(db().collection('usernames').doc(unameKey(clean)), {uid:user.id, username:clean});
+  if(oldName && unameKey(oldName) !== unameKey(clean)){
+    batch.delete(db().collection('usernames').doc(unameKey(oldName)));
+  }
+  batch.set(db().collection('users').doc(user.id), {username:clean, usernameChangedAt:Date.now()}, {merge:true});
+  await withTimeout(batch.commit(), 10000);
+}
+
+function Section({title, hint, children}){
+  return (
+    <div className="setblock">
+      <div className="eyebrow">{title}</div>
+      {hint && <p className="sethint">{hint}</p>}
+      {children}
+    </div>
+  );
+}
+
+function Settings({sub, user, onSignOut, settings, setSettings, toast}){
+  const auth = initFirebase();
+  const [profile, setProfile] = useState(null);
+  const [err, setErr] = useState('');
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [legal, setLegal] = useState(null);
+
+  useEffect(() => { (async () => {
+    try{
+      const snap = await withTimeout(db().collection('users').doc(user.id).get());
+      setProfile(snap.exists ? snap.data() : {});
+    }catch(e){ setProfile({}); setErr("Couldn't load your account details."); }
+  })(); }, [user.id]);
+
+  useEffect(() => { setErr(''); setNote(''); }, [sub]);
+
+  /* ---------- my account ---------- */
+  const [form, setForm] = useState(null);
+  useEffect(() => {
+    if(profile && !form) setForm({
+      name: profile.name || '', age: profile.age || '', grade: profile.grade || '',
+      gender: profile.gender || '', school: profile.school || ''
+    });
+  }, [profile, form]);
+
+  const saveAccount = async () => {
+    setBusy(true); setErr(''); setNote('');
+    try{
+      await saveProfile(user.id, {
+        name:form.name.trim(), age:form.age, grade:form.grade,
+        gender:form.gender, school:form.school.trim(), email:user.email
+      });
+      setNote('Saved.');
+    }catch(e){ setErr('Could not save. Check your connection and try again.'); }
+    setBusy(false);
+  };
+
+  /* ---------- username ---------- */
+  const [newName, setNewName] = useState('');
+  const [avail, setAvail] = useState(null);
+  useEffect(() => {
+    const n = newName.trim();
+    if(!n){ setAvail(null); return; }
+    if(!validUsername(n)){ setAvail('invalid'); return; }
+    if(unameKey(n) === unameKey(user.username || '')){ setAvail('same'); return; }
+    setAvail('checking');
+    let alive = true;
+    const t = setTimeout(async () => {
+      try{ const taken = await usernameTaken(n); if(alive) setAvail(taken ? 'taken' : 'free'); }
+      catch(e){ if(alive) setAvail('offline'); }
+    }, 450);
+    return () => { alive = false; clearTimeout(t); };
+  }, [newName, user.username]);
+
+  const submitUsername = async () => {
+    const n = newName.trim();
+    if(!validUsername(n)) return setErr('Usernames are 3–20 characters: letters, numbers, underscores, and periods.');
+    if(!freeToChange(profile && profile.usernameChangedAt))
+      return setErr(`You can change your username again in ${daysUntil(profile.usernameChangedAt)} days.`);
+    setBusy(true); setErr(''); setNote('');
+    try{
+      await changeUsername(n, user, user.username);
+      if(auth.currentUser) await auth.currentUser.updateProfile({displayName:n});
+      toast('Username updated');
+      window.location.reload();
+    }catch(e){ setErr(usernameWriteError(e)); setBusy(false); }
+  };
+
+  /* ---------- password ---------- */
+  const [curPw, setCurPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [newPw2, setNewPw2] = useState('');
+
+  const submitPassword = async () => {
+    if(newPw.length < 8) return setErr('New passwords need at least 8 characters.');
+    if(newPw !== newPw2) return setErr("The two new passwords don't match.");
+    if(!freeToChange(profile && profile.passwordChangedAt))
+      return setErr(`You can change your password again in ${daysUntil(profile.passwordChangedAt)} days.`);
+    setBusy(true); setErr(''); setNote('');
+    try{
+      const cred = firebase.auth.EmailAuthProvider.credential(user.email, curPw);
+      await auth.currentUser.reauthenticateWithCredential(cred);
+      await auth.currentUser.updatePassword(newPw);
+      await saveProfile(user.id, {passwordChangedAt:Date.now()});
+      setProfile(p => ({...p, passwordChangedAt:Date.now()}));
+      setCurPw(''); setNewPw(''); setNewPw2('');
+      setNote('Password changed.');
+    }catch(e){ setErr(fbErr(e)); }
+    setBusy(false);
+  };
+
+  /* ---------- notifications ---------- */
+  const askNotify = async on => {
+    if(!on){ setSettings({...settings, notify:{...settings.notify, on:false}}); return; }
+    if(!('Notification' in window)) return setErr('This browser cannot show notifications.');
+    const perm = await Notification.requestPermission();
+    if(perm !== 'granted') return setErr('Your browser blocked notifications. Allow them in the address bar, then try again.');
+    setSettings({...settings, notify:{...settings.notify, on:true}});
+    new Notification('Plan It', {body:"Reminders are on. You'll get a nudge before scheduled blocks."});
+  };
+
+  const Err = () => err ? <div className="formerr" role="alert">{err}</div> : null;
+  const Note = () => note ? <div className="formnote">{note}</div> : null;
+  const accents = settings.accents || ACCENT_PRESETS[0].c;
+
+  return (
+    <div style={{maxWidth:660}}>
+      {sub === 'account' && (
+        <>
+          <Section title="Signed in as">
+            <div className="card row" style={{gap:12}}>
+              <div className="avatar" style={{background:avColor(user.username || user.email), width:40, height:40, fontSize:16}}>
+                {(user.username || user.email).slice(0,1).toUpperCase()}
+              </div>
+              <div style={{flex:1, minWidth:0}}>
+                <b>{user.username}</b>
+                <div style={{fontSize:12.5, color:'var(--ink35)'}}>
+                  {user.email} · {user.provider === 'google' ? 'Google account' : 'Email account'}
+                </div>
+              </div>
+              <button className="btn" onClick={onSignOut}>Log out</button>
+            </div>
+          </Section>
+
+          <Section title="About you" hint="Only you can see this. Leave anything blank you'd rather not fill in.">
+            {!form ? <div className="card" style={{color:'var(--ink35)'}}>Loading…</div> : (
+              <div className="card">
+                <Field label="Name"><input value={form.name} onChange={e => setForm({...form, name:e.target.value})} placeholder="Amara Rivera" /></Field>
+                <div className="grid2">
+                  <Field label="Age"><input type="number" min="1" max="120" value={form.age} onChange={e => setForm({...form, age:e.target.value})} placeholder="16" /></Field>
+                  <Field label="Grade">
+                    <select value={form.grade} onChange={e => setForm({...form, grade:e.target.value})}>
+                      <option value="">Prefer not to say</option>
+                      {['6','7','8','9','10','11','12','College','Other'].map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </Field>
+                </div>
+                <div className="grid2">
+                  <Field label="Gender">
+                    <select value={form.gender} onChange={e => setForm({...form, gender:e.target.value})}>
+                      <option value="">Prefer not to say</option>
+                      <option>Female</option><option>Male</option><option>Non-binary</option><option>Other</option>
+                    </select>
+                  </Field>
+                  <Field label="School"><input value={form.school} onChange={e => setForm({...form, school:e.target.value})} placeholder="Northview High" /></Field>
+                </div>
+                <Note />
+                <Err />
+                <button className="btn primary" disabled={busy} onClick={saveAccount}>{busy ? 'Saving…' : 'Save details'}</button>
+              </div>
+            )}
+          </Section>
+        </>
+      )}
+
+      {sub === 'security' && (
+        <>
+          <Section title="Username" hint="You can change this once a week.">
+            <div className="card">
+              <div className="row" style={{marginBottom:12, fontSize:13.5, color:'var(--ink60)'}}>
+                Currently <b style={{color:'var(--ink)', marginLeft:5}}>{user.username}</b>
+              </div>
+              {profile && !freeToChange(profile.usernameChangedAt)
+                ? <div className="lockednote">Changed recently. You can change it again in {daysUntil(profile.usernameChangedAt)} days.</div>
+                : <>
+                    <Field label="New username">
+                      <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Enter your username here" />
+                    </Field>
+                    {avail === 'taken'   && <div className="avail bad">Taken — try another</div>}
+                    {avail === 'invalid' && <div className="avail bad">3–20 characters: letters, numbers, _ and .</div>}
+                    {avail === 'same'    && <div className="avail hint">That's already your username</div>}
+                    {avail === 'free'    && <div className="avail good">✓ Available</div>}
+                    <Err />
+                    <button className="btn primary" disabled={busy || avail !== 'free'} onClick={submitUsername}>
+                      {busy ? 'Saving…' : 'Change username'}
+                    </button>
+                  </>}
+            </div>
+          </Section>
+
+          <Section title="Password" hint="You can change this once a week.">
+            <div className="card">
+              {user.provider === 'google'
+                ? <div className="lockednote">You sign in with Google, so there's no Plan It password to change. Manage it in your Google account.</div>
+                : profile && !freeToChange(profile.passwordChangedAt)
+                ? <div className="lockednote">Changed recently. You can change it again in {daysUntil(profile.passwordChangedAt)} days.</div>
+                : <>
+                    <Field label="Current password"><input type="password" value={curPw} onChange={e => setCurPw(e.target.value)} autoComplete="current-password" /></Field>
+                    <Field label="New password"><input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" /></Field>
+                    <Field label="New password again"><input type="password" value={newPw2} onChange={e => setNewPw2(e.target.value)} autoComplete="new-password" /></Field>
+                    <Note />
+                    <Err />
+                    <button className="btn primary" disabled={busy} onClick={submitPassword}>{busy ? 'Changing…' : 'Change password'}</button>
+                  </>}
+            </div>
+          </Section>
+
+          <Section title="Session">
+            <button className="btn" onClick={onSignOut}>Log out of Plan It</button>
+          </Section>
+        </>
+      )}
+
+      {sub === 'appearance' && (
+        <>
+          <Section title="Theme">
+            <div className="row" style={{gap:9}}>
+              {[['light','Light'],['dark','Dark'],['system','Match device']].map(([k,l]) => (
+                <button key={k} className={'chip' + (settings.theme === k ? ' on' : '')}
+                  onClick={() => setSettings({...settings, theme:k})}>{l}</button>
+              ))}
+            </div>
+          </Section>
+
+          <Section title="Tab colours" hint="Each section keeps its own colour across the app.">
+            <div className="row" style={{gap:9, flexWrap:'wrap', marginBottom:16}}>
+              {ACCENT_PRESETS.map(p => (
+                <button key={p.id} className="palette" onClick={() => setSettings({...settings, accents:p.c})}>
+                  <span className="swatches">
+                    {['brag','list','organize','lock'].map(k => <i key={k} style={{background:p.c[k]}} />)}
+                  </span>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <div className="card">
+              {ACCENT_KEYS.map(([k,label]) => (
+                <label key={k} className="colorrow">
+                  <span>{label}</span>
+                  <input type="color" value={accents[k]}
+                    onChange={e => setSettings({...settings, accents:{...accents, [k]:e.target.value}})} />
+                </label>
+              ))}
+              <button className="btn sm" style={{marginTop:10}}
+                onClick={() => setSettings({...settings, accents:ACCENT_PRESETS[0].c})}>Reset to default</button>
+            </div>
+          </Section>
+        </>
+      )}
+
+      {sub === 'notifications' && (
+        <>
+          <Section title="Reminders" hint="A nudge before a scheduled block starts.">
+            <div className="card">
+              <label className="switchrow">
+                <span>
+                  <b>Reminders</b>
+                  <small>Notify me before something on the daily schedule begins</small>
+                </span>
+                <input type="checkbox" checked={!!settings.notify.on} onChange={e => askNotify(e.target.checked)} />
+              </label>
+              {settings.notify.on && (
+                <div style={{marginTop:14}}>
+                  <div className="eyebrow" style={{marginBottom:8}}>How early</div>
+                  <div className="row" style={{gap:8, flexWrap:'wrap'}}>
+                    {[5,10,15,30].map(m => (
+                      <button key={m} className={'chip' + (settings.notify.before === m ? ' on' : '')}
+                        onClick={() => setSettings({...settings, notify:{...settings.notify, before:m}})}>{m} min</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <Err />
+            </div>
+          </Section>
+          <Section title="Worth knowing">
+            <div className="card" style={{color:'var(--ink60)', fontSize:13.5, lineHeight:1.6}}>
+              Reminders only fire while Plan It is open in a tab. Notifications that reach you with the site
+              closed need a service worker and a push service, which a static site can't do on its own.
+            </div>
+          </Section>
+        </>
+      )}
+
+      {sub === 'pro' && (
+        <>
+          <Section title="Plan It Pro">
+            <div className="procard">
+              <div className="prohead">
+                <div>
+                  <div className="eyebrow" style={{color:'var(--accent)'}}>Coming soon</div>
+                  <h3>Plan It Pro</h3>
+                </div>
+                <div className="proprice">{CONFIG.PRO_PRICE || '$3'}<small>/mo</small></div>
+              </div>
+              <ul className="prolist">
+                <li>Your planner synced across every device</li>
+                <li>Unlimited study rooms with more than four friends</li>
+                <li>Export Brag It as a formatted activities résumé</li>
+                <li>Recurring tasks and repeating class schedules</li>
+                <li>Full history and stats for focus sessions</li>
+              </ul>
+              {CONFIG.PRO_CHECKOUT_URL
+                ? <a className="btn primary wide" href={CONFIG.PRO_CHECKOUT_URL} target="_blank" rel="noopener noreferrer">Upgrade to Pro</a>
+                : <>
+                    <button className="btn primary wide" disabled>Not available yet</button>
+                    <div className="gnote" style={{marginTop:12}}>
+                      <b>To turn this on</b>
+                      Create a Stripe Payment Link, then paste its URL into <code>CONFIG.PRO_CHECKOUT_URL</code> at
+                      the top of index.html. Stripe hosts the checkout page, so no server is needed.
+                    </div>
+                  </>}
+            </div>
+          </Section>
+        </>
+      )}
+
+      {sub === 'legal' && (
+        <>
+          <Section title="Policies">
+            <div className="card">
+              <div className="legalrow">
+                <div><b>Privacy policy</b><small>What Plan It stores and where it lives</small></div>
+                <button className="btn sm" onClick={() => setLegal('privacy')}>View</button>
+              </div>
+              <div className="legalrow">
+                <div><b>Terms and conditions</b><small>The rules for using Plan It</small></div>
+                <button className="btn sm" onClick={() => setLegal('terms')}>View</button>
+              </div>
+            </div>
+          </Section>
+          <Section title="Your data">
+            <div className="card" style={{color:'var(--ink60)', fontSize:13.5, lineHeight:1.6}}>
+              Your account and username live in Firebase. Your tasks, calendar entries, and activities are
+              stored in this browser. Logging out doesn't erase them — use "Clear all planner data" in the
+              sidebar for that.
+            </div>
+          </Section>
+        </>
+      )}
+
+      {legal && <LegalModal kind={legal} onClose={() => setLegal(null)} />}
+    </div>
+  );
+}
+
+function LegalModal({kind, onClose}){
+  const privacy = kind === 'privacy';
+  return (
+    <Modal title={privacy ? 'Privacy policy' : 'Terms and conditions'} onClose={onClose}
+      footer={<button className="btn primary" onClick={onClose}>Close</button>}>
+      <div className="demo" style={{textAlign:'left', marginBottom:16}}>
+        <b>Template — read before you publish</b>
+        This is a starting point written to match how Plan It actually works, not legal advice.
+        Check it against your situation, and get an adult or a lawyer to look it over if real users sign up.
+      </div>
+      <div className="legaldoc">
+        {privacy ? (
+          <>
+            <p><em>Last updated: {MON[new Date().getMonth()]} {new Date().getFullYear()}</em></p>
+            <h4>What we collect</h4>
+            <p>When you make an account we collect your email address and the username you choose. If you fill in
+            the optional details under My account — name, age, grade, gender, school — we store those too. You can
+            leave any of them blank.</p>
+            <h4>Where it is kept</h4>
+            <p>Accounts, usernames, and profile details are stored by Google Firebase on Google's servers. Your
+            planner contents — tasks, calendar entries, activities, and focus statistics — are stored in your own
+            browser and are not uploaded.</p>
+            <h4>What we do with it</h4>
+            <p>We use your email to sign you in and to send confirmation and password-reset messages. Usernames are
+            stored so no two people can pick the same one. Nothing is sold, and nothing is shared with advertisers.</p>
+            <h4>Who else can see it</h4>
+            <p>If you join a study room in Lock It, the other people in that room can see the name you enter and how
+            many minutes you have focused. Nothing else is shared between accounts.</p>
+            <h4>Your choices</h4>
+            <p>You can change your username, edit or clear your profile details, and delete your planner data at any
+            time from Settings. To have your account removed entirely, contact us at the address below.</p>
+            <h4>Children</h4>
+            <p>Plan It is built for students. If you are under 13, ask a parent or guardian before making an account.</p>
+            <h4>Contact</h4>
+            <p>{CONFIG.CONTACT_EMAIL || 'Add your contact email to CONFIG.CONTACT_EMAIL.'}</p>
+          </>
+        ) : (
+          <>
+            <p><em>Last updated: {MON[new Date().getMonth()]} {new Date().getFullYear()}</em></p>
+            <h4>Using Plan It</h4>
+            <p>Plan It is a free planner for students. You need an account to use it, and you agree to give accurate
+            information when you sign up.</p>
+            <h4>Your account</h4>
+            <p>Keep your password to yourself. You are responsible for what happens under your account. Usernames
+            can be changed once a week; pick something that is not offensive or impersonating someone else.</p>
+            <h4>Your content</h4>
+            <p>Anything you write in Plan It stays yours. We claim no ownership of your tasks, notes, or activity
+            entries.</p>
+            <h4>Study rooms</h4>
+            <p>Room codes are shared by you. Do not use rooms to harass anyone. We may remove access for behaviour
+            that harms other people.</p>
+            <h4>No guarantees</h4>
+            <p>Plan It is provided as is. It may go down, lose data, or change without notice. Keep your own copy of
+            anything you cannot afford to lose. We are not liable for missed deadlines, lost work, or any damages
+            arising from using it.</p>
+            <h4>Ending things</h4>
+            <p>You can stop using Plan It whenever you like. We can suspend accounts that break these terms.</p>
+            <h4>Changes</h4>
+            <p>These terms may be updated. Continuing to use Plan It after a change means you accept the new version.</p>
+            <h4>Contact</h4>
+            <p>{CONFIG.CONTACT_EMAIL || 'Add your contact email to CONFIG.CONTACT_EMAIL.'}</p>
+          </>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
 /* ============ APP ============ */
 const TABS = [
   {id:'brag',     emoji:'🏆', label:'Brag It',    sub:'Extracurriculars', color:'var(--brag)',
@@ -1859,13 +2561,17 @@ const TABS = [
   {id:'lock',     emoji:'🔒', label:'Lock It',    sub:'Study mode', color:'var(--lock)',
    title:'Lock It', tagline:'Set a timer, close everything else, bring your friends.',
    subs:[['focus','Focus timer']]},
+  {id:'settings', emoji:'⚙️', label:'Settings',   sub:'Account', color:'var(--set)',
+   title:'Settings', tagline:'Your account, how Plan It looks, and what it can do.',
+   subs:[['account','My account'],['security','Username & password'],['appearance','Appearance'],
+         ['notifications','Notifications'],['pro','Plan It Pro'],['legal','Legal']]},
 ];
-const SOFT = {brag:'rgba(224,154,18,.14)', list:'rgba(15,158,104,.13)', organize:'rgba(83,80,232,.12)', lock:'rgba(224,63,124,.12)'};
+const SOFT = {brag:'rgba(224,154,18,.14)', list:'rgba(15,158,104,.13)', organize:'rgba(83,80,232,.12)', lock:'rgba(224,63,124,.12)', settings:'rgba(90,97,120,.14)'};
 
 function App({user, onSignOut}){
   const [ready, setReady] = useState(false);
   const [tab, setTab] = useState('organize');
-  const [sub, setSub] = useState({brag:'honor', list:'daily', organize:'daily', lock:'focus'});
+  const [sub, setSub] = useState({brag:'honor', list:'daily', organize:'daily', lock:'focus', settings:'account'});
   const [date, setDate] = useState(new Date());
   const [store, setStore] = useState(() => ({tasks:[], events:[], ecs:[], lock:{sessions:0,minutes:0,day:iso(new Date())}}));
   const [toastMsg, setToastMsg] = useState(null);
@@ -1874,6 +2580,12 @@ function App({user, onSignOut}){
   const [minutes, setMinutes] = useState(25);
   const [left, setLeft] = useState(25*60);
   const [running, setRunning] = useState(false);
+  const endsAt = useRef(null);   // wall-clock target, not a tick count
+  const runFrom = useRef(null);  // when the current run began, for crediting time
+  const [mode, setMode] = useState('timer');            // 'timer' | 'pomo'
+  const [pomo, setPomo] = useState({work:25, brk:5, cycles:4});
+  const [phase, setPhase] = useState(null);             // 'work' | 'break' | null
+  const [cycle, setCycle] = useState(1);
 
   useEffect(() => { (async () => {
     const d = await loadStore(user.id);
@@ -1891,21 +2603,174 @@ function App({user, onSignOut}){
 
   const toast = useCallback(msg => { setToastMsg(msg); setTimeout(() => setToastMsg(null), 2200); }, []);
 
+  const settings = store.settings || DEFAULT_SETTINGS;
+  const setSettings = next => setStore(s => ({...s, settings:next}));
+
+  // theme + custom tab colours live on <html> so modals and the shield get them too
+  useEffect(() => {
+    const root = document.documentElement;
+    const apply = () => {
+      const dark = settings.theme === 'dark' ||
+        (settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      root.setAttribute('data-theme', dark ? 'dark' : 'light');
+    };
+    apply();
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    if(settings.theme === 'system' && mq.addEventListener){
+      mq.addEventListener('change', apply);
+      return () => mq.removeEventListener('change', apply);
+    }
+  }, [settings.theme]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const a = settings.accents;
+    ['brag','list','organize','lock'].forEach(k => {
+      if(a && a[k]) root.style.setProperty('--' + k, a[k]);
+      else root.style.removeProperty('--' + k);
+    });
+  }, [settings.accents]);
+
+  const resetPlanner = async () => {
+    if(!window.confirm('Delete every task, calendar entry, and activity in this planner? This cannot be undone.')) return;
+    const fresh = seed();
+    setStore(fresh);
+    await saveStore(user.id, fresh);
+    await DB.del('planit:data:v1');   // don't let the old sample data come back
+    toast('Planner cleared');
+  };
+
+  // Time you actually sat there counts, whether or not you reach the end.
+  // Seconds are banked so short stretches aren't rounded away to nothing.
+  const creditElapsed = useCallback(() => {
+    if(!runFrom.current) return 0;
+    const secs = Math.max(0, Math.round((Date.now() - runFrom.current)/1000));
+    runFrom.current = null;
+    if(secs > 0) setStore(s => {
+      const banked = (s.lock.seconds != null ? s.lock.seconds : (s.lock.minutes || 0)*60) + secs;
+      return {...s, lock:{...s.lock, seconds:banked, minutes:Math.floor(banked/60)}};
+    });
+    return secs;
+  }, []);
+
+  // A pomodoro phase. Break time deliberately isn't credited as focus minutes.
+  const beginPhase = useCallback((kind, c) => {
+    const mins = kind === 'work' ? pomo.work : pomo.brk;
+    endsAt.current = Date.now() + mins*60*1000;
+    runFrom.current = kind === 'work' ? Date.now() : null;
+    setPhase(kind);
+    setCycle(c);
+    setLeft(mins*60);
+    setRunning(true);
+  }, [pomo.work, pomo.brk]);
+
+  const startTimer = useCallback(() => {
+    if(mode === 'pomo'){
+      if(phase && left > 0){                        // resume a paused phase
+        endsAt.current = Date.now() + left*1000;
+        if(phase === 'work') runFrom.current = Date.now();
+        setRunning(true);
+      } else beginPhase('work', 1);
+      return;
+    }
+    const secs = left > 0 ? left : minutes*60;      // resume from a pause
+    endsAt.current = Date.now() + secs*1000;
+    runFrom.current = Date.now();
+    setLeft(secs);
+    setRunning(true);
+  }, [left, minutes, mode, phase, beginPhase]);
+
+  const pauseTimer = useCallback(() => {
+    if(endsAt.current) setLeft(Math.max(0, Math.round((endsAt.current - Date.now())/1000)));
+    const secs = creditElapsed();
+    endsAt.current = null;
+    setRunning(false);
+    if(secs >= 60) toast(`Logged ${Math.floor(secs/60)} min`);
+  }, [creditElapsed, toast]);
+
+  const resetTimer = useCallback(m => {
+    creditElapsed();
+    endsAt.current = null;
+    setRunning(false);
+    if(mode === 'pomo' && !m){
+      setPhase(null); setCycle(1); setLeft(pomo.work*60);
+      return;
+    }
+    const mins = m || minutes;
+    setMinutes(mins);
+    setLeft(mins*60);
+  }, [minutes, creditElapsed, mode, pomo.work]);
+
+  const addCycle = useCallback(() => setPomo(p => ({...p, cycles:p.cycles + 1})), []);
+
+  // Background tabs get their intervals throttled, so the remaining time is
+  // always derived from the clock rather than counted down tick by tick.
+  // Coming back to the tab recalculates immediately.
   useEffect(() => {
     if(!running) return;
-    const i = setInterval(() => {
-      setLeft(l => {
-        if(l <= 1){
-          setRunning(false);
-          setStore(s => ({...s, lock:{...s.lock, sessions:s.lock.sessions+1, minutes:s.lock.minutes+minutes}}));
-          toast('Session complete. Take a break.');
-          return minutes*60;
+    const tick = () => {
+      if(!endsAt.current) return;
+      const rem = Math.max(0, Math.round((endsAt.current - Date.now())/1000));
+      setLeft(rem);
+      if(rem <= 0){
+        endsAt.current = null;
+        if(mode === 'pomo'){
+          if(phase === 'work'){
+            creditElapsed();
+            setStore(s => ({...s, lock:{...s.lock, sessions:s.lock.sessions+1}}));
+            if(cycle < pomo.cycles){
+              toast(`Cycle ${cycle} of ${pomo.cycles} done — break time.`);
+              beginPhase('break', cycle);
+            } else {
+              setRunning(false); setPhase(null); setCycle(1); setLeft(pomo.work*60);
+              toast(`All ${pomo.cycles} cycles finished. Nice work.`);
+            }
+          } else {
+            toast('Break over — back to it.');
+            beginPhase('work', cycle + 1);
+          }
+          return;
         }
-        return l-1;
+        creditElapsed();
+        setRunning(false);
+        setLeft(minutes*60);
+        setStore(s => ({...s, lock:{...s.lock, sessions:s.lock.sessions+1}}));
+        toast('Session complete. Take a break.');
+      }
+    };
+    tick();
+    const i = setInterval(tick, 500);
+    const wake = () => { if(!document.hidden) tick(); };
+    document.addEventListener('visibilitychange', wake);
+    window.addEventListener('focus', wake);
+    return () => {
+      clearInterval(i);
+      document.removeEventListener('visibilitychange', wake);
+      window.removeEventListener('focus', wake);
+    };
+  }, [running, minutes, toast, creditElapsed, mode, phase, cycle, pomo.cycles, pomo.work, beginPhase]);
+
+  // reminders for scheduled blocks, while Plan It is open
+  const fired = useRef({});
+  useEffect(() => {
+    if(!settings.notify.on || !('Notification' in window) || Notification.permission !== 'granted') return;
+    const check = () => {
+      const now = new Date();
+      const today = iso(now);
+      const mins = now.getHours()*60 + now.getMinutes();
+      store.tasks.forEach(t => {
+        if(t.scope !== 'daily' || !t.start || t.date !== today || t.done) return;
+        const lead = toMin(t.start) - mins;
+        if(lead <= settings.notify.before && lead >= 0 && !fired.current[t.id]){
+          fired.current[t.id] = true;
+          new Notification(t.title, {body:`Starts at ${pretty(t.start)}`, tag:t.id});
+        }
       });
-    }, 1000);
+    };
+    check();
+    const i = setInterval(check, 30000);
     return () => clearInterval(i);
-  }, [running, minutes, toast]);
+  }, [settings.notify.on, settings.notify.before, store.tasks]);
 
   // mutators
   const addTask    = t => setStore(s => ({...s, tasks:[...s.tasks, {...t, id:uid()}]}));
@@ -1926,8 +2791,8 @@ function App({user, onSignOut}){
   return (
     <div className="app" style={{'--accent':meta.color, '--accent-soft':SOFT[tab]}}>
       <nav className="rail" aria-label="Sections">
-        <div className="brand"><b>Plan It</b><span>{new Date().getFullYear()}</span></div>
-        {TABS.map(t => (
+        <div className="brand"><Mark size={22} /><b>Plan It</b><span>{new Date().getFullYear()}</span></div>
+        {TABS.filter(t => t.id !== 'settings').map(t => (
           <button key={t.id} className={'tab' + (tab === t.id ? ' on' : '')} style={{'--tabcolor':t.color}}
             disabled={running && t.id !== 'lock'}
             title={running && t.id !== 'lock' ? 'Locked until the session ends' : t.label}
@@ -1936,18 +2801,30 @@ function App({user, onSignOut}){
             <span><span className="lbl">{t.label}</span><span className="sub">{t.sub}</span></span>
           </button>
         ))}
-        <div className="rail-account">
-          <div className="avatar" style={{background:avColor(user.username || user.email)}}>
-            {(user.username || user.email).slice(0,1).toUpperCase()}
+
+        <div className="rail-bottom">
+          {TABS.filter(t => t.id === 'settings').map(t => (
+            <button key={t.id} className={'tab' + (tab === t.id ? ' on' : '')} style={{'--tabcolor':t.color}}
+              disabled={running} title={running ? 'Locked until the session ends' : t.label}
+              onClick={() => setTab(t.id)} aria-current={tab === t.id}>
+              <span className="emoji">{t.emoji}</span>
+              <span><span className="lbl">{t.label}</span><span className="sub">{t.sub}</span></span>
+            </button>
+          ))}
+          <div className="rail-account">
+            <div className="avatar" style={{background:avColor(user.username || user.email)}}>
+              {(user.username || user.email).slice(0,1).toUpperCase()}
+            </div>
+            <div className="who">
+              <b>{user.username}</b>
+              <small>{user.provider === 'google' ? 'Google account' : user.email}</small>
+            </div>
+            <button className="btn sm ghost" onClick={onSignOut} title="Sign out">↪</button>
           </div>
-          <div className="who">
-            <b>{user.username}</b>
-            <small>{user.provider === 'google' ? 'Google account' : user.email}</small>
+          <div className="rail-foot">
+            {running ? 'Focus session running. Other tabs open when the timer ends.' : 'Everything saves as you type.'}
+            {!running && <button className="resetlink" onClick={resetPlanner}>Clear all planner data</button>}
           </div>
-          <button className="btn sm ghost" onClick={onSignOut} title="Sign out">↪</button>
-        </div>
-        <div className="rail-foot">
-          {running ? 'Focus session running. Other tabs open when the timer ends.' : 'Everything saves as you type.'}
         </div>
       </nav>
 
@@ -1984,18 +2861,30 @@ function App({user, onSignOut}){
           {tab === 'brag' &&
             <BragIt sub={sub.brag} ecs={store.ecs} add={addEc} update={updateEc} remove={removeEc} />}
 
+          {tab === 'settings' &&
+            <Settings sub={sub.settings} user={user} onSignOut={onSignOut} settings={settings}
+              setSettings={setSettings} toast={toast} />}
+
           {tab === 'lock' &&
-            <LockIt lock={store.lock} setLock={l => setStore(s => ({...s, lock:l}))} running={running} setRunning={setRunning}
-              left={left} setLeft={setLeft} minutes={minutes} setMinutes={setMinutes} toast={toast} />}
+            <LockIt lock={store.lock} running={running} left={left} minutes={minutes}
+              start={startTimer} pause={pauseTimer} reset={resetTimer} toast={toast}
+              mode={mode} setMode={setMode} pomo={pomo} setPomo={setPomo}
+              phase={phase} cycle={cycle} addCycle={addCycle} />}
         </div>
       </main>
 
       {running && (
         <div className="shield">
-          <div className="eyebrow" style={{color:'#B79DD0',letterSpacing:'.2em'}}>Locked in</div>
+          <div className="eyebrow" style={{color:'#B79DD0',letterSpacing:'.2em'}}>
+            {mode === 'pomo' && phase
+              ? (phase === 'work' ? `Work · cycle ${cycle} of ${pomo.cycles}` : 'Break')
+              : 'Locked in'}
+          </div>
           <div className="big">{pad(Math.floor(left/60))}:{pad(left%60)}</div>
-          <div className="sub">Plan It is closed until the timer ends. Put the phone face down.</div>
-          <button className="btn" onClick={() => setRunning(false)}>End session early</button>
+          <div className="sub">{mode === 'pomo' && phase === 'break'
+            ? 'Stretch, get water, look out a window. Work starts again on its own.'
+            : 'Plan It is closed until the timer ends. Put the phone face down.'}</div>
+          <button className="btn" onClick={pauseTimer}>End session early</button>
         </div>
       )}
 
