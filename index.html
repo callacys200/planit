@@ -92,7 +92,7 @@
   h1{font-size:30px;font-weight:800;position:relative;display:inline-block;z-index:0}
   h1::after{
     content:"";position:absolute;left:-6px;right:-8px;bottom:2px;height:12px;z-index:-1;
-    background:var(--accent);opacity:.22;transform:skewX(-12deg) rotate(-.6deg);border-radius:2px
+    background:var(--accent);opacity:.45;transform:skewX(-12deg) rotate(-.6deg);border-radius:2px
   }
   .tagline{color:var(--ink60);font-size:13.5px;margin-top:4px}
   .tape{display:flex;gap:3px;margin:18px 0 0;padding:3px;background:#F2F3F8;border-radius:12px;width:fit-content;max-width:100%;overflow-x:auto}
@@ -107,7 +107,7 @@
   /* ---------- bits ---------- */
   .btn{border:1px solid var(--line);background:var(--card);padding:8px 13px;border-radius:10px;font-weight:600;font-size:13.5px;display:inline-flex;align-items:center;gap:7px;transition:.14s}
   .btn:hover{border-color:#C6CBDC;background:#FAFBFF}
-  .btn.primary{background:var(--accent);border-color:transparent;color:#fff}
+  .btn.primary{background:var(--accent);border-color:transparent;color:var(--accent-ink,#fff)}
   .btn.primary:hover{opacity:.9}
   .btn.ghost{border-color:transparent;background:transparent;color:var(--ink60)}
   .btn.ghost:hover{background:#F2F3F8;color:var(--ink)}
@@ -115,7 +115,7 @@
   .btn.danger{color:#C42B5B;border-color:#F2D3DE}
   .btn.danger:hover{background:#FFF4F7;border-color:#E7B6C7}
   .chip{border:1px solid var(--line);background:var(--card);padding:5px 11px;border-radius:99px;font-size:12.5px;font-weight:600;color:var(--ink60)}
-  .chip.on{background:var(--accent);border-color:transparent;color:#fff}
+  .chip.on{background:var(--accent);border-color:transparent;color:var(--accent-ink,#fff)}
   .row{display:flex;align-items:center;gap:10px}
   .spread{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
   .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink35);font-weight:500}
@@ -186,7 +186,7 @@
   .tray{position:sticky;top:0}
   .tray-item{display:flex;gap:8px;align-items:flex-start;padding:9px 10px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px;background:#FBFBFE;cursor:grab;touch-action:pan-y}
   .tray-item:hover{border-color:#C6CBDC;background:#fff}
-  .ghost{position:fixed;z-index:90;pointer-events:none;background:var(--accent);color:#fff;padding:7px 11px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 26px -8px rgba(20,23,42,.5);opacity:.95}
+  .ghost{position:fixed;z-index:90;pointer-events:none;background:var(--accent);color:var(--accent-ink,#fff);padding:7px 11px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 26px -8px rgba(20,23,42,.5);opacity:.95}
 
   /* ---------- month ---------- */
   .month{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--line);gap:1px}
@@ -197,7 +197,7 @@
   .cell .dnum{font-size:12.5px;font-weight:600;color:var(--ink60);font-family:"IBM Plex Mono",monospace}
   .cell.out{background:#F8F9FC}
   .cell.out .dnum{color:#C3C8DA}
-  .cell.today .dnum{background:var(--accent);color:#fff;border-radius:7px;padding:1px 6px;display:inline-block}
+  .cell.today .dnum{background:var(--accent);color:var(--accent-ink,#fff);border-radius:7px;padding:1px 6px;display:inline-block}
   .ev{display:flex;align-items:center;gap:5px;margin-top:4px;font-size:11.5px;line-height:1.25}
   .ev .dot{width:7px;height:7px;border-radius:99px;flex:none}
   .ev .evt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -226,7 +226,7 @@
   .iconbtn{width:28px;height:28px;flex:none;padding:0;display:grid;place-items:center;border:0;background:transparent;color:var(--ink35);border-radius:8px;line-height:0;transition:.14s}
   .iconbtn:hover{background:#FBEEF3;color:#B92A61}
   .check:hover{border-color:var(--accent)}
-  .check.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .check.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink,#fff)}
   .todo .txt{flex:1;min-width:0}
   .todo .txt b{font-weight:600;font-size:14px;display:block;word-break:break-word}
   .todo.done .txt b{text-decoration:line-through;color:var(--ink35)}
@@ -323,7 +323,7 @@
   .finput{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:11px;background:#fff;margin-bottom:16px;transition:.14s}
   .finput::placeholder{color:#A6ACC2}
   .finput:focus{border-color:var(--org);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
-  .pillbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;padding:14px;border:0;border-radius:99px;background:var(--org);color:#fff;font-weight:600;font-size:15.5px;margin-top:6px;transition:.14s}
+  .pillbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;padding:14px;border:0;border-radius:99px;background:var(--org);color:var(--org-ink,#fff);font-weight:600;font-size:15.5px;margin-top:6px;transition:.14s}
   .pillbtn:hover{opacity:.9}
   .pillbtn:disabled{opacity:.55;cursor:not-allowed}
   .pillbtn span{opacity:.7;font-size:12px}
@@ -614,6 +614,23 @@ const pretty = t => { const [h,m] = t.split(':').map(Number);
   const ap = h >= 12 ? 'pm' : 'am'; const hh = h%12 === 0 ? 12 : h%12;
   return m === 0 ? `${hh}${ap}` : `${hh}:${pad(m)}${ap}`; };
 const uid = () => Math.random().toString(36).slice(2,10);
+
+const hexRgba = (hex, a) => {
+  const h = String(hex).replace('#','');
+  const n = h.length === 3 ? h.split('').map(c => c+c).join('') : h;
+  const r = parseInt(n.slice(0,2),16), g = parseInt(n.slice(2,4),16), b = parseInt(n.slice(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+};
+const relLum = hex => {
+  const h = String(hex).replace('#','');
+  const n = h.length === 3 ? h.split('').map(c => c+c).join('') : h;
+  const [r,g,b] = [0,2,4].map(i => parseInt(n.slice(i,i+2),16)/255)
+    .map(c => c <= .03928 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4));
+  return .2126*r + .7152*g + .0722*b;
+};
+// Pale accents get dark text instead of white, so a pastel palette stays pastel
+// rather than having to be darkened until white text works on it.
+const inkOn = hex => (1.05/(relLum(hex)+0.05)) >= 3.0 ? '#FFFFFF' : '#17181F';
 
 const ROW = 58;
 const DEFAULT_DAY = {wake:'07:00', sleep:'23:00'};
@@ -2108,9 +2125,9 @@ const freeToChange = ts => !ts || (Date.now() - ts) >= WEEK_MS;
 
 const ACCENT_PRESETS = [
   {id:'default',  label:'Default',       c:{brag:'#E09A12', list:'#0F9E68', organize:'#5350E8', lock:'#E03F7C'}},
-  {id:'fauna',    label:'Fauna',         c:{brag:'#A37138', list:'#2A3723', organize:'#7A7D62', lock:'#0C0A08'}},
-  {id:'pastel',   label:'Pastel',        c:{brag:'#A56E58', list:'#6B7D7E', organize:'#787A82', lock:'#9D6F66'}},
-  {id:'academia', label:'Dark academia', c:{brag:'#A36D51', list:'#917667', organize:'#5E1C1F', lock:'#160E08'}},
+  {id:'fauna',    label:'Fauna',         c:{brag:'#DCBC98', list:'#2A3723', organize:'#B9BBA8', lock:'#0C0A08'}},
+  {id:'pastel',   label:'Pastel',        c:{brag:'#D2B6AB', list:'#9BA9AA', organize:'#B0B1B6', lock:'#B18C85'}},
+  {id:'academia', label:'Dark academia', c:{brag:'#BB8E76', list:'#B29E93', organize:'#5E1C1F', lock:'#160E08'}},
   {id:'mono',     label:'Slate',         c:{brag:'#7A7F99', list:'#5E6580', organize:'#454B66', lock:'#8A6478'}},
 ];
 const ACCENT_KEYS = [
@@ -2566,7 +2583,7 @@ const TABS = [
    subs:[['account','My account'],['security','Username & password'],['appearance','Appearance'],
          ['notifications','Notifications'],['pro','Plan It Pro'],['legal','Legal']]},
 ];
-const SOFT = {brag:'rgba(224,154,18,.14)', list:'rgba(15,158,104,.13)', organize:'rgba(83,80,232,.12)', lock:'rgba(224,63,124,.12)', settings:'rgba(90,97,120,.14)'};
+const BASE_ACCENTS = {brag:'#E09A12', list:'#0F9E68', organize:'#5350E8', lock:'#E03F7C', settings:'#5A6178'};
 
 function App({user, onSignOut}){
   const [ready, setReady] = useState(false);
@@ -2626,8 +2643,10 @@ function App({user, onSignOut}){
     const root = document.documentElement;
     const a = settings.accents;
     ['brag','list','organize','lock'].forEach(k => {
-      if(a && a[k]) root.style.setProperty('--' + k, a[k]);
+      const hex = (a && a[k]) || BASE_ACCENTS[k];
+      if(a && a[k]) root.style.setProperty('--' + k, hex);
       else root.style.removeProperty('--' + k);
+      root.style.setProperty('--' + (k === 'organize' ? 'org' : k) + '-ink', inkOn(hex));
     });
   }, [settings.accents]);
 
@@ -2786,12 +2805,13 @@ function App({user, onSignOut}){
   const removeEc = id => setStore(s => ({...s, ecs:s.ecs.filter(e => e.id !== id)}));
 
   const meta = TABS.find(t => t.id === tab);
+  const accentHex = (settings.accents && settings.accents[tab]) || BASE_ACCENTS[tab];
   const goDaily = d => { setDate(d); setTab('organize'); setSub(p => ({...p, organize:'daily'})); };
 
   if(!ready) return <div style={{display:'grid',placeItems:'center',height:'100%',color:'var(--ink35)'}}>Opening your planner…</div>;
 
   return (
-    <div className="app" style={{'--accent':meta.color, '--accent-soft':SOFT[tab]}}>
+    <div className="app" style={{'--accent':accentHex, '--accent-soft':hexRgba(accentHex, .16), '--accent-ink':inkOn(accentHex)}}>
       <nav className="rail" aria-label="Sections">
         <div className="brand"><Mark size={22} /><b>Plan It</b><span>{new Date().getFullYear()}</span></div>
         {TABS.filter(t => t.id !== 'settings').map(t => (
