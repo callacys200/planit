@@ -212,7 +212,9 @@
   .daycol.is-today h4{background:var(--accent-soft)}
   .daycol .inner{padding:8px;display:flex;flex-direction:column;gap:6px;flex:1;min-height:0}
   .daycol .inner > *{flex:none}
-  .openday{margin-top:auto;align-self:flex-start}
+  .daypills{display:flex;flex-direction:column;gap:6px;flex:1 1 auto;min-height:0}
+  .daypills > *{flex:none}
+  .openday{flex:none;align-self:flex-start;margin-top:6px}
   .pill{border-radius:8px;padding:5px 7px;font-size:11.5px;line-height:1.3;border-left:3px solid;overflow-wrap:anywhere}
   .wkbottom{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
   @media (max-width:960px){.wkbottom{grid-template-columns:1fr}}
@@ -246,6 +248,9 @@
   .prio{display:inline-flex;gap:2.5px;align-items:center;flex:none}
   .prio i{width:6px;height:13px;flex:none;border-radius:2px;background:#E2E5EF;display:block}
   .prio i.on{background:var(--brag)}
+  .livedot{width:6px;height:6px;border-radius:99px;background:currentColor;display:block;flex:none}
+  .avail.good{color:#0F9E68;display:flex;align-items:center;gap:5px}
+  .navdate button svg{display:block}
   .tagline-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;background:#EEF7F2;color:#0B7A50}
   .tagline-badge.past{background:#F2F3F8;color:var(--ink60)}
   .award{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:4px 9px;border-radius:8px;background:#FDF5E6;color:#96660A;font-weight:600;margin:0 6px 6px 0}
@@ -440,7 +445,8 @@
   .proprice small{font-size:13px;font-weight:500;color:var(--ink35)}
   .prolist{list-style:none;padding:0;margin:0 0 20px;font-size:14px;color:var(--ink60)}
   .prolist li{padding:7px 0 7px 24px;position:relative;line-height:1.5}
-  .prolist li::before{content:"✓";position:absolute;left:0;color:var(--accent);font-weight:700}
+  .prolist li::before{content:"";position:absolute;left:2px;top:15px;width:9px;height:5px;
+    border-left:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(-45deg)}
   a.btn.wide{text-decoration:none}
 
   /* ---------- dark theme ---------- */
@@ -711,14 +717,40 @@ function DateNav({label, onPrev, onNext, onToday}){
   return (
     <div className="row" style={{gap:8}}>
       <div className="navdate">
-        <button onClick={onPrev} aria-label="Previous">‹</button>
+        <button onClick={onPrev} aria-label="Previous"><IconArrow dir="left" /></button>
         <div className="cur">{label}</div>
-        <button onClick={onNext} aria-label="Next">›</button>
+        <button onClick={onNext} aria-label="Next"><IconArrow /></button>
       </div>
       <button className="btn sm" onClick={onToday}>Today</button>
     </div>
   );
 }
+const IconArrow = ({dir = 'right'}) => (
+  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style={{flex:'none'}}>
+    <path d={dir === 'left' ? "M7.5 2.5L4 6l3.5 3.5" : "M4.5 2.5L8 6l-3.5 3.5"}
+      fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const IconOut = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" style={{flex:'none'}}>
+    <path d="M6 14H3.5A1.5 1.5 0 0 1 2 12.5v-9A1.5 1.5 0 0 1 3.5 2H6M10.5 11L14 8l-3.5-3M14 8H6"
+      fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const IconGrip = () => (
+  <svg width="10" height="14" viewBox="0 0 10 14" aria-hidden="true" style={{flex:'none', opacity:.5}}>
+    {[2,7,12].map(y => [2.5,7.5].map(x => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.2" fill="currentColor" />))}
+  </svg>
+);
+
+const IconCheck = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style={{flex:'none'}}>
+    <path d="M2 6.4l2.6 2.6L10 3.4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 const XBtn = ({onClick, label = 'Delete'}) => (
   <button className="iconbtn" onClick={onClick} aria-label={label} title={label}>
     <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
@@ -943,7 +975,7 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
             ? <div className="empty" style={{padding:'18px 14px',fontSize:13}}><b>Nothing waiting</b>Everything on today's list has a time.</div>
             : tray.map(t => (
               <div key={t.id} className="tray-item" onPointerDown={e => onDown(e, t, 'place')} title="Drag onto the schedule">
-                <span style={{color:'var(--ink35)',fontSize:13,marginTop:1}}>⠿</span>
+                <span style={{color:'var(--ink35)',marginTop:3}}><IconGrip /></span>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:600,fontSize:13.5}}>{t.title}</div>
                   <div style={{fontSize:11,color:'var(--ink35)'}}>Drag to place, or</div>
@@ -1074,6 +1106,7 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily})
             <div key={dk} className={'daycol' + (sameDay(d, new Date()) ? ' is-today' : '')}>
               <h4>{DOW[d.getDay()]}<small>{MON[d.getMonth()].slice(0,3)} {d.getDate()}</small></h4>
               <div className="inner">
+                <div className="daypills">
                 {evs.map(e => (
                   <div key={e.id} className="pill" style={{borderLeftColor:evColor(e.type), background:'var(--soft)'}}>
                     <b style={{fontWeight:600}}>{e.title}</b>
@@ -1086,7 +1119,8 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily})
                   </div>
                 ))}
                 {evs.length === 0 && blocks.length === 0 && <div style={{fontSize:11.5,color:'var(--ink35)'}}>Clear</div>}
-                <button className="btn sm ghost openday" onClick={() => { setDaily(d); }}>Open day →</button>
+                </div>
+                <button className="btn sm ghost openday" onClick={() => { setDaily(d); }}>Open day <IconArrow /></button>
               </div>
             </div>
           );
@@ -1365,7 +1399,7 @@ function BragIt({sub, ecs, add, update, remove}){
               </div>
 
               <div className="row" style={{gap:9,marginTop:10,flexWrap:'wrap'}}>
-                <span className={'tagline-badge' + (e.ongoing ? '' : ' past')}>{e.ongoing ? '● Ongoing' : 'Finished'}</span>
+                <span className={'tagline-badge' + (e.ongoing ? '' : ' past')}>{e.ongoing ? <><i className="livedot" />Ongoing</> : 'Finished'}</span>
                 <span className="mono" style={{fontSize:12,color:'var(--ink60)'}}>{fmtRange(e)}</span>
               </div>
 
@@ -1957,7 +1991,7 @@ function Auth(){
     if(avail === 'invalid') return <div className="avail bad">3–20 characters: letters, numbers, _ and .</div>;
     if(avail === 'taken')   return <div className="avail bad">Taken — try another</div>;
     if(avail === 'offline') return <div className="avail hint">Can't check right now</div>;
-    return <div className="avail good">✓ Available</div>;
+    return <div className="avail good"><IconCheck /> Available</div>;
   };
 
   const p = PANELS[panel];
@@ -1996,7 +2030,7 @@ function Auth(){
                   <Note />
                   <Err />
                   <button className="pillbtn" disabled={busy} onClick={checkVerified}>
-                    {busy ? 'Checking…' : "I've clicked the link"} <span>▸</span>
+                    {busy ? 'Checking…' : "I've clicked the link"} <IconArrow />
                   </button>
                   <button className="resend" disabled={cool > 0 || busy} onClick={resend}>
                     Didn't get it? Resend{cool > 0 ? ` (${cool})` : ''}
@@ -2015,7 +2049,7 @@ function Auth(){
                   <Avail />
                   <Err />
                   <button className="pillbtn" disabled={busy || avail === 'taken' || avail === 'invalid'} onClick={claimUsername}>
-                    {busy ? 'Saving…' : 'Save username'} <span>▸</span>
+                    {busy ? 'Saving…' : 'Save username'} <IconArrow />
                   </button>
                   <button className="undertext" onClick={startOver}>Sign out</button>
                 </>
@@ -2048,7 +2082,7 @@ function Auth(){
                   )}
                   <Err />
                   <button className="pillbtn" disabled={busy || avail === 'taken' || avail === 'invalid'} onClick={signUp}>
-                    {busy ? 'Creating…' : 'Continue'} <span>▸</span>
+                    {busy ? 'Creating…' : 'Continue'} <IconArrow />
                   </button>
                 </>
               )}
@@ -2071,7 +2105,7 @@ function Auth(){
                   <button className="forgot" onClick={resetPassword}>Forgot password?</button>
                   <Note />
                   <Err />
-                  <button className="pillbtn" disabled={busy} onClick={logIn}>{busy ? 'Checking…' : 'Continue'} <span>▸</span></button>
+                  <button className="pillbtn" disabled={busy} onClick={logIn}>{busy ? 'Checking…' : 'Continue'} <IconArrow /></button>
                 </>
               )}
             </div>
@@ -2331,7 +2365,7 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast}){
                     {avail === 'taken'   && <div className="avail bad">Taken — try another</div>}
                     {avail === 'invalid' && <div className="avail bad">3–20 characters: letters, numbers, _ and .</div>}
                     {avail === 'same'    && <div className="avail hint">That's already your username</div>}
-                    {avail === 'free'    && <div className="avail good">✓ Available</div>}
+                    {avail === 'free'    && <div className="avail good"><IconCheck /> Available</div>}
                     <Err />
                     <button className="btn primary" disabled={busy || avail !== 'free'} onClick={submitUsername}>
                       {busy ? 'Saving…' : 'Change username'}
@@ -2841,7 +2875,7 @@ function App({user, onSignOut}){
               <b>{user.username}</b>
               <small>{user.provider === 'google' ? 'Google account' : user.email}</small>
             </div>
-            <button className="btn sm ghost" onClick={onSignOut} title="Sign out">↪</button>
+            <button className="iconbtn" onClick={onSignOut} title="Sign out" aria-label="Sign out"><IconOut /></button>
           </div>
           <div className="rail-foot">
             {running ? 'Focus session running. Other tabs open when the timer ends.' : 'Everything saves as you type.'}
