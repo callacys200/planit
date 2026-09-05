@@ -478,6 +478,19 @@ const DB = {
   }
 };
 const dataKey = uid2 => `planit:data:v1:${uid2}`;
+
+async function loadStore(userId){
+  const raw = await DB.get(dataKey(userId));
+  if(raw){ try { return JSON.parse(raw); } catch(e){ return null; } }
+  // first sign-in on a browser that used Plan It before accounts existed
+  const legacy = await DB.get('planit:data:v1');
+  if(legacy){ try { return JSON.parse(legacy); } catch(e){} }
+  return null;
+}
+
+async function saveStore(userId, data){
+  await DB.set(dataKey(userId), JSON.stringify(data));
+}
 function seed(){
   const t = new Date();
   const d0 = iso(t), d1 = iso(addDays(t,1)), d3 = iso(addDays(t,3)), d9 = iso(addDays(t,9));
