@@ -243,7 +243,9 @@
   .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:11px;font-size:13.5px;z-index:95;box-shadow:0 14px 30px -10px rgba(20,23,42,.6);animation:pop .2s}
 
   /* ---------- auth ---------- */
-  .booting{display:grid;place-items:center;height:100%;color:var(--ink35)}
+  .booting{display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;height:100%;color:var(--ink35);padding:24px;text-align:center}
+  .bootslow{max-width:380px;font-size:13px;line-height:1.55;color:var(--ink60);background:#FFF9E9;border:1px solid #F0DEB0;border-radius:12px;padding:12px 14px}
+  .dbwarn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:96;background:#FFF9E9;border:1px solid #F0DEB0;color:#7A5A10;font-size:12.5px;padding:8px 14px;border-radius:99px;box-shadow:var(--shadow)}
   .authpage{--accent:var(--org);--accent-soft:rgba(83,80,232,.12);height:100%;overflow:auto;background:#fff;display:flex;flex-direction:column}
   .topnav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);z-index:10}
   .tn-brand{display:flex;align-items:center;gap:9px}
@@ -1367,6 +1369,12 @@ const toUser = u => ({
 
 /* ---- usernames: unique across everyone, enforced by Firestore ---- */
 const db = () => firebase.firestore();
+
+// Firestore retries a failed read forever instead of rejecting, which can
+// leave the app spinning. Every call below is raced against a timeout.
+const withTimeout = (p, ms = 6000) => Promise.race([
+  p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))
+]);
 const unameKey = s => s.trim().toLowerCase();
 const validUsername = s => /^[a-zA-Z0-9_.]{3,20}$/.test(s.trim());
 
@@ -1377,12 +1385,12 @@ const suggestUsername = u => {
 };
 
 async function usernameTaken(name){
-  const d = await db().collection('usernames').doc(unameKey(name)).get();
+  const d = await withTimeout(db().collection('usernames').doc(unameKey(name)).get());
   return d.exists;
 }
 
 async function hasUsername(uid){
-  try{ return (await db().collection('users').doc(uid).get()).exists; }
+  try{ return (await withTimeout(db().collection('users').doc(uid).get())).exists; }
   catch(e){ return true; }   // can't reach Firestore: don't trap them on this screen
 }
 
@@ -1394,7 +1402,7 @@ async function reserveUsername(name, user){
   const batch = db().batch();
   batch.set(db().collection('usernames').doc(unameKey(clean)), {uid:user.uid, username:clean});
   batch.set(db().collection('users').doc(user.uid), {username:clean, email:user.email || ''});
-  await batch.commit();
+  await withTimeout(batch.commit(), 10000);
 }
 
 const usernameWriteError = e => {
@@ -1989,21 +1997,45 @@ function App({user, onSignOut}){
 }
 
 /* ============ ROOT ============ */
+function Booting(){
+  const [slow, setSlow] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setSlow(true), 7000); return () => clearTimeout(t); }, []);
+  return (
+    <div className="booting">
+      <div>Opening your planner…</div>
+      {slow && (
+        <div className="bootslow">
+          This is taking longer than it should. Firestore may not be reachable —
+          check that the database exists and its rules are published, then reload.
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Root(){
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
+  const [dbWarn, setDbWarn] = useState(false);
 
   useEffect(() => {
     const auth = initFirebase();
     if(!auth){ setChecking(false); return; }
     return auth.onAuthStateChanged(async u => {
-      if(!u || !u.emailVerified){ setUser(null); setChecking(false); return; }
       try{
-        const snap = await db().collection('users').doc(u.uid).get();
-        // no username yet -> Auth shows the "pick a username" step
-        setUser(snap.exists ? {...toUser(u), username: snap.data().username} : null);
-      }catch(e){ setUser(toUser(u)); }
-      setChecking(false);
+        if(!u || !u.emailVerified){ setUser(null); return; }
+        try{
+          const snap = await withTimeout(db().collection('users').doc(u.uid).get());
+          // no username yet -> Auth shows the "pick a username" step
+          setUser(snap.exists ? {...toUser(u), username: snap.data().username} : null);
+        }catch(e){
+          // Firestore unreachable: let them into their planner rather than
+          // stranding them on a loading screen, but say so.
+          console.warn('Plan It: could not read your profile from Firestore.', e);
+          setDbWarn(true);
+          setUser(toUser(u));
+        }
+      } finally { setChecking(false); }
     });
   }, []);
 
@@ -2014,9 +2046,12 @@ function Root(){
   };
 
   if(!CONFIG.FIREBASE.apiKey) return <SetupNeeded />;
-  if(checking) return <div className="booting">Opening your planner…</div>;
+  if(checking) return <Booting />;
   if(!user) return <Auth />;
-  return <App key={user.id} user={user} onSignOut={signOut} />;
+  return <>
+    {dbWarn && <div className="dbwarn">Couldn't reach Firestore, so your username isn't loaded. Your planner still works.</div>}
+    <App key={user.id} user={user} onSignOut={signOut} />
+  </>;
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
