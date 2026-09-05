@@ -301,6 +301,10 @@
   .verifybox{background:#FAFAFD;border:1px solid var(--line);border-radius:14px;padding:22px 20px;text-align:center;margin:4px 0 18px}
   .venvelope{font-size:34px;line-height:1;margin-bottom:12px}
   .verifybox p{margin:0;color:var(--ink60);font-size:13.5px;line-height:1.55}
+  .avail{font-size:12px;font-weight:600;margin:-10px 0 14px;min-height:16px}
+  .avail.good{color:#0F9E68}
+  .avail.bad{color:#B92A61}
+  .avail.hint{color:var(--ink35);font-weight:500}
   .forgot{display:block;margin:-6px 0 16px auto;border:0;background:transparent;color:var(--org);font-size:13px;font-weight:600;padding:4px}
   .forgot:hover{text-decoration:underline}
   .demo{background:#FFF9E9;border:1px solid #F0DEB0;border-radius:12px;padding:12px 14px;font-size:12.5px;color:#7A5A10;line-height:1.55;text-align:center}
@@ -383,6 +387,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -1360,6 +1365,46 @@ const toUser = u => ({
   picture: u.photoURL || ''
 });
 
+/* ---- usernames: unique across everyone, enforced by Firestore ---- */
+const db = () => firebase.firestore();
+const unameKey = s => s.trim().toLowerCase();
+const validUsername = s => /^[a-zA-Z0-9_.]{3,20}$/.test(s.trim());
+
+const suggestUsername = u => {
+  const base = (u.displayName || (u.email || '').split('@')[0] || 'planit')
+    .replace(/[^a-zA-Z0-9_.]/g, '').slice(0, 16) || 'planit';
+  return base.length < 3 ? base + '123' : base;
+};
+
+async function usernameTaken(name){
+  const d = await db().collection('usernames').doc(unameKey(name)).get();
+  return d.exists;
+}
+
+async function hasUsername(uid){
+  try{ return (await db().collection('users').doc(uid).get()).exists; }
+  catch(e){ return true; }   // can't reach Firestore: don't trap them on this screen
+}
+
+// Both writes go in one batch. The rules allow create but never update on
+// /usernames, so if the name already exists the whole batch fails — which is
+// what makes this a real lock rather than a hopeful check.
+async function reserveUsername(name, user){
+  const clean = name.trim();
+  const batch = db().batch();
+  batch.set(db().collection('usernames').doc(unameKey(clean)), {uid:user.uid, username:clean});
+  batch.set(db().collection('users').doc(user.uid), {username:clean, email:user.email || ''});
+  await batch.commit();
+}
+
+const usernameWriteError = e => {
+  const c = (e && e.code) || '';
+  if(c === 'permission-denied') return 'That username was just claimed by someone else. Pick another one.';
+  if(c === 'unavailable') return 'Could not reach the database. Check your connection and try again.';
+  if(c === 'failed-precondition') return 'Firestore is not set up yet for this project. Create the database in the Firebase console.';
+  return (e && e.message) || 'Could not save that username. Try again.';
+};
+
 const FB_ERRORS = {
   'auth/email-already-in-use':'An account already uses that email. Log in instead.',
   'auth/invalid-email':'That email address is missing something. Check it over.',
@@ -1446,7 +1491,7 @@ function SetupNeeded(){
 function Auth(){
   const auth = initFirebase();
   const [mode, setMode] = useState('up');            // 'up' | 'in'
-  const [step, setStep] = useState('form');          // 'form' | 'verify'
+  const [step, setStep] = useState('form');          // 'form' | 'verify' | 'username'
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [pw, setPw] = useState('');
@@ -1456,27 +1501,45 @@ function Auth(){
   const [note, setNote] = useState('');
   const [cool, setCool] = useState(0);
   const [panel, setPanel] = useState(0);
+  const [avail, setAvail] = useState(null);          // null | 'checking' | 'free' | 'taken' | 'invalid' | 'offline'
 
-  // someone reloaded mid-verification: pick the flow back up
-  useEffect(() => {
+  // reloaded mid-flow, or signed in with Google but never picked a username
+  useEffect(() => { (async () => {
     const u = auth && auth.currentUser;
-    if(u && !u.emailVerified){ setEmail(u.email); setStep('verify'); }
-  }, [auth]);
+    if(!u) return;
+    if(!u.emailVerified){ setEmail(u.email); setStep('verify'); return; }
+    if(!(await hasUsername(u.uid))){
+      setUsername(suggestUsername(u));
+      setStep('username');
+    }
+  })(); }, [auth]);
 
   useEffect(() => { if(cool <= 0) return; const t = setTimeout(() => setCool(c => c-1), 1000); return () => clearTimeout(t); }, [cool]);
   useEffect(() => { setErr(''); setNote(''); }, [mode, step]);
   useEffect(() => { const t = setInterval(() => setPanel(p => (p+1) % PANELS.length), 7000); return () => clearInterval(t); }, []);
 
-  // while waiting on the link, quietly check whether they've clicked it
+  // live "is that name free?" check, once typing settles
+  useEffect(() => {
+    const name = username.trim();
+    if(!name){ setAvail(null); return; }
+    if(!validUsername(name)){ setAvail('invalid'); return; }
+    setAvail('checking');
+    let alive = true;
+    const t = setTimeout(async () => {
+      try{
+        const taken = await usernameTaken(name);
+        if(alive) setAvail(taken ? 'taken' : 'free');
+      }catch(e){ if(alive) setAvail('offline'); }
+    }, 450);
+    return () => { alive = false; clearTimeout(t); };
+  }, [username]);
+
   useEffect(() => {
     if(step !== 'verify') return;
     const t = setInterval(async () => {
       const u = auth.currentUser;
       if(!u) return;
-      try{
-        await u.reload();
-        if(u.emailVerified) window.location.reload();
-      }catch(e){}
+      try{ await u.reload(); if(u.emailVerified) window.location.reload(); }catch(e){}
     }, 4000);
     return () => clearInterval(t);
   }, [step, auth]);
@@ -1494,17 +1557,44 @@ function Auth(){
 
   const signUp = async () => {
     const u = username.trim();
-    if(u.length < 3) return setErr('Usernames need at least 3 characters.');
-    if(!/^[a-zA-Z0-9_. ]+$/.test(u)) return setErr('Usernames can use letters, numbers, spaces, underscores, and periods.');
+    if(!validUsername(u)) return setErr('Usernames are 3–20 characters: letters, numbers, underscores, and periods.');
     if(pw.length < 8) return setErr('Passwords need at least 8 characters.');
     setBusy(true); setErr('');
     try{
-      const cred = await auth.createUserWithEmailAndPassword(email.trim(), pw);
+      if(await usernameTaken(u)){ setAvail('taken'); setBusy(false); return setErr('That username is taken. Try another one.'); }
+    }catch(e){ /* offline check — the reserve below is the real gate */ }
+
+    let cred;
+    try{
+      cred = await auth.createUserWithEmailAndPassword(email.trim(), pw);
+    }catch(e){ setBusy(false); return setErr(fbErr(e)); }
+
+    try{
+      await reserveUsername(u, cred.user);
+    }catch(e){
+      // someone claimed it in the seconds between the check and the write
+      try{ await cred.user.delete(); }catch(e2){}
+      setAvail('taken'); setBusy(false);
+      return setErr(usernameWriteError(e));
+    }
+
+    try{
       await cred.user.updateProfile({displayName:u});
       await cred.user.sendEmailVerification();
       setStep('verify'); setCool(45);
     }catch(e){ setErr(fbErr(e)); }
     setBusy(false);
+  };
+
+  const claimUsername = async () => {
+    const u = username.trim();
+    if(!validUsername(u)) return setErr('Usernames are 3–20 characters: letters, numbers, underscores, and periods.');
+    setBusy(true); setErr('');
+    try{
+      await reserveUsername(u, auth.currentUser);
+      await auth.currentUser.updateProfile({displayName:u});
+      window.location.reload();
+    }catch(e){ setAvail('taken'); setErr(usernameWriteError(e)); setBusy(false); }
   };
 
   const logIn = async () => {
@@ -1513,7 +1603,6 @@ function Auth(){
     try{
       const cred = await auth.signInWithEmailAndPassword(email.trim(), pw);
       if(!cred.user.emailVerified){ setStep('verify'); setCool(0); }
-      // verified users are picked up by onAuthStateChanged in Root
     }catch(e){ setErr(fbErr(e)); }
     setBusy(false);
   };
@@ -1521,8 +1610,11 @@ function Auth(){
   const withGoogle = async () => {
     setBusy(true); setErr('');
     try{
-      const provider = new firebase.auth.GoogleAuthProvider();
-      await auth.signInWithPopup(provider);
+      const cred = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      if(!(await hasUsername(cred.user.uid))){
+        setUsername(suggestUsername(cred.user));
+        setStep('username');
+      }
     }catch(e){ const m = fbErr(e); if(m) setErr(m); }
     setBusy(false);
   };
@@ -1566,6 +1658,14 @@ function Auth(){
 
   const Err = () => err ? <div className="formerr" role="alert">{err}</div> : null;
   const Note = () => note ? <div className="formnote">{note}</div> : null;
+  const Avail = () => {
+    if(!avail || avail === 'checking') return <div className="avail hint">{avail ? 'Checking…' : ' '}</div>;
+    if(avail === 'invalid') return <div className="avail bad">3–20 characters: letters, numbers, _ and .</div>;
+    if(avail === 'taken')   return <div className="avail bad">Taken — try another</div>;
+    if(avail === 'offline') return <div className="avail hint">Can't check right now</div>;
+    return <div className="avail good">✓ Available</div>;
+  };
+
   const p = PANELS[panel];
   const script = mode === 'in' ? "welcome back, let's get to work" : "let's get your year in one place";
 
@@ -1611,6 +1711,22 @@ function Auth(){
                 </>
               )}
 
+              {step === 'username' && (
+                <>
+                  <h2>Pick a username</h2>
+                  <p className="csub">It has to be one nobody else is using</p>
+                  <label className="flabel">Username</label>
+                  <input className="finput" autoFocus value={username} onChange={e => setUsername(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && claimUsername()} placeholder="Enter your username here" autoComplete="username" />
+                  <Avail />
+                  <Err />
+                  <button className="pillbtn" disabled={busy || avail === 'taken' || avail === 'invalid'} onClick={claimUsername}>
+                    {busy ? 'Saving…' : 'Save username'} <span>▸</span>
+                  </button>
+                  <button className="undertext" onClick={startOver}>Sign out</button>
+                </>
+              )}
+
               {step === 'form' && mode === 'up' && (
                 <>
                   <h2>Create your account</h2>
@@ -1618,7 +1734,9 @@ function Auth(){
                   <button className="gbtn" disabled={busy} onClick={withGoogle}><GMark /> Continue with Google</button>
                   <div className="or"><span>OR</span></div>
                   <label className="flabel">Username</label>
-                  <input className="finput" value={username} onChange={e => setUsername(e.target.value)} placeholder="amara.r" autoComplete="username" />
+                  <input className="finput" value={username} onChange={e => setUsername(e.target.value)}
+                    placeholder="Enter your username here" autoComplete="username" />
+                  <Avail />
                   <label className="flabel">Email address</label>
                   <input className="finput" type="email" value={email} onChange={e => setEmail(e.target.value)}
                     placeholder="you@school.edu" autoComplete="email" />
@@ -1635,7 +1753,9 @@ function Auth(){
                     </div>
                   )}
                   <Err />
-                  <button className="pillbtn" disabled={busy} onClick={signUp}>{busy ? 'Creating…' : 'Continue'} <span>▸</span></button>
+                  <button className="pillbtn" disabled={busy || avail === 'taken' || avail === 'invalid'} onClick={signUp}>
+                    {busy ? 'Creating…' : 'Continue'} <span>▸</span>
+                  </button>
                 </>
               )}
 
@@ -1876,8 +1996,13 @@ function Root(){
   useEffect(() => {
     const auth = initFirebase();
     if(!auth){ setChecking(false); return; }
-    return auth.onAuthStateChanged(u => {
-      setUser(u && u.emailVerified ? toUser(u) : null);
+    return auth.onAuthStateChanged(async u => {
+      if(!u || !u.emailVerified){ setUser(null); setChecking(false); return; }
+      try{
+        const snap = await db().collection('users').doc(u.uid).get();
+        // no username yet -> Auth shows the "pick a username" step
+        setUser(snap.exists ? {...toUser(u), username: snap.data().username} : null);
+      }catch(e){ setUser(toUser(u)); }
       setChecking(false);
     });
   }, []);
