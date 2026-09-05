@@ -271,8 +271,8 @@
   .pomofield input{width:74px;text-align:center;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--soft);font-weight:700;font-size:15px}
   .pomofield input:disabled{opacity:.55}
   .timerbtns{display:flex;justify-content:center;align-items:center;gap:9px;margin-top:18px;flex-wrap:wrap}
-  .timerbtns > *{flex:none;position:static}
-  .shield{position:fixed;inset:0;z-index:70;background:linear-gradient(160deg,#1B1030,#2A123B 60%,#3A1233);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:24px;text-align:center;animation:fade .3s ease}
+  .timerbtns > *{flex:none;position:relative;z-index:1}
+  .shield{position:fixed;inset:0;z-index:9999;background:#2A123B;background-image:linear-gradient(160deg,#1B1030,#2A123B 60%,#3A1233);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:24px;text-align:center;isolation:isolate}
   .shield .big{font-family:"IBM Plex Mono",monospace;font-size:min(19vw,120px);font-weight:500;letter-spacing:-.04em;line-height:1}
   .shield .sub{color:#D6C7E6;max-width:420px;font-size:14px}
   .shield .btn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.24);color:#fff;margin-top:18px}
@@ -1576,8 +1576,8 @@ function LockIt({lock, running, left, minutes, start, pause, reset, toast,
         <div className="eyebrow" style={{marginBottom:9}}>Study room</div>
         {!room ? (
           <div className="card">
-            <Field label="Your name"><input value={name} onChange={e => setName(e.target.value)} placeholder="Amara" /></Field>
-            <Field label="Room code"><input value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="BIO101" maxLength={12} /></Field>
+            <Field label="Your name"><input value={name} onChange={e => setName(e.target.value)} placeholder="Enter your name here" /></Field>
+            <Field label="Room code"><input value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="Enter room code here" maxLength={12} /></Field>
             <button className="btn primary" style={{width:'100%'}} onClick={join}>Join room</button>
             <div style={{fontSize:12,color:'var(--ink35)',marginTop:10,lineHeight:1.5}}>
               Share the code with friends and you'll all see the same list. Anyone with the code can see your name and focus minutes.
@@ -2270,7 +2270,7 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast}){
           <Section title="About you" hint="Only you can see this. Leave anything blank you'd rather not fill in.">
             {!form ? <div className="card" style={{color:'var(--ink35)'}}>Loading…</div> : (
               <div className="card">
-                <Field label="Name"><input value={form.name} onChange={e => setForm({...form, name:e.target.value})} placeholder="Amara Rivera" /></Field>
+                <Field label="Name"><input value={form.name} onChange={e => setForm({...form, name:e.target.value})} placeholder="Enter your name here" /></Field>
                 <div className="grid2">
                   <Field label="Age"><input type="number" min="1" max="120" value={form.age} onChange={e => setForm({...form, age:e.target.value})} placeholder="16" /></Field>
                   <Field label="Grade">
@@ -2287,7 +2287,7 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast}){
                       <option>Female</option><option>Male</option><option>Non-binary</option><option>Other</option>
                     </select>
                   </Field>
-                  <Field label="School"><input value={form.school} onChange={e => setForm({...form, school:e.target.value})} placeholder="Northview High" /></Field>
+                  <Field label="School"><input value={form.school} onChange={e => setForm({...form, school:e.target.value})} placeholder="Enter your school here" /></Field>
                 </div>
                 <Note />
                 <Err />
@@ -2691,7 +2691,9 @@ function App({user, onSignOut}){
   const resetTimer = useCallback(m => {
     creditElapsed();
     endsAt.current = null;
+    runFrom.current = null;
     setRunning(false);
+    if(!m) toast(mode === 'pomo' ? 'Cycles reset' : 'Timer reset');
     if(mode === 'pomo' && !m){
       setPhase(null); setCycle(1); setLeft(pomo.work*60);
       return;
@@ -2699,7 +2701,7 @@ function App({user, onSignOut}){
     const mins = m || minutes;
     setMinutes(mins);
     setLeft(mins*60);
-  }, [minutes, creditElapsed, mode, pomo.work]);
+  }, [minutes, creditElapsed, mode, pomo.work, toast]);
 
   const addCycle = useCallback(() => setPomo(p => ({...p, cycles:p.cycles + 1})), []);
 
@@ -2873,7 +2875,7 @@ function App({user, onSignOut}){
         </div>
       </main>
 
-      {running && (
+      {running && ReactDOM.createPortal(
         <div className="shield">
           <div className="eyebrow" style={{color:'#B79DD0',letterSpacing:'.2em'}}>
             {mode === 'pomo' && phase
@@ -2885,8 +2887,7 @@ function App({user, onSignOut}){
             ? 'Stretch, get water, look out a window. Work starts again on its own.'
             : 'Plan It is closed until the timer ends. Put the phone face down.'}</div>
           <button className="btn" onClick={pauseTimer}>End session early</button>
-        </div>
-      )}
+        </div>, document.body)}
 
       {!store.day && (
         <DayEditor first day={DEFAULT_DAY} onClose={() => setStore(s => ({...s, day:DEFAULT_DAY}))}
