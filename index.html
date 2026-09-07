@@ -283,6 +283,7 @@
   .shield .btn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.24);color:#fff}
   @media (max-width:560px){ .shieldbtns{grid-auto-flow:row} .shieldbtns .btn{width:100%;justify-content:center} }
   .shield .btn:hover{background:rgba(255,255,255,.18)}
+  .roomcode{font-size:24px;font-weight:500;letter-spacing:.14em;display:block;margin-top:2px}
   .member{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px}
   .avatar{width:32px;height:32px;border-radius:99px;display:grid;place-items:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:14px;line-height:1;color:#fff;flex:none;overflow:hidden;text-transform:uppercase}
   .status{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:#F2F3F8;color:var(--ink60)}
@@ -351,6 +352,9 @@
   .verifybox{background:#FAFAFD;border:1px solid var(--line);border-radius:14px;padding:22px 20px;text-align:center;margin:4px 0 18px}
   .venvelope{font-size:34px;line-height:1;margin-bottom:12px}
   .verifybox p{margin:0;color:var(--ink60);font-size:13.5px;line-height:1.55}
+  .spamwarn{background:#FFF9E9;border:1px solid #F0DEB0;border-radius:12px;padding:11px 14px;
+    font-size:12.5px;color:#7A5A10;line-height:1.55;margin:0 0 16px;text-align:left}
+  .spamwarn b{display:block;margin-bottom:2px}
   .avail{font-size:12px;font-weight:600;margin:-10px 0 14px;min-height:16px}
   .avail.good{color:#0F9E68}
   .avail.bad{color:#B92A61}
@@ -463,18 +467,24 @@
   .sw:hover{transform:scale(1.08)}
   .sw.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--card) inset}
   .seats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:26px 0 4px;width:min(560px,92vw)}
-  .seat{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;
-    padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;min-height:118px;justify-content:center}
-  .seat b{font-size:12px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .seat.live{border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.13)}
-  .seat.me{outline:2px solid rgba(255,255,255,.5);outline-offset:-2px}
-  .seat.empty{color:rgba(255,255,255,.35);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;border-style:dashed}
-  .seatvid{width:78px;height:78px;border-radius:99px;object-fit:cover;transform:scaleX(-1);background:#000}
+  .seat{position:relative;aspect-ratio:1;border-radius:16px;overflow:hidden;
+    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14)}
+  .seatmedia{position:absolute;inset:0}
+  .seatname{position:absolute;left:0;right:0;bottom:0;padding:22px 8px 8px;text-align:center;
+    font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    background:linear-gradient(transparent,rgba(0,0,0,.6))}
+  .seat.live{border-color:rgba(255,255,255,.45)}
+  .seat.me{outline:2px solid rgba(255,255,255,.55);outline-offset:-2px}
+  .seat.empty{display:grid;place-items:center;color:rgba(255,255,255,.35);font-size:11.5px;
+    letter-spacing:.1em;text-transform:uppercase;border-style:dashed;aspect-ratio:1}
+  .seatvid{width:100%;height:100%;object-fit:cover;background:#000;display:block}
+  .seatvid.mirror{transform:scaleX(-1)}
+  .avatar-svg.fill{width:100%;height:100%;border-radius:0;display:block}
   @media (max-width:560px){
     .studio{grid-template-columns:1fr}
     .studio-preview{position:static}
     .seats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-    .seat{min-height:96px;padding:9px 6px}
+    .seatname{font-size:11px;padding:18px 6px 6px}
   }
 
   /* ---------- dark theme ---------- */
@@ -526,7 +536,7 @@
   [data-theme="dark"] .cardfoot{background:var(--soft)}
   [data-theme="dark"] .verifybox,[data-theme="dark"] .gnote{background:var(--soft);border-color:var(--line)}
   [data-theme="dark"] .gbtn{background:var(--card);border-color:var(--line);color:var(--ink)}
-  [data-theme="dark"] .demo{background:#2A2413;border-color:#4A4021;color:#E7D9A8}
+  [data-theme="dark"] .demo,[data-theme="dark"] .spamwarn{background:#2A2413;border-color:#4A4021;color:#E7D9A8}
   [data-theme="dark"] .demo-code{color:#FFE9A8}
   [data-theme="dark"] code{background:#252A3D;color:var(--ink60)}
   [data-theme="dark"] .formnote{background:#12271F;border-color:#1F4536;color:#6FD3A6}
@@ -1538,13 +1548,39 @@ function LockIt({lock, running, left, minutes, start, pause, reset, toast,
                  room, setRoom, members, myId, name, setName}){
   const [code, setCode] = useState('');
   const [roomErr, setRoomErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const join = () => {
-    const c = code.trim().toUpperCase();
-    if(!c || !name.trim()){ toast('Add your name and a room code first'); return; }
-    setRoom(c); setRoomErr(''); toast(`Joined room ${c}`);
+  const create = async () => {
+    if(!name.trim()){ setRoomErr('Add your name first, so friends know who you are.'); return; }
+    setBusy(true); setRoomErr('');
+    try{
+      const c = await reserveRoom(myId);
+      setRoom(c);
+      toast(`Room ${c} is yours`);
+    }catch(e){ setRoomErr(e.message || 'Could not make a room. Try again.'); }
+    setBusy(false);
   };
-  const leave = () => { setRoom(null); toast('Left the room'); };
+
+  const join = async () => {
+    const c = code.trim().toUpperCase();
+    if(!name.trim()){ setRoomErr('Add your name first, so friends know who you are.'); return; }
+    if(c.length !== 6){ setRoomErr('Room codes are six characters.'); return; }
+    setBusy(true); setRoomErr('');
+    try{
+      if(!(await roomExists(c))){ setRoomErr("No room with that code. Check it, or make your own."); setBusy(false); return; }
+      setRoom(c); toast(`Joined room ${c}`);
+    }catch(e){ setRoomErr('Could not reach the room. Check your connection.'); }
+    setBusy(false);
+  };
+
+  const leave = () => { setRoom(null); setCode(''); toast('Left the room'); };
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(room).then(() => {
+      setCopied(true); setTimeout(() => setCopied(false), 1600);
+    }).catch(() => toast('Could not copy — the code is ' + room));
+  };
 
   const mm = Math.floor(left/60), ss = left%60;
 
@@ -1644,18 +1680,32 @@ function LockIt({lock, running, left, minutes, start, pause, reset, toast,
         {!room ? (
           <div className="card">
             <Field label="Your name"><input value={name} onChange={e => setName(e.target.value)} placeholder="Enter your name here" /></Field>
-            <Field label="Room code"><input value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="Enter room code here" maxLength={12} /></Field>
-            <button className="btn primary" style={{width:'100%'}} onClick={join}>Join room</button>
+            <button className="btn primary" style={{width:'100%'}} disabled={busy} onClick={create}>
+              {busy ? 'Making a room…' : 'Create a room'}
+            </button>
+            <div className="or"><span>OR</span></div>
+            <Field label="Join with a code">
+              <input value={code} onChange={e => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''))}
+                onKeyDown={e => e.key === 'Enter' && join()} placeholder="Enter room code here" maxLength={6} />
+            </Field>
+            <button className="btn" style={{width:'100%',justifyContent:'center'}} disabled={busy} onClick={join}>Join room</button>
+            {roomErr && <div className="formerr" style={{marginTop:12,marginBottom:0}}>{roomErr}</div>}
             <div style={{fontSize:12,color:'var(--ink35)',marginTop:10,lineHeight:1.5}}>
-              Share the code with friends — up to nine of you. Anyone with the code can see your name,
-              avatar, and focus minutes, and can see your video if you turn your camera on.
+              Creating a room gives you a code no one else has. Share it with friends — up to nine of you.
+              Anyone with the code can see your name, avatar, and focus minutes, and your video if your camera is on.
             </div>
           </div>
         ) : (
           <div className="card">
-            <div className="spread" style={{marginBottom:12}}>
-              <div><div className="eyebrow">Room</div><b className="mono" style={{fontSize:17}}>{room}</b></div>
-              <button className="btn sm" onClick={leave}>Leave</button>
+            <div className="spread" style={{marginBottom:14}}>
+              <div>
+                <div className="eyebrow">Room code</div>
+                <b className="mono roomcode">{room}</b>
+              </div>
+              <div className="row" style={{gap:6}}>
+                <button className="btn sm" onClick={copyCode}>{copied ? 'Copied' : 'Copy'}</button>
+                <button className="btn sm" onClick={leave}>Leave</button>
+              </div>
             </div>
             {roomErr && <div style={{fontSize:12.5,color:'#B92A61',marginBottom:10}}>{roomErr}</div>}
             <label className="switchrow" style={{marginBottom:12}}>
@@ -2053,13 +2103,18 @@ function Auth(){
                     <div className="venvelope">✉️</div>
                     <p>Click the confirmation link we just sent. This page picks it up on its own — you can leave it open.</p>
                   </div>
+                  <div className="spamwarn">
+                    <b>Check your spam folder first</b>
+                    These emails land in spam a lot. Look there before you resend — a second copy usually
+                    ends up in the same place.
+                  </div>
                   <Note />
                   <Err />
                   <button className="pillbtn" disabled={busy} onClick={checkVerified}>
                     {busy ? 'Checking…' : "I've clicked the link"} <IconArrow />
                   </button>
                   <button className="resend" disabled={cool > 0 || busy} onClick={resend}>
-                    Didn't get it? Resend{cool > 0 ? ` (${cool})` : ''}
+                    Checked spam already? Resend{cool > 0 ? ` (${cool})` : ''}
                   </button>
                   <button className="undertext" onClick={startOver}>Use a different email</button>
                 </>
@@ -2194,6 +2249,32 @@ function Section({title, hint, children}){
 // means another stream your device has to encode.
 const CAM_LIMIT = 4;
 
+// No 0/O/1/I/L — those are the characters people mistype when reading a code
+// off someone else's screen. 31^6 is about 900 million combinations.
+const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const makeRoomCode = () => Array.from({length:6},
+  () => CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]).join('');
+
+// The rules allow create but never update on /rooms/{code}, so writing to a
+// code that already exists is refused by the server. That is what guarantees
+// two people can never hold the same code, even at the same instant.
+async function reserveRoom(uid){
+  for(let i = 0; i < 8; i++){
+    const code = makeRoomCode();
+    try{
+      await withTimeout(db().collection('rooms').doc(code)
+        .set({createdBy:uid, createdAt:Date.now()}), 8000);
+      return code;
+    }catch(e){ /* taken — roll again */ }
+  }
+  throw new Error('Could not find a free code. Try again in a moment.');
+}
+
+async function roomExists(code){
+  const d = await withTimeout(db().collection('rooms').doc(code).get());
+  return d.exists;
+}
+
 const ICE = () => ({
   iceServers: [
     {urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302']},
@@ -2218,9 +2299,15 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
 
   const closeAll = useCallback(() => { Object.keys(pcs.current).forEach(close); }, [close]);
 
+  const wasSending = useRef(camOn);
+
   useEffect(() => {
-    if(!room || !camOn || !streamRef.current){ closeAll(); return; }
+    if(!room){ closeAll(); return; }
     const others = key ? key.split(',').filter(Boolean) : [];
+
+    // Adding or dropping your own track changes what every connection carries,
+    // so those have to be rebuilt rather than patched.
+    if(wasSending.current !== camOn){ wasSending.current = camOn; closeAll(); }
 
     Object.keys(pcs.current).forEach(id => { if(!others.includes(id)) close(id); });
 
@@ -2238,7 +2325,21 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
       const unsubs = [];
       pcs.current[otherId] = {pc, unsubs};
 
-      streamRef.current.getTracks().forEach(t => pc.addTrack(t, streamRef.current));
+      if(camOn && streamRef.current){
+        streamRef.current.getTracks().forEach(t => {
+          const sender = pc.addTrack(t, streamRef.current);
+          // small tiles, so keep the encode cheap — this is what lets a phone
+          // send to several people without cooking itself
+          try{
+            const p = sender.getParameters();
+            p.encodings = [{maxBitrate: 300000, maxFramerate: 20}];
+            sender.setParameters(p);
+          }catch(err){}
+        });
+      } else {
+        // no camera of your own, but you still want to see theirs
+        try{ pc.addTransceiver('video', {direction:'recvonly'}); }catch(err){}
+      }
       pc.ontrack = e => setRemote(r => ({...r, [otherId]: e.streams[0]}));
       pc.onconnectionstatechange = () => {
         if(['failed','closed','disconnected'].includes(pc.connectionState)) close(otherId);
@@ -2298,10 +2399,12 @@ function Seat({name, av, focusing, me, stream, tick}){
   useEffect(() => { if(vid.current && stream) vid.current.srcObject = stream; }, [stream, tick]);
   return (
     <div className={'seat' + (focusing ? ' live' : '') + (me ? ' me' : '')}>
-      {stream
-        ? <video ref={vid} autoPlay playsInline muted className="seatvid" />
-        : <Avatar a={av} size={78} />}
-      <b>{name}{me ? ' (you)' : ''}</b>
+      <div className="seatmedia">
+        {stream
+          ? <video ref={vid} autoPlay playsInline muted className={'seatvid' + (me ? ' mirror' : '')} />
+          : <Avatar a={av} fill />}
+      </div>
+      <b className="seatname">{name}{me ? ' (you)' : ''}</b>
     </div>
   );
 }
@@ -2329,7 +2432,7 @@ const shade = (hex, amt) => {
   return '#' + v.map(x => x.toString(16).padStart(2,'0')).join('');
 };
 
-function Avatar({a, size = 64, className = ''}){
+function Avatar({a, size = 64, className = '', fill = false}){
   const av = {...DEFAULT_AVATAR, ...(a || {})};
   const cid = useMemo(() => 'av' + uid(), []);
   const skin = SKINS[av.skin % SKINS.length];
@@ -2364,21 +2467,21 @@ function Avatar({a, size = 64, className = ''}){
 
   const body = (
     <g>
-      <path d="M12 120q2-24 26-30 10 8 22 8t22-8q24 6 26 30z" fill={cloth}/>
+      <path d="M10 120v-12q0-19 24-26 q9-3 16-3h20q7 0 16 3 q24 7 24 26v12z" fill={cloth}/>
       {av.outfit === 'hoodie' && (
         <g>
-          <path d="M36 92q24 16 48 0-6 18-24 18t-24-18z" fill={shade(cloth,-18)}/>
-          <path d="M54 104v14M66 104v14" stroke={shade(cloth,30)} strokeWidth="2.5" strokeLinecap="round"/>
+          <path d="M34 82q26 16 52 0-7 18-26 18t-26-18z" fill={shade(cloth,-18)}/>
+          <path d="M54 100v16M66 100v16" stroke={shade(cloth,30)} strokeWidth="2.5" strokeLinecap="round"/>
         </g>
       )}
       {av.outfit === 'puffer' && (
         <g>
-          <path d="M50 94h20v26H50z" fill="#FFFFFF" opacity=".9"/>
+          <path d="M50 84h20v36H50z" fill={shade(cloth,60)} opacity=".95"/>
           <path d="M14 104h92M16 112h88" stroke={shade(cloth,-22)} strokeWidth="2" opacity=".55"/>
         </g>
       )}
-      {av.outfit === 'collar' && <path d="M48 92l12 12 12-12 6 4-18 16-18-16z" fill={shade(cloth,26)}/>}
-      {av.outfit === 'crew' && <path d="M46 92q14 12 28 0" stroke={shade(cloth,-24)} strokeWidth="4" fill="none"/>}
+      {av.outfit === 'collar' && <path d="M48 82l12 12 12-12 6 4-18 16-18-16z" fill={shade(cloth,26)}/>}
+      {av.outfit === 'crew' && <path d="M46 82q14 12 28 0" stroke={shade(cloth,-24)} strokeWidth="4" fill="none"/>}
     </g>
   );
 
@@ -2414,13 +2517,17 @@ function Avatar({a, size = 64, className = ''}){
   }[av.acc];
 
   return (
-    <svg viewBox="0 0 120 120" width={size} height={size} className={'avatar-svg ' + className} aria-hidden="true">
-      <defs><clipPath id={cid}><circle cx="60" cy="60" r="60"/></clipPath></defs>
+    <svg viewBox="0 0 120 120" width={fill ? undefined : size} height={fill ? undefined : size}
+      preserveAspectRatio="xMidYMid slice"
+      className={'avatar-svg ' + (fill ? 'fill ' : '') + className} aria-hidden="true">
+      <defs><clipPath id={cid}>
+        {fill ? <rect width="120" height="120"/> : <circle cx="60" cy="60" r="60"/>}
+      </clipPath></defs>
       <g clipPath={`url(#${cid})`}>
         <rect width="120" height="120" fill={bg}/>
         {hairBack}
         {body}
-        <path d="M50 76h20v16q-10 7-20 0z" fill={shade(skin,-22)}/>
+        <path d="M47 68h26v14q-13 11-26 0z" fill={shade(skin,-22)}/>
         <ellipse cx="35" cy="56" rx="5" ry="7" fill={skin}/>
         <ellipse cx="85" cy="56" rx="5" ry="7" fill={skin}/>
         <ellipse cx="60" cy="52" rx="26" ry="30" fill={skin}/>
@@ -2992,9 +3099,10 @@ function App({user, onSignOut}){
   const [camTick, setCamTick] = useState(0);
   const othersOn = members.filter(m => m.id !== user.id && m.camOn).length;
   const camFull = othersOn >= CAM_LIMIT;
+  // connect when either side has something to show
   const camPeers = useMemo(
-    () => members.filter(m => m.id !== user.id && m.camOn).map(m => m.id).sort(),
-    [members, user.id]);
+    () => members.filter(m => m.id !== user.id && (m.camOn || camOn)).map(m => m.id).sort(),
+    [members, user.id, camOn]);
   const [cycle, setCycle] = useState(1);
 
   useEffect(() => { (async () => {
