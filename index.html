@@ -479,7 +479,21 @@
     letter-spacing:.1em;text-transform:uppercase;border-style:dashed;aspect-ratio:1}
   .seatvid{width:100%;height:100%;object-fit:cover;background:#000;display:block}
   .seatvid.mirror{transform:scaleX(-1)}
+  .seatnote{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:10px;
+    letter-spacing:.06em;padding:3px 8px;border-radius:99px;background:rgba(0,0,0,.5);white-space:nowrap}
   .avatar-svg.fill{width:100%;height:100%;border-radius:0;display:block}
+  .burst{position:absolute;left:50%;bottom:30%;font-size:30px;line-height:1;pointer-events:none;
+    animation:floatup 2.4s cubic-bezier(.2,.7,.3,1) forwards}
+  @keyframes floatup{
+    0%{transform:translate(-50%,10px) scale(.5);opacity:0}
+    18%{transform:translate(-50%,-4px) scale(1.15);opacity:1}
+    100%{transform:translate(-50%,-78px) scale(.95);opacity:0}
+  }
+  .reactbar{display:grid;grid-auto-flow:column;grid-auto-columns:max-content;gap:10px;justify-content:center;margin-top:22px}
+  .reactbar button{width:52px;height:52px;border-radius:99px;border:1px solid rgba(255,255,255,.22);
+    background:rgba(255,255,255,.1);font-size:23px;line-height:1;display:grid;place-items:center;transition:.14s}
+  .reactbar button:hover{background:rgba(255,255,255,.2);transform:translateY(-2px)}
+  .reactbar button:active{transform:scale(.92)}
   @media (max-width:560px){
     .studio{grid-template-columns:1fr}
     .studio-preview{position:static}
@@ -2251,6 +2265,13 @@ const CAM_LIMIT = 4;
 
 // No 0/O/1/I/L — those are the characters people mistype when reading a code
 // off someone else's screen. 31^6 is about 900 million combinations.
+const REACTIONS = [
+  {kind:'up',   emoji:'👍', label:'Nice'},
+  {kind:'down', emoji:'👎', label:'Struggling'},
+  {kind:'help', emoji:'🙋', label:'Need help'},
+];
+const REACTION_EMOJI = {up:'👍', down:'👎', help:'🙋'};
+
 const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const makeRoomCode = () => Array.from({length:6},
   () => CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]).join('');
@@ -2284,8 +2305,14 @@ const ICE = () => ({
 
 function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
   const [remote, setRemote] = useState({});
+  const [status, setStatus] = useState({});
   const pcs = useRef({});
   const key = camPeers.join(',');
+
+  // Whether we are actually able to send right now. camOn alone is not enough:
+  // getUserMedia resolves a moment later, and a connection built before the
+  // stream exists would be receive-only forever.
+  const sending = camOn && !!streamRef.current;
 
   const close = useCallback(id => {
     const e = pcs.current[id];
@@ -2295,19 +2322,19 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
       delete pcs.current[id];
     }
     setRemote(r => { const n = {...r}; delete n[id]; return n; });
+    setStatus(st => { const n = {...st}; delete n[id]; return n; });
   }, []);
 
   const closeAll = useCallback(() => { Object.keys(pcs.current).forEach(close); }, [close]);
-
-  const wasSending = useRef(camOn);
+  const wasSending = useRef(sending);
 
   useEffect(() => {
     if(!room){ closeAll(); return; }
     const others = key ? key.split(',').filter(Boolean) : [];
 
-    // Adding or dropping your own track changes what every connection carries,
-    // so those have to be rebuilt rather than patched.
-    if(wasSending.current !== camOn){ wasSending.current = camOn; closeAll(); }
+    // Gaining or losing your own track changes what every connection carries,
+    // so those get rebuilt rather than patched.
+    if(wasSending.current !== sending){ wasSending.current = sending; closeAll(); }
 
     Object.keys(pcs.current).forEach(id => { if(!others.includes(id)) close(id); });
 
@@ -2324,8 +2351,9 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
       catch(e){ return; }
       const unsubs = [];
       pcs.current[otherId] = {pc, unsubs};
+      setStatus(st => ({...st, [otherId]:'connecting'}));
 
-      if(camOn && streamRef.current){
+      if(sending){
         streamRef.current.getTracks().forEach(t => {
           const sender = pc.addTrack(t, streamRef.current);
           // small tiles, so keep the encode cheap — this is what lets a phone
@@ -2340,9 +2368,15 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
         // no camera of your own, but you still want to see theirs
         try{ pc.addTransceiver('video', {direction:'recvonly'}); }catch(err){}
       }
-      pc.ontrack = e => setRemote(r => ({...r, [otherId]: e.streams[0]}));
+
+      pc.ontrack = e => {
+        setRemote(r => ({...r, [otherId]: e.streams[0]}));
+        setStatus(st => ({...st, [otherId]:'live'}));
+      };
       pc.onconnectionstatechange = () => {
-        if(['failed','closed','disconnected'].includes(pc.connectionState)) close(otherId);
+        const cs = pc.connectionState;
+        setStatus(st => ({...st, [otherId]: cs === 'connected' ? 'live' : cs}));
+        if(['failed','closed'].includes(cs)) close(otherId);
       };
 
       const mine   = caller ? 'callerCandidates' : 'calleeCandidates';
@@ -2362,6 +2396,18 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
       (async () => {
         try{
           if(caller){
+            // Clear anything left from a previous attempt first. Without this
+            // the other side reads the OLD offer, answers it, and then ignores
+            // the real one because it already has a remote description.
+            try{
+              const stale = await Promise.all([
+                ref.collection('callerCandidates').get(),
+                ref.collection('calleeCandidates').get()
+              ]);
+              await Promise.all(stale.flatMap(sn => sn.docs.map(d => d.ref.delete())));
+              await ref.delete();
+            }catch(err){}
+
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             await ref.set({offer:{type:offer.type, sdp:offer.sdp}, at:Date.now()});
@@ -2387,14 +2433,14 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
         }catch(err){ close(otherId); }
       })();
     });
-  }, [room, camOn, key, myId, streamTick, close, closeAll, streamRef]);
+  }, [room, sending, key, myId, streamTick, close, closeAll, streamRef]);
 
   useEffect(() => () => closeAll(), [closeAll]);
-  return remote;
+  return {remote, status};
 }
 
 /* ============ AVATAR ============ */
-function Seat({name, av, focusing, me, stream, tick}){
+function Seat({name, av, focusing, me, stream, tick, bursts = [], note}){
   const vid = useRef(null);
   useEffect(() => { if(vid.current && stream) vid.current.srcObject = stream; }, [stream, tick]);
   return (
@@ -2404,7 +2450,11 @@ function Seat({name, av, focusing, me, stream, tick}){
           ? <video ref={vid} autoPlay playsInline muted className={'seatvid' + (me ? ' mirror' : '')} />
           : <Avatar a={av} fill />}
       </div>
+      {note && <span className="seatnote">{note}</span>}
       <b className="seatname">{name}{me ? ' (you)' : ''}</b>
+      {bursts.map(b => (
+        <span key={b.key} className="burst" style={{marginLeft:b.x}}>{REACTION_EMOJI[b.kind]}</span>
+      ))}
     </div>
   );
 }
@@ -3308,9 +3358,37 @@ function App({user, onSignOut}){
     return () => clearInterval(hb);
   }, [room, user.id, roomName, avatar, camOn, running, store.lock.minutes]);
 
-  const remoteStreams = useVideoMesh({
+  const {remote: remoteStreams, status: peerStatus} = useVideoMesh({
     room, myId:user.id, camOn, camPeers, streamRef:camStream, streamTick:camTick
   });
+
+  // Reactions piggyback on your presence row: everyone is already listening to
+  // it, so a new timestamp is all it takes to make an emoji pop up for the room.
+  const [bursts, setBursts] = useState({});
+  const seenReacts = useRef({});
+
+  const react = kind => {
+    if(!room) return;
+    db().collection('rooms').doc(room).collection('peers').doc(user.id)
+      .set({react:{kind, at:Date.now()}}, {merge:true}).catch(() => {});
+  };
+
+  useEffect(() => {
+    if(!room) return;
+    const now = Date.now();
+    members.forEach(m => {
+      const r = m.react;
+      if(!r || !r.kind || now - r.at > 6000) return;
+      const stamp = `${m.id}:${r.at}`;
+      if(seenReacts.current[stamp]) return;
+      seenReacts.current[stamp] = true;
+      const key = stamp + ':' + Math.random().toString(36).slice(2,6);
+      setBursts(b => ({...b, [m.id]: [...(b[m.id] || []), {key, kind:r.kind, x:Math.random()*44 - 22}]}));
+      setTimeout(() => setBursts(b => ({
+        ...b, [m.id]: (b[m.id] || []).filter(x => x.key !== key)
+      })), 2500);
+    });
+  }, [members, room]);
 
   const toggleCam = on => {
     if(on && camFull){ toast(`Camera circle is full — ${CAM_LIMIT} at a time`); return; }
@@ -3480,13 +3558,27 @@ function App({user, onSignOut}){
           {room && (
             <div className="seats">
               <Seat me name={roomName || 'You'} av={avatar} focusing
-                stream={camOn ? camStream.current : null} tick={camTick} />
+                stream={camOn ? camStream.current : null} tick={camTick}
+                bursts={bursts[user.id] || []} />
               {members.filter(m => m.id !== user.id).slice(0,8).map(m => (
                 <Seat key={m.id} name={m.name} av={m.av} focusing={m.focusing}
-                  stream={remoteStreams[m.id] || null} tick={camTick} />
+                  stream={remoteStreams[m.id] || null} tick={camTick}
+                  bursts={bursts[m.id] || []}
+                  note={m.camOn && !remoteStreams[m.id]
+                    ? (peerStatus[m.id] === 'failed' ? 'no route' : 'connecting…') : null} />
               ))}
               {Array.from({length: Math.max(0, 8 - members.filter(m => m.id !== user.id).length)}, (_,i) => (
                 <div key={'e'+i} className="seat empty"><span>open</span></div>
+              ))}
+            </div>
+          )}
+
+          {room && (
+            <div className="reactbar">
+              {REACTIONS.map(r => (
+                <button key={r.kind} onClick={() => react(r.kind)} title={r.label} aria-label={r.label}>
+                  <span>{r.emoji}</span>
+                </button>
               ))}
             </div>
           )}
