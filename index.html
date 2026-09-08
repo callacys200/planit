@@ -651,6 +651,8 @@ const CONFIG = {
   PRO_PRICE: '$3',
   // Shown at the bottom of the privacy policy and terms.
   CONTACT_EMAIL: '',
+  // Set true to print video connection steps to the browser console.
+  DEBUG_VIDEO: true,
   // Optional TURN relay. Roughly 10–20% of networks (school wifi especially)
   // block direct connections, and those calls only work through a relay.
   // Free tiers: metered.ca or Cloudflare Calls. Example:
@@ -2303,6 +2305,8 @@ const ICE = () => ({
   ]
 });
 
+const log = (...a) => { if(CONFIG.DEBUG_VIDEO) console.log('[planit-video]', ...a); };
+
 function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
   const [remote, setRemote] = useState({});
   const [status, setStatus] = useState({});
@@ -2327,6 +2331,7 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
 
   const closeAll = useCallback(() => { Object.keys(pcs.current).forEach(close); }, [close]);
   const wasSending = useRef(sending);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     if(!room){ closeAll(); return; }
@@ -2352,6 +2357,7 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
       const unsubs = [];
       pcs.current[otherId] = {pc, unsubs};
       setStatus(st => ({...st, [otherId]:'connecting'}));
+      log(caller ? 'calling' : 'waiting for', otherId, '| sending:', sending);
 
       if(sending){
         streamRef.current.getTracks().forEach(t => {
@@ -2373,8 +2379,10 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
         setRemote(r => ({...r, [otherId]: e.streams[0]}));
         setStatus(st => ({...st, [otherId]:'live'}));
       };
+      pc.oniceconnectionstatechange = () => log('ice', otherId, pc.iceConnectionState);
       pc.onconnectionstatechange = () => {
         const cs = pc.connectionState;
+        log('conn', otherId, cs);
         setStatus(st => ({...st, [otherId]: cs === 'connected' ? 'live' : cs}));
         if(['failed','closed'].includes(cs)) close(otherId);
       };
@@ -2382,15 +2390,26 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
       const mine   = caller ? 'callerCandidates' : 'calleeCandidates';
       const theirs = caller ? 'calleeCandidates' : 'callerCandidates';
 
+      // Candidates almost always arrive before the remote description is set,
+      // and addIceCandidate throws if you call it too early — dropping them
+      // silently. They get queued here and applied once the description lands.
+      const queued = [];
+      let haveRemote = false;
+      const addCandidate = c => {
+        if(!haveRemote){ queued.push(c); return; }
+        pc.addIceCandidate(new RTCIceCandidate(c)).catch(e => log('addIceCandidate', e.message));
+      };
+      const flushCandidates = () => {
+        haveRemote = true;
+        queued.splice(0).forEach(c =>
+          pc.addIceCandidate(new RTCIceCandidate(c)).catch(e => log('flush', e.message)));
+      };
+
       pc.onicecandidate = e => {
         if(e.candidate) ref.collection(mine).add(e.candidate.toJSON()).catch(() => {});
       };
       unsubs.push(ref.collection(theirs).onSnapshot(snap => {
-        snap.docChanges().forEach(ch => {
-          if(ch.type === 'added'){
-            pc.addIceCandidate(new RTCIceCandidate(ch.doc.data())).catch(() => {});
-          }
-        });
+        snap.docChanges().forEach(ch => { if(ch.type === 'added') addCandidate(ch.doc.data()); });
       }));
 
       (async () => {
@@ -2414,7 +2433,10 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
             unsubs.push(ref.onSnapshot(d => {
               const data = d.data();
               if(data && data.answer && !pc.currentRemoteDescription){
-                pc.setRemoteDescription(new RTCSessionDescription(data.answer)).catch(() => {});
+                log('got answer from', otherId);
+                pc.setRemoteDescription(new RTCSessionDescription(data.answer))
+                  .then(flushCandidates)
+                  .catch(e => log('setRemote(answer)', e.message));
               }
             }));
           } else {
@@ -2422,18 +2444,36 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
               const data = d.data();
               if(data && data.offer && !pc.currentRemoteDescription){
                 try{
+                  log('got offer from', otherId);
                   await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+                  flushCandidates();
                   const answer = await pc.createAnswer();
                   await pc.setLocalDescription(answer);
                   await ref.set({answer:{type:answer.type, sdp:answer.sdp}}, {merge:true});
-                }catch(err){}
+                  log('answered', otherId);
+                }catch(err){ log('answer failed', err.message); }
               }
             }));
           }
         }catch(err){ close(otherId); }
       })();
     });
-  }, [room, sending, key, myId, streamTick, close, closeAll, streamRef]);
+  }, [room, sending, key, myId, streamTick, retry, close, closeAll, streamRef]);
+
+  // A connection that never gets past 'connecting' is dead — drop it so the
+  // next pass builds a fresh one.
+  useEffect(() => {
+    if(!room) return;
+    const i = setInterval(() => {
+      let dropped = false;
+      Object.entries(pcs.current).forEach(([id, e]) => {
+        const cs = e.pc.connectionState;
+        if(cs === 'failed' || cs === 'disconnected'){ log('retrying', id, cs); close(id); dropped = true; }
+      });
+      if(dropped) setRetry(r => r + 1);
+    }, 9000);
+    return () => clearInterval(i);
+  }, [room, close]);
 
   useEffect(() => () => closeAll(), [closeAll]);
   return {remote, status};
