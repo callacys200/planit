@@ -24,6 +24,7 @@
     --org:#5350E8;
     --lock:#E03F7C;
     --set:#5A6178;
+    --watch:#0E8F86;
     --accent:var(--org);
     --accent-soft:rgba(83,80,232,.12);
     --t-test:#E23D6D;
@@ -276,7 +277,10 @@
   .timerbtns{display:grid;grid-auto-flow:column;grid-auto-columns:max-content;justify-content:center;
     align-items:center;gap:9px;margin-top:18px}
   .timerbtns > *{width:auto;min-width:0}
-  .shield{position:fixed;inset:0;z-index:9999;background:#2A123B;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:24px;text-align:center;isolation:isolate}
+  .shield{position:fixed;inset:0;z-index:9999;background:#2A123B;color:#fff;display:flex;
+    align-items:flex-start;justify-content:center;padding:24px;text-align:center;isolation:isolate;
+    overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  .shieldinner{margin:auto;display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:620px}
   .shield .big{font-family:"IBM Plex Mono",monospace;font-size:min(19vw,120px);font-weight:500;letter-spacing:-.04em;line-height:1}
   .shield .sub{color:var(--shield-dim,#D6C7E6);max-width:420px;font-size:14px}
   .shieldbtns{display:grid;grid-auto-flow:column;grid-auto-columns:max-content;gap:10px;justify-content:center;margin-top:18px}
@@ -421,6 +425,20 @@
 
 
   /* ---------- settings ---------- */
+  .rolecard{display:flex;align-items:flex-start;gap:13px;width:100%;text-align:left;padding:15px;
+    border:1.5px solid var(--line);background:var(--card);border-radius:14px;margin-bottom:10px;transition:.14s}
+  .rolecard:hover{border-color:#C6CBDC}
+  .rolecard.on{border-color:var(--org);box-shadow:0 0 0 3px var(--accent-soft)}
+  .rolecard b{display:block;font-size:15px}
+  .rolecard small{display:block;color:var(--ink35);font-size:12.5px;margin-top:2px;line-height:1.45}
+  .roleicon{font-size:22px;line-height:1;margin-top:1px}
+  .viewonly{margin-top:14px;background:#EAF6F5;border:1px solid #BFE0DC;color:#0B6B63;
+    border-radius:11px;padding:9px 13px;font-size:12.5px;font-weight:600}
+  .readonly .btn.primary,.readonly .addbar,.readonly .iconbtn,
+  .readonly .ec-actions .btn,.readonly .todo-actions .btn,.readonly .tray-item .btn,
+  .readonly .anchor,.readonly .reactbar{display:none !important}
+  .readonly .check{pointer-events:none;opacity:.55}
+  .readonly .block,.readonly .tray-item,.readonly .cell{cursor:default}
   .setblock{margin-bottom:26px}
   .sethint{color:var(--ink60);font-size:13px;margin:6px 0 10px}
   .setblock .eyebrow{margin-bottom:8px}
@@ -428,13 +446,6 @@
   .switchrow b{display:block;font-size:14px}
   .switchrow small{display:block;color:var(--ink35);font-size:12px;margin-top:2px}
   .switchrow input{width:18px;height:18px;flex:none}
-  .colorrow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;font-weight:500}
-  .colorrow:last-of-type{border-bottom:0}
-  .colorrow input[type=color]{width:44px;height:28px;padding:0;border:1px solid var(--line);border-radius:8px;background:none;cursor:pointer}
-  .palette{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);padding:7px 12px;border-radius:99px;font-size:13px;font-weight:600}
-  .palette:hover{border-color:#C6CBDC}
-  .swatches{display:flex;gap:2px}
-  .swatches i{width:9px;height:14px;border-radius:2px;display:block}
   .lockednote{background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:12px 14px;font-size:13px;color:var(--ink60);line-height:1.55}
   .legalrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
   .legalrow:last-child{border-bottom:0}
@@ -456,16 +467,11 @@
 
 
   /* ---------- avatar + study seats ---------- */
-  .avatar-svg{border-radius:99px;display:block;flex:none;background:transparent}
+  .initial{border-radius:99px;display:grid;place-items:center;flex:none;color:#fff;
+    font-family:"Bricolage Grotesque",sans-serif;font-weight:700;line-height:1;text-transform:uppercase}
   .railav{border:1px solid var(--line)}
-  .studio{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;align-items:start}
-  .studio-preview{position:sticky;top:0;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 16px}
-  .studio-preview .avatar-svg{margin:0 auto;box-shadow:0 8px 22px -12px rgba(20,23,42,.5)}
-  .studio-controls .setblock{margin-bottom:18px}
-  .swrow{display:flex;gap:7px;flex-wrap:wrap}
-  .sw{width:28px;height:28px;border-radius:99px;border:2px solid var(--line);padding:0;cursor:pointer;transition:.14s}
-  .sw:hover{transform:scale(1.08)}
-  .sw.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--card) inset}
+  .seatinitial{width:100%;height:100%;display:grid;place-items:center;color:#fff;
+    font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:38px;text-transform:uppercase}
   .seats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:26px 0 4px;width:min(560px,92vw)}
   .seat{position:relative;aspect-ratio:1;border-radius:16px;overflow:hidden;
     background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14)}
@@ -481,7 +487,6 @@
   .seatvid.mirror{transform:scaleX(-1)}
   .seatnote{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:10px;
     letter-spacing:.06em;padding:3px 8px;border-radius:99px;background:rgba(0,0,0,.5);white-space:nowrap}
-  .avatar-svg.fill{width:100%;height:100%;border-radius:0;display:block}
   .burst{position:absolute;left:50%;bottom:30%;font-size:30px;line-height:1;pointer-events:none;
     animation:floatup 2.4s cubic-bezier(.2,.7,.3,1) forwards}
   @keyframes floatup{
@@ -495,8 +500,6 @@
   .reactbar button:hover{background:rgba(255,255,255,.2);transform:translateY(-2px)}
   .reactbar button:active{transform:scale(.92)}
   @media (max-width:560px){
-    .studio{grid-template-columns:1fr}
-    .studio-preview{position:static}
     .seats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
     .seatname{font-size:11px;padding:18px 6px 6px}
   }
@@ -718,7 +721,7 @@ const inkOn = hex => (1.05/(relLum(hex)+0.05)) >= 3.0 ? '#FFFFFF' : '#17181F';
 
 const ROW = 58;
 const DEFAULT_DAY = {wake:'07:00', sleep:'23:00'};
-const DEFAULT_SETTINGS = {theme:'light', accents:null, notify:{on:false, before:10}};
+const DEFAULT_SETTINGS = {notify:{on:false, before:10}};
 const EV_TYPES = [
   {id:'test',     label:'Test or quiz', color:'var(--t-test)'},
   {id:'deadline', label:'Deadline',     color:'var(--t-deadline)'},
@@ -889,6 +892,21 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
 
   const pending = useRef(null);
 
+  useEffect(() => {
+    document.body.classList.remove('dragging');   // clear any stuck scroll lock
+    const clear = () => {
+      if(pending.current){ clearTimeout(pending.current); pending.current = null; }
+      document.body.classList.remove('dragging');
+    };
+    window.addEventListener('pagehide', clear);
+    document.addEventListener('visibilitychange', clear);
+    return () => {
+      window.removeEventListener('pagehide', clear);
+      document.removeEventListener('visibilitychange', clear);
+      clear();
+    };
+  }, []);
+
   const beginDrag = (pt, task, mode) => {
     const offset = mode === 'move' ? yToMin(pt.clientY) - norm(toMin(task.start)) : 0;
     document.body.classList.add('dragging');
@@ -955,14 +973,22 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
       setDrag(null);
     };
     const hold = ev => ev.preventDefault();
+    // Leaving the tab mid-drag means pointerup never arrives, which would
+    // otherwise leave the page permanently unscrollable on return.
+    const bail = () => { document.body.classList.remove('dragging'); setGhost(null); setDrag(null); };
+    const onHide = () => { if(document.hidden) bail(); };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', up);
+    window.addEventListener('blur', bail);
+    document.addEventListener('visibilitychange', onHide);
     document.addEventListener('touchmove', hold, {passive:false});
     return () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
+      window.removeEventListener('blur', bail);
+      document.removeEventListener('visibilitychange', onHide);
       document.removeEventListener('touchmove', hold);
       document.body.classList.remove('dragging');
     };
@@ -1456,8 +1482,12 @@ function BragIt({sub, ecs, add, update, remove}){
       </div>
 
       {list.length === 0
-        ? <Empty title={sub === 'honor' ? 'No honors logged yet' : 'No activities logged yet'}
-            hint={sub === 'honor' ? 'Add an award, scholarship, or recognition while you still remember the date.' : 'Add a club, job, sport, internship, or volunteer role.'} />
+        ? <Empty title={sub === 'honor' ? 'No honors logged yet'
+              : sub === 'certification' ? 'No certifications logged yet'
+              : 'No activities logged yet'}
+            hint={sub === 'honor' ? 'Add an award, scholarship, or recognition while you still remember the date.'
+              : sub === 'certification' ? 'Add a course, licence, or training you completed — CPR, lifeguarding, a language test, an online course.'
+              : 'Add a club, job, sport, internship, or volunteer role.'} />
         : list.map(e => (
           <div key={e.id} className="ec">
             <div className="main">
@@ -1476,7 +1506,11 @@ function BragIt({sub, ecs, add, update, remove}){
               </div>
 
               <div className="row" style={{gap:9,marginTop:10,flexWrap:'wrap'}}>
-                <span className={'tagline-badge' + (e.ongoing ? '' : ' past')}>{e.ongoing ? <><i className="livedot" />Ongoing</> : 'Finished'}</span>
+                <span className={'tagline-badge' + (e.ongoing ? '' : ' past')}>
+                  {sub === 'certification'
+                    ? (e.ongoing ? 'No expiry' : 'Expires')
+                    : (e.ongoing ? <><i className="livedot" />Ongoing</> : 'Finished')}
+                </span>
                 <span className="mono" style={{fontSize:12,color:'var(--ink60)'}}>{fmtRange(e)}</span>
               </div>
 
@@ -1515,7 +1549,10 @@ function EcEditor({ec, onClose, onSave}){
     onSave({...f, title:f.title.trim(), awards:f.awards.split(',').map(s => s.trim()).filter(Boolean)});
   };
   return (
-    <Modal title={ec.id ? 'Edit entry' : (ec.category === 'honor' ? 'New honor or award' : 'New activity')} onClose={onClose}
+    <Modal title={ec.id ? 'Edit entry'
+      : ec.category === 'honor' ? 'New honor or award'
+      : ec.category === 'certification' ? 'New certification'
+      : 'New activity'} onClose={onClose}
       footer={<><button className="btn ghost" onClick={onClose}>Cancel</button><button className="btn primary" onClick={save}>Save entry</button></>}>
       <Field label="Name"><input autoFocus value={f.title} onChange={e => set('title', e.target.value)} placeholder="Enter the name here" /></Field>
       <div className="grid2">
@@ -1523,19 +1560,22 @@ function EcEditor({ec, onClose, onSave}){
         <Field label="Your position"><input value={f.role} onChange={e => set('role', e.target.value)} placeholder="Enter your position here" /></Field>
       </div>
       <div className="grid2">
-        <Field label="Started"><input type="month" value={f.start} onChange={e => set('start', e.target.value)} /></Field>
-        <Field label="Ended">
+        <Field label={f.category === 'certification' ? 'Earned' : 'Started'}>
+          <input type="month" value={f.start} onChange={e => set('start', e.target.value)} />
+        </Field>
+        <Field label={f.category === 'certification' ? 'Expires' : 'Ended'}>
           <input type="month" value={f.end} disabled={f.ongoing} onChange={e => set('end', e.target.value)} />
         </Field>
       </div>
       <label className="row" style={{gap:8,marginBottom:14,fontSize:13.5,fontWeight:500}}>
         <input type="checkbox" checked={f.ongoing} onChange={e => set('ongoing', e.target.checked)} style={{width:16,height:16}} />
-        Still doing this
+        {f.category === 'certification' ? "Doesn't expire" : 'Still doing this'}
       </label>
       <Field label="Category">
         <select value={f.category} onChange={e => set('category', e.target.value)}>
           <option value="experience">Experience</option>
           <option value="honor">Honor or award</option>
+          <option value="certification">Certification</option>
         </select>
       </Field>
       <Field label={`How important is this to you? (${f.priority} of 5)`}>
@@ -1560,7 +1600,7 @@ const avColor = n => AV[[...n].reduce((a,c) => a + c.charCodeAt(0), 0) % AV.leng
 
 function LockIt({lock, running, left, minutes, start, pause, reset, toast,
                  mode, setMode, pomo, setPomo, phase, cycle, addCycle,
-                 avatar, camOn, setCamOn, camFull, camCount, remoteStreams, camTick,
+                 camOn, setCamOn, camFull, camCount, remoteStreams, camTick,
                  room, setRoom, members, myId, name, setName}){
   const [code, setCode] = useState('');
   const [roomErr, setRoomErr] = useState('');
@@ -1735,7 +1775,7 @@ function LockIt({lock, running, left, minutes, start, pause, reset, toast,
               ? <div style={{fontSize:13,color:'var(--ink60)'}}>Just you so far. Send the code to a friend.</div>
               : members.slice().sort((a,b) => (b.min||0)-(a.min||0)).map(m => (
                 <div className="member" key={m.id}>
-                  <Avatar a={m.av} size={32} />
+                  <Initial name={m.name} size={32} />
                   <div style={{flex:1,minWidth:0}}>
                     <b style={{fontSize:13.5}}>{m.name}{m.id === myId ? ' (you)' : ''}</b>
                     <div style={{fontSize:11.5,color:'var(--ink35)'}} className="mono">
@@ -2480,7 +2520,7 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
 }
 
 /* ============ AVATAR ============ */
-function Seat({name, av, focusing, me, stream, tick, bursts = [], note}){
+function Seat({name, focusing, me, stream, tick, bursts = [], note}){
   const vid = useRef(null);
   useEffect(() => { if(vid.current && stream) vid.current.srcObject = stream; }, [stream, tick]);
   return (
@@ -2488,7 +2528,9 @@ function Seat({name, av, focusing, me, stream, tick, bursts = [], note}){
       <div className="seatmedia">
         {stream
           ? <video ref={vid} autoPlay playsInline muted className={'seatvid' + (me ? ' mirror' : '')} />
-          : <Avatar a={av} fill />}
+          : <div className="seatinitial" style={{background:avColor(name)}}>
+              {String(name || '?').trim().slice(0,1).toUpperCase()}
+            </div>}
       </div>
       {note && <span className="seatnote">{note}</span>}
       <b className="seatname">{name}{me ? ' (you)' : ''}</b>
@@ -2500,225 +2542,362 @@ function Seat({name, av, focusing, me, stream, tick, bursts = [], note}){
 }
 
 
-const SKINS   = ['#FAE0CE','#F2CBA9','#E0AE83','#C58B5F','#9C6640','#6E4327'];
-const HAIRS   = ['#241A14','#3E2A1C','#5C3A22','#8B5A2B','#B98F5A','#E2C48C','#A63D3D','#7A5C8E','#4A6B8A','#2B2B2B'];
-const CLOTHES = ['#E8E5DD','#2A3723','#5E1C1F','#5350E8','#E03F7C','#0F9E68','#1A1A22','#B9BBA8','#D2B6AB','#DCBC98'];
-const BGS     = ['#EEF0F7','#E6EFE9','#F5EAE6','#EAE8F6','#F3EFE3','#E7EDF3'];
+const AV_COLORS = ['#E03F7C','#5350E8','#0F9E68','#E09A12','#2F80ED','#8A5CF6'];
+const avColor = n => AV_COLORS[[...String(n || '?')].reduce((a,c) => a + c.charCodeAt(0), 0) % AV_COLORS.length];
 
-const HAIR_STYLES = ['long','wavy','bob','short','curly','pony','bun','coils'];
-const OUTFITS     = ['tee','hoodie','puffer','crew','collar'];
-const EYES        = ['open','happy','wink','sleepy','wide'];
-const MOUTHS      = ['smile','grin','neutral','ooh','smirk'];
-const ACCESSORIES = ['none','cap','glasses','headphones','beanie'];
-
-const DEFAULT_AVATAR = {
-  skin:1, hair:0, hairStyle:'long', clothes:3, outfit:'tee',
-  eyes:'open', mouth:'smile', acc:'none', accColor:6, bg:0, freckles:false
-};
-
-const shade = (hex, amt) => {
-  const n = String(hex).replace('#','');
-  const v = [0,2,4].map(i => Math.max(0, Math.min(255, parseInt(n.slice(i,i+2),16) + amt)));
-  return '#' + v.map(x => x.toString(16).padStart(2,'0')).join('');
-};
-
-function Avatar({a, size = 64, className = '', fill = false}){
-  const av = {...DEFAULT_AVATAR, ...(a || {})};
-  const cid = useMemo(() => 'av' + uid(), []);
-  const skin = SKINS[av.skin % SKINS.length];
-  const hair = HAIRS[av.hair % HAIRS.length];
-  const cloth = CLOTHES[av.clothes % CLOTHES.length];
-  const acc = CLOTHES[av.accColor % CLOTHES.length];
-  const bg = BGS[av.bg % BGS.length];
-  const dark = shade(hair, -26);
-  const lip = shade(skin, -70);
-
-  const hairBack = {
-    long:  <path d="M26 52q0-36 34-36t34 36v56q-13 7-20 0V70H46v38q-7 7-20 0z" fill={hair}/>,
-    wavy:  <path d="M26 52q0-36 34-36t34 36v40q-4 10 -12 10 t-8-12v-56H46v56q0 12-8 12t-12-10z" fill={hair}/>,
-    bob:   <path d="M26 52q0-36 34-36t34 36v26q-10 8-18 2V64H44v16q-8 6-18-2z" fill={hair}/>,
-    short: <path d="M30 52q0-34 30-34t30 34v10q-8-6-8-14H38q0 8-8 14z" fill={hair}/>,
-    curly: <g fill={hair}>{[[34,34],[48,22],[62,20],[78,26],[88,40],[30,50],[92,54]].map(([x,y],i) => <circle key={i} cx={x} cy={y} r="13"/>)}</g>,
-    pony:  <g fill={hair}><path d="M28 52q0-34 32-34t32 34v14q-8-8-8-16H36q0 8-8 16z"/><ellipse cx="98" cy="62" rx="10" ry="20"/></g>,
-    bun:   <g fill={hair}><circle cx="60" cy="16" r="13"/><path d="M30 52q0-32 30-32t30 32v10q-8-6-8-14H38q0 8-8 14z"/></g>,
-    coils: <g fill={hair}>{[[36,32],[50,20],[64,18],[78,24],[90,38],[32,48],[92,50]].map(([x,y],i) => <circle key={i} cx={x} cy={y} r="11"/>)}</g>,
-  }[av.hairStyle];
-
-  const fringe = {
-    long:  <path d="M32 48q4-28 28-28t28 28q-12-14-28-10-16-4-28 10z" fill={hair}/>,
-    wavy:  <path d="M32 48q4-28 28-28t28 28q-8-10-16-6-6-8-14-4-8-4-14 4-6-4-12 6z" fill={hair}/>,
-    bob:   <path d="M32 48q4-28 28-28t28 28q-10-16-28-12-18-4-28 12z" fill={hair}/>,
-    short: <path d="M34 46q4-24 26-24t26 24q-10-12-26-10-16-2-26 10z" fill={hair}/>,
-    curly: <path d="M34 46q4-24 26-24t26 24q-10-12-26-10-16-2-26 10z" fill={hair}/>,
-    pony:  <path d="M32 48q4-28 28-28t28 28q-12-16-28-10-16-6-28 10z" fill={hair}/>,
-    bun:   <path d="M32 46q4-26 28-26t28 26q-12-14-28-8-16-6-28 8z" fill={hair}/>,
-    coils: <path d="M34 46q4-24 26-24t26 24q-10-12-26-10-16-2-26 10z" fill={hair}/>,
-  }[av.hairStyle];
-
-  const body = (
-    <g>
-      <path d="M10 120v-12q0-19 24-26 q9-3 16-3h20q7 0 16 3 q24 7 24 26v12z" fill={cloth}/>
-      {av.outfit === 'hoodie' && (
-        <g>
-          <path d="M34 82q26 16 52 0-7 18-26 18t-26-18z" fill={shade(cloth,-18)}/>
-          <path d="M54 100v16M66 100v16" stroke={shade(cloth,30)} strokeWidth="2.5" strokeLinecap="round"/>
-        </g>
-      )}
-      {av.outfit === 'puffer' && (
-        <g>
-          <path d="M50 84h20v36H50z" fill={shade(cloth,60)} opacity=".95"/>
-          <path d="M14 104h92M16 112h88" stroke={shade(cloth,-22)} strokeWidth="2" opacity=".55"/>
-        </g>
-      )}
-      {av.outfit === 'collar' && <path d="M48 82l12 12 12-12 6 4-18 16-18-16z" fill={shade(cloth,26)}/>}
-      {av.outfit === 'crew' && <path d="M46 82q14 12 28 0" stroke={shade(cloth,-24)} strokeWidth="4" fill="none"/>}
-    </g>
-  );
-
-  const eyes = {
-    open:   <g><ellipse cx="49" cy="55" rx="4.6" ry="5.6" fill="#2A2018"/><ellipse cx="71" cy="55" rx="4.6" ry="5.6" fill="#2A2018"/>
-              <circle cx="50.6" cy="53" r="1.6" fill="#fff"/><circle cx="72.6" cy="53" r="1.6" fill="#fff"/></g>,
-    happy:  <g stroke="#2A2018" strokeWidth="3" fill="none" strokeLinecap="round"><path d="M44 56q5-7 10 0"/><path d="M66 56q5-7 10 0"/></g>,
-    wink:   <g><path d="M44 56q5-7 10 0" stroke="#2A2018" strokeWidth="3" fill="none" strokeLinecap="round"/>
-              <ellipse cx="71" cy="55" rx="4.6" ry="5.6" fill="#2A2018"/><circle cx="72.6" cy="53" r="1.6" fill="#fff"/></g>,
-    sleepy: <g stroke="#2A2018" strokeWidth="3" fill="none" strokeLinecap="round"><path d="M44 54q5 5 10 0"/><path d="M66 54q5 5 10 0"/></g>,
-    wide:   <g><ellipse cx="49" cy="55" rx="6" ry="7" fill="#fff" stroke="#2A2018" strokeWidth="1.6"/>
-              <ellipse cx="71" cy="55" rx="6" ry="7" fill="#fff" stroke="#2A2018" strokeWidth="1.6"/>
-              <circle cx="49" cy="56" r="3.2" fill="#2A2018"/><circle cx="71" cy="56" r="3.2" fill="#2A2018"/></g>,
-  }[av.eyes];
-
-  const mouth = {
-    smile:   <path d="M53 68q7 7 14 0" stroke={lip} strokeWidth="2.6" fill="none" strokeLinecap="round"/>,
-    grin:    <g><path d="M51 66q9 12 18 0z" fill={shade(lip,-20)}/><path d="M53 67h14v3H53z" fill="#fff"/></g>,
-    neutral: <path d="M54 69h12" stroke={lip} strokeWidth="2.6" fill="none" strokeLinecap="round"/>,
-    ooh:     <ellipse cx="60" cy="69" rx="4" ry="5" fill={shade(lip,-20)}/>,
-    smirk:   <path d="M53 69q8 5 14-3" stroke={lip} strokeWidth="2.6" fill="none" strokeLinecap="round"/>,
-  }[av.mouth];
-
-  const accessory = {
-    none: null,
-    cap: <g><path d="M31 40q3-26 29-26t29 26z" fill={acc}/><path d="M60 40h36q-1 9-14 10H60z" fill={shade(acc,-24)}/></g>,
-    beanie: <g><path d="M30 42q2-28 30-28t30 28z" fill={acc}/><rect x="28" y="40" width="64" height="9" rx="4" fill={shade(acc,-24)}/></g>,
-    glasses: <g fill="none" stroke="#2A2018" strokeWidth="2.4">
-               <rect x="40" y="48" width="18" height="15" rx="6"/><rect x="62" y="48" width="18" height="15" rx="6"/>
-               <path d="M58 55h4"/></g>,
-    headphones: <g><path d="M30 54v-6a30 30 0 0 1 60 0v6" fill="none" stroke={acc} strokeWidth="6" strokeLinecap="round"/>
-               <rect x="22" y="50" width="13" height="20" rx="6" fill={acc}/><rect x="85" y="50" width="13" height="20" rx="6" fill={acc}/></g>,
-  }[av.acc];
-
+// Profile picture: the first letter of the name on a colour derived from it,
+// so the same person always gets the same colour.
+function Initial({name, size = 32, className = ''}){
+  const label = String(name || '?').trim().slice(0,1).toUpperCase() || '?';
   return (
-    <svg viewBox="0 0 120 120" width={fill ? undefined : size} height={fill ? undefined : size}
-      preserveAspectRatio="xMidYMid slice"
-      className={'avatar-svg ' + (fill ? 'fill ' : '') + className} aria-hidden="true">
-      <defs><clipPath id={cid}>
-        {fill ? <rect width="120" height="120"/> : <circle cx="60" cy="60" r="60"/>}
-      </clipPath></defs>
-      <g clipPath={`url(#${cid})`}>
-        <rect width="120" height="120" fill={bg}/>
-        {hairBack}
-        {body}
-        <path d="M47 68h26v14q-13 11-26 0z" fill={shade(skin,-22)}/>
-        <ellipse cx="35" cy="56" rx="5" ry="7" fill={skin}/>
-        <ellipse cx="85" cy="56" rx="5" ry="7" fill={skin}/>
-        <ellipse cx="60" cy="52" rx="26" ry="30" fill={skin}/>
-        {fringe}
-        <g stroke={dark} strokeWidth="2.6" fill="none" strokeLinecap="round">
-          <path d="M43 44q6-4 12-1"/><path d="M77 44q-6-4-12-1"/>
-        </g>
-        {eyes}
-        <path d="M60 58v5" stroke={shade(skin,-38)} strokeWidth="2" strokeLinecap="round" fill="none"/>
-        {mouth}
-        <ellipse cx="41" cy="64" rx="5" ry="3" fill="#E8837E" opacity=".35"/>
-        <ellipse cx="79" cy="64" rx="5" ry="3" fill="#E8837E" opacity=".35"/>
-        {av.freckles && <g fill={shade(skin,-46)} opacity=".7">
-          {[[45,61],[50,63],[70,63],[75,61],[47,65],[73,65]].map(([x,y],i) => <circle key={i} cx={x} cy={y} r="1"/>)}
-        </g>}
-        {accessory}
-      </g>
-    </svg>
+    <div className={'initial ' + className}
+      style={{background:avColor(name), width:size, height:size, fontSize:Math.round(size*0.42)}}>
+      {label}
+    </div>
   );
 }
 
-const randomAvatar = () => ({
-  skin: Math.floor(Math.random()*SKINS.length),
-  hair: Math.floor(Math.random()*HAIRS.length),
-  hairStyle: HAIR_STYLES[Math.floor(Math.random()*HAIR_STYLES.length)],
-  clothes: Math.floor(Math.random()*CLOTHES.length),
-  outfit: OUTFITS[Math.floor(Math.random()*OUTFITS.length)],
-  eyes: EYES[Math.floor(Math.random()*EYES.length)],
-  mouth: MOUTHS[Math.floor(Math.random()*MOUTHS.length)],
-  acc: ACCESSORIES[Math.floor(Math.random()*ACCESSORIES.length)],
-  accColor: Math.floor(Math.random()*CLOTHES.length),
-  bg: Math.floor(Math.random()*BGS.length),
-  freckles: Math.random() > .6
-});
 
-function AvatarStudio({avatar, setAvatar}){
-  const a = {...DEFAULT_AVATAR, ...(avatar || {})};
-  const set = (k,v) => setAvatar({...a, [k]:v});
-  const Swatches = ({list, k}) => (
-    <div className="swrow">
-      {list.map((c,i) => (
-        <button key={i} className={'sw' + (a[k] === i ? ' on' : '')} style={{background:c}}
-          onClick={() => set(k, i)} aria-label={`Colour ${i+1}`} />
-      ))}
-    </div>
-  );
-  const Chips = ({list, k}) => (
-    <div className="row" style={{gap:7, flexWrap:'wrap'}}>
-      {list.map(v => (
-        <button key={v} className={'chip' + (a[k] === v ? ' on' : '')} onClick={() => set(k, v)}>{v}</button>
-      ))}
-    </div>
-  );
+async function saveProfile(uid, fields){
+  await withTimeout(db().collection('users').doc(uid).set(fields, {merge:true}), 10000);
+}
+
+/* ============ ROLES & PARENT LINKS ============ */
+const linkId = (childUid, parentUid) => `${childUid}_${parentUid}`;
+
+async function findUidByUsername(username){
+  const d = await withTimeout(db().collection('usernames').doc(unameKey(username)).get());
+  return d.exists ? d.data().uid : null;
+}
+
+// A parent asks; the child decides. Nobody is watched without agreeing to it.
+async function requestLink({parentUid, parentEmail, parentName, childUsername}){
+  const childUid = await findUidByUsername(childUsername);
+  if(!childUid) throw new Error('No account with that username. Check the spelling with them.');
+  if(childUid === parentUid) throw new Error("That's your own username.");
+  const ref = db().collection('links').doc(linkId(childUid, parentUid));
+  const existing = await withTimeout(ref.get());
+  if(existing.exists){
+    const st = existing.data().status;
+    throw new Error(st === 'approved'
+      ? "You're already connected to that account."
+      : "You've already sent a request to that account.");
+  }
+  await withTimeout(ref.set({
+    parentUid, childUid, parentEmail: parentEmail || '', parentName: parentName || '',
+    childUsername: childUsername.trim(), status:'pending', at: Date.now()
+  }));
+}
+
+const linksForParent = uid => db().collection('links').where('parentUid','==',uid).get();
+const linksForChild  = uid => db().collection('links').where('childUid','==',uid).get();
+
+function Onboarding({user, onDone}){
+  const [step, setStep] = useState('role');
+  const [role, setRole] = useState(null);
+  const [age, setAge] = useState('');
+  const [email, setEmail] = useState(user.email || '');
+  const [childName, setChildName] = useState('');
+  const [day, setDay] = useState(DEFAULT_DAY);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [note, setNote] = useState('');
+
+  const finish = async () => {
+    setBusy(true); setErr('');
+    try{
+      await saveProfile(user.id, {
+        role, onboarded:true,
+        ...(role === 'student' ? {age: age || ''} : {parentEmail: email.trim()}),
+        day
+      });
+      onDone();
+    }catch(e){ setErr('Could not save that. Check your connection and try again.'); setBusy(false); }
+  };
+
+  const sendRequest = async () => {
+    if(!childName.trim()) return setErr("Enter your child's username.");
+    setBusy(true); setErr(''); setNote('');
+    try{
+      await requestLink({parentUid:user.id, parentEmail:email.trim(),
+        parentName:user.username, childUsername:childName});
+      setNote(`Request sent to ${childName.trim()}. They'll see it in their settings.`);
+      setChildName('');
+    }catch(e){ setErr(e.message); }
+    setBusy(false);
+  };
+
+  const wm = toMin(day.wake), sm0 = toMin(day.sleep);
+  const awake = ((sm0 <= wm ? sm0 + 1440 : sm0) - wm)/60;
 
   return (
-    <div className="studio">
-      <div className="studio-preview">
-        <Avatar a={a} size={170} />
-        <button className="btn sm" style={{marginTop:14}} onClick={() => setAvatar(randomAvatar())}>Shuffle</button>
-      </div>
-      <div className="studio-controls">
-        <Section title="Skin"><Swatches list={SKINS} k="skin" /></Section>
-        <Section title="Hair colour"><Swatches list={HAIRS} k="hair" /></Section>
-        <Section title="Hair style"><Chips list={HAIR_STYLES} k="hairStyle" /></Section>
-        <Section title="Eyes"><Chips list={EYES} k="eyes" /></Section>
-        <Section title="Mouth"><Chips list={MOUTHS} k="mouth" /></Section>
-        <Section title="Outfit"><Chips list={OUTFITS} k="outfit" /></Section>
-        <Section title="Outfit colour"><Swatches list={CLOTHES} k="clothes" /></Section>
-        <Section title="Accessory"><Chips list={ACCESSORIES} k="acc" /></Section>
-        <Section title="Accessory colour"><Swatches list={CLOTHES} k="accColor" /></Section>
-        <Section title="Background"><Swatches list={BGS} k="bg" /></Section>
-        <Section title="Freckles">
-          <div className="row" style={{gap:7}}>
-            <button className={'chip' + (a.freckles ? ' on' : '')} onClick={() => set('freckles', true)}>On</button>
-            <button className={'chip' + (!a.freckles ? ' on' : '')} onClick={() => set('freckles', false)}>Off</button>
+    <div className="authpage">
+      <header className="topnav">
+        <div className="tn-brand"><Mark /><b>Plan It</b><span className="beta">SETUP</span></div>
+      </header>
+      <div className="authsplit">
+        <section className="authleft">
+          <div className="lead">
+            <div className="leadmark"><Mark size={30} /><b>Plan It</b></div>
+            <p className="script">two questions, then you're in</p>
           </div>
-        </Section>
+
+          <div className="authcard">
+            <div className="cardbody">
+              {step === 'role' && (
+                <>
+                  <h2>Who's using this?</h2>
+                  <p className="csub">This decides what Plan It shows you.</p>
+                  <button className={'rolecard' + (role === 'student' ? ' on' : '')} onClick={() => setRole('student')}>
+                    <span className="roleicon">🎒</span>
+                    <span><b>I'm a student</b><small>Plan your days, track activities, focus with friends</small></span>
+                  </button>
+                  <button className={'rolecard' + (role === 'parent' ? ' on' : '')} onClick={() => setRole('parent')}>
+                    <span className="roleicon">👀</span>
+                    <span><b>I'm a parent</b><small>Follow along with your child's planner — viewing only</small></span>
+                  </button>
+                  <button className="pillbtn" disabled={!role}
+                    onClick={() => setStep(role === 'student' ? 'age' : 'parent')}>Continue <IconArrow /></button>
+                </>
+              )}
+
+              {step === 'age' && (
+                <>
+                  <h2>How old are you?</h2>
+                  <p className="csub">Just so the planner fits your school year.</p>
+                  <label className="flabel">Age</label>
+                  <input className="finput" type="number" min="5" max="100" value={age}
+                    onChange={e => setAge(e.target.value)} placeholder="Enter your age here" autoFocus />
+                  <Err msg={err} />
+                  <button className="pillbtn" onClick={() => setStep('day')}>Continue <IconArrow /></button>
+                  <button className="undertext" onClick={() => setStep('role')}>Back</button>
+                </>
+              )}
+
+              {step === 'parent' && (
+                <>
+                  <h2>Connect to your child</h2>
+                  <p className="csub">They approve the request from their own account.</p>
+                  <label className="flabel">Your email</label>
+                  <input className="finput" type="email" value={email} onChange={e => setEmail(e.target.value)}
+                    placeholder="Enter your email here" />
+                  <label className="flabel">Your child's Plan It username</label>
+                  <input className="finput" value={childName} onChange={e => setChildName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && sendRequest()} placeholder="Enter their username here" />
+                  {note && <div className="formnote">{note}</div>}
+                  <Err msg={err} />
+                  <button className="btn" style={{width:'100%',justifyContent:'center'}}
+                    disabled={busy} onClick={sendRequest}>{busy ? 'Sending…' : 'Send request'}</button>
+                  <div className="gnote" style={{marginTop:14}}>
+                    <b>How this works</b>
+                    Your child sees the request in their settings and chooses whether to accept. Until they do,
+                    you won't see anything of theirs. You can add more children later from Settings.
+                  </div>
+                  <button className="pillbtn" style={{marginTop:14}} disabled={busy} onClick={finish}>
+                    {busy ? 'Finishing…' : 'Finish setup'} <IconArrow />
+                  </button>
+                  <button className="undertext" onClick={() => setStep('role')}>Back</button>
+                </>
+              )}
+
+              {step === 'day' && (
+                <>
+                  <h2>When does your day run?</h2>
+                  <p className="csub">Your schedule starts and ends here. You can change it any time.</p>
+                  <div className="grid2">
+                    <label className="field"><span>☀️ I wake up at</span>
+                      <input type="time" value={day.wake} onChange={e => setDay({...day, wake:e.target.value})} /></label>
+                    <label className="field"><span>🌙 I go to sleep at</span>
+                      <input type="time" value={day.sleep} onChange={e => setDay({...day, sleep:e.target.value})} /></label>
+                  </div>
+                  <div className="card soft" style={{fontSize:13,color:'var(--ink60)'}}>
+                    That's <b style={{color:'var(--ink)'}}>{awake % 1 === 0 ? awake : awake.toFixed(1)} hours</b> awake.
+                  </div>
+                  <div className="row" style={{gap:7,margin:'12px 0 4px',flexWrap:'wrap'}}>
+                    <span className="eyebrow" style={{marginRight:2}}>Quick set</span>
+                    {[['Early bird','05:30','21:30'],['School day','07:00','23:00'],['Night owl','09:00','01:30']].map(([l,w,sl]) => (
+                      <button key={l} className="chip" onClick={() => setDay({wake:w, sleep:sl})}>{l}</button>
+                    ))}
+                  </div>
+                  <Err msg={err} />
+                  <button className="pillbtn" disabled={busy} onClick={finish}>
+                    {busy ? 'Finishing…' : 'Start planning'} <IconArrow />
+                  </button>
+                  <button className="undertext" onClick={() => setStep('age')}>Back</button>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <aside className="authright">
+          <p className="script rscript">one setup, then it's yours</p>
+          <h2 className="rhead">Built for the student. Open to the parent, read only.</h2>
+          <p className="rsub">
+            Students plan, log, and focus. Parents can follow along once their child accepts the request —
+            and can only ever look, never change anything.
+          </p>
+        </aside>
       </div>
+    </div>
+  );
+}
+
+const Err = ({msg}) => msg ? <div className="formerr" role="alert">{msg}</div> : null;
+
+/* ============ WATCH IT ============ */
+function WatchIt({user, toast}){
+  const [links, setLinks] = useState(null);
+  const [childName, setChildName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [note, setNote] = useState('');
+
+  const load = useCallback(async () => {
+    try{
+      const snap = await withTimeout(linksForParent(user.id));
+      setLinks(snap.docs.map(d => ({id:d.id, ...d.data()})));
+    }catch(e){ setLinks([]); setErr("Couldn't load your children."); }
+  }, [user.id]);
+  useEffect(() => { load(); }, [load]);
+
+  const add = async () => {
+    if(!childName.trim()) return setErr("Enter your child's username.");
+    setBusy(true); setErr(''); setNote('');
+    try{
+      await requestLink({parentUid:user.id, parentEmail:user.parentEmail || user.email,
+        parentName:user.username, childUsername:childName});
+      setNote(`Request sent to ${childName.trim()}.`);
+      setChildName(''); load();
+    }catch(e){ setErr(e.message); }
+    setBusy(false);
+  };
+
+  const remove = async l => {
+    if(!window.confirm(`Remove the connection to ${l.childUsername}?`)) return;
+    try{ await db().collection('links').doc(l.id).delete(); toast('Removed'); load(); }
+    catch(e){ setErr('Could not remove that.'); }
+  };
+
+  const approved = (links || []).filter(l => l.status === 'approved');
+
+  return (
+    <div style={{maxWidth:660}}>
+      <Section title="Your children" hint="A child appears here once they accept your request.">
+        {links === null ? <div className="card" style={{color:'var(--ink35)'}}>Loading…</div>
+          : links.length === 0
+          ? <Empty title="Nobody connected yet" hint="Add your child's username below to send a request." />
+          : links.map(l => (
+            <div key={l.id} className="todo" style={{alignItems:'center'}}>
+              <Initial name={l.childUsername} size={34} />
+              <div className="txt">
+                <b>{l.childUsername}</b>
+                <div className="meta">
+                  {l.status === 'approved' ? 'Connected' :
+                   l.status === 'declined' ? 'Declined the request' : 'Waiting for them to accept'}
+                </div>
+              </div>
+              <div className="todo-actions">
+                <span className={'status' + (l.status === 'approved' ? ' focusing' : '')}>{l.status}</span>
+                <XBtn onClick={() => remove(l)} label="Remove" />
+              </div>
+            </div>
+          ))}
+      </Section>
+
+      <Section title="Add a child">
+        <div className="card">
+          <Field label="Their Plan It username">
+            <input value={childName} onChange={e => setChildName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && add()} placeholder="Enter their username here" />
+          </Field>
+          {note && <div className="formnote">{note}</div>}
+          <Err msg={err} />
+          <button className="btn primary" disabled={busy} onClick={add}>{busy ? 'Sending…' : 'Send request'}</button>
+        </div>
+      </Section>
+
+      <Section title="What's coming here">
+        <div className="card soft" style={{color:'var(--ink60)', fontSize:13.5, lineHeight:1.65}}>
+          <b style={{color:'var(--ink)'}}>To be decided.</b> This page will grow into a place to see how
+          {approved.length ? ` ${approved.map(l => l.childUsername).join(' and ')} is` : ' your child is'} doing —
+          upcoming tests, what's overdue, how much they've focused this week.
+          <div style={{marginTop:10}}>
+            One thing worth knowing now: planner entries are stored in each person's own browser, not on a
+            server. Showing you their actual tasks means syncing that data first — a real piece of work rather
+            than a switch to flip.
+          </div>
+        </div>
+      </Section>
     </div>
   );
 }
 
 /* ============ SETTINGS ============ */
+// A student's view of who has asked to follow along, and who already does.
+function ParentAccess({user, toast}){
+  const [links, setLinks] = useState(null);
+  const load = useCallback(async () => {
+    try{
+      const snap = await withTimeout(linksForChild(user.id));
+      setLinks(snap.docs.map(d => ({id:d.id, ...d.data()})));
+    }catch(e){ setLinks([]); }
+  }, [user.id]);
+  useEffect(() => { load(); }, [load]);
+
+  const decide = async (l, status) => {
+    try{
+      await db().collection('links').doc(l.id).update({status, decidedAt:Date.now()});
+      toast(status === 'approved' ? 'Access granted' : 'Request declined');
+      load();
+    }catch(e){ toast('Could not save that'); }
+  };
+  const revoke = async l => {
+    if(!window.confirm(`Stop ${l.parentName || 'this parent'} from following your planner?`)) return;
+    try{ await db().collection('links').doc(l.id).delete(); toast('Access removed'); load(); }
+    catch(e){ toast('Could not remove that'); }
+  };
+
+  if(!links || links.length === 0) return null;
+  const pending = links.filter(l => l.status === 'pending');
+  const active  = links.filter(l => l.status === 'approved');
+
+  return (
+    <>
+      {pending.length > 0 && (
+        <Section title="Requests to follow your planner"
+          hint="They can only ever look. Nothing they do changes your planner.">
+          {pending.map(l => (
+            <div key={l.id} className="card" style={{marginBottom:10}}>
+              <b>{l.parentName || 'A parent'}</b>
+              <div style={{fontSize:12.5, color:'var(--ink35)', margin:'2px 0 12px'}}>{l.parentEmail}</div>
+              <div className="row" style={{gap:8}}>
+                <button className="btn primary" onClick={() => decide(l,'approved')}>Allow</button>
+                <button className="btn" onClick={() => decide(l,'declined')}>Decline</button>
+              </div>
+            </div>
+          ))}
+        </Section>
+      )}
+      {active.length > 0 && (
+        <Section title="Following your planner">
+          {active.map(l => (
+            <div key={l.id} className="todo" style={{alignItems:'center'}}>
+              <Initial name={l.parentName || l.parentEmail} size={32} />
+              <div className="txt"><b>{l.parentName || 'Parent'}</b><div className="meta">{l.parentEmail}</div></div>
+              <div className="todo-actions"><button className="btn sm" onClick={() => revoke(l)}>Remove</button></div>
+            </div>
+          ))}
+        </Section>
+      )}
+    </>
+  );
+}
+
+
 const WEEK_MS = 7*24*60*60*1000;
 const daysUntil = ts => Math.max(1, Math.ceil((WEEK_MS - (Date.now() - ts))/86400000));
 const freeToChange = ts => !ts || (Date.now() - ts) >= WEEK_MS;
-
-const ACCENT_PRESETS = [
-  {id:'default',  label:'Default',       c:{brag:'#E09A12', list:'#0F9E68', organize:'#5350E8', lock:'#E03F7C'}},
-  {id:'fauna',    label:'Fauna',         c:{brag:'#DCBC98', list:'#2A3723', organize:'#B9BBA8', lock:'#0C0A08'}},
-  {id:'pastel',   label:'Pastel',        c:{brag:'#D2B6AB', list:'#9BA9AA', organize:'#B0B1B6', lock:'#B18C85'}},
-  {id:'academia', label:'Dark academia', c:{brag:'#BB8E76', list:'#B29E93', organize:'#5E1C1F', lock:'#160E08'}},
-  {id:'mono',     label:'Slate',         c:{brag:'#7A7F99', list:'#5E6580', organize:'#454B66', lock:'#8A6478'}},
-];
-const ACCENT_KEYS = [
-  ['brag','Brag It'], ['list','List It'], ['organize','Organize It'], ['lock','Lock It']
-];
-
-async function saveProfile(uid, fields){
-  await withTimeout(db().collection('users').doc(uid).set(fields, {merge:true}), 10000);
-}
 
 async function changeUsername(newName, user, oldName){
   const clean = newName.trim();
@@ -2731,7 +2910,7 @@ async function changeUsername(newName, user, oldName){
   await withTimeout(batch.commit(), 10000);
 }
 
-function Settings({sub, user, onSignOut, settings, setSettings, toast, avatar, setAvatar}){
+function Settings({sub, user, onSignOut, settings, setSettings, toast}){
   const auth = initFirebase();
   const [profile, setProfile] = useState(null);
   const [err, setErr] = useState('');
@@ -2835,7 +3014,6 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, avatar, s
 
   const Err = () => err ? <div className="formerr" role="alert">{err}</div> : null;
   const Note = () => note ? <div className="formnote">{note}</div> : null;
-  const accents = settings.accents || ACCENT_PRESETS[0].c;
 
   return (
     <div style={{maxWidth:660}}>
@@ -2843,7 +3021,7 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, avatar, s
         <>
           <Section title="Signed in as">
             <div className="card row" style={{gap:12}}>
-              <Avatar a={avatar} size={44} />
+              <Initial name={user.username || user.email} size={44} />
               <div style={{flex:1, minWidth:0}}>
                 <b>{user.username}</b>
                 <div style={{fontSize:12.5, color:'var(--ink35)'}}>
@@ -2885,12 +3063,14 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, avatar, s
         </>
       )}
 
-      {sub === 'avatar' && (
-        <>
-          <Section title="Your avatar" hint="This is your profile picture, and it's what friends see in a study room.">
-            <AvatarStudio avatar={avatar} setAvatar={setAvatar} />
-          </Section>
-        </>
+      {sub === 'account' && user.role !== 'parent' && <ParentAccess user={user} toast={toast} />}
+      {sub === 'account' && user.role === 'parent' && (
+        <Section title="Your children" hint="Add another child from the Watch It tab.">
+          <div className="card soft" style={{fontSize:13.5, color:'var(--ink60)'}}>
+            Connections live in <b style={{color:'var(--ink)'}}>Watch It</b>, where you can send a new request
+            or remove one.
+          </div>
+        </Section>
       )}
 
       {sub === 'security' && (
@@ -2937,43 +3117,6 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, avatar, s
 
           <Section title="Session">
             <button className="btn" onClick={onSignOut}>Log out of Plan It</button>
-          </Section>
-        </>
-      )}
-
-      {sub === 'appearance' && (
-        <>
-          <Section title="Theme">
-            <div className="row" style={{gap:9}}>
-              {[['light','Light'],['dark','Dark'],['system','Match device']].map(([k,l]) => (
-                <button key={k} className={'chip' + (settings.theme === k ? ' on' : '')}
-                  onClick={() => setSettings({...settings, theme:k})}>{l}</button>
-              ))}
-            </div>
-          </Section>
-
-          <Section title="Tab colours" hint="Each section keeps its own colour across the app.">
-            <div className="row" style={{gap:9, flexWrap:'wrap', marginBottom:16}}>
-              {ACCENT_PRESETS.map(p => (
-                <button key={p.id} className="palette" onClick={() => setSettings({...settings, accents:p.c})}>
-                  <span className="swatches">
-                    {['brag','list','organize','lock'].map(k => <i key={k} style={{background:p.c[k]}} />)}
-                  </span>
-                  {p.label}
-                </button>
-              ))}
-            </div>
-            <div className="card">
-              {ACCENT_KEYS.map(([k,label]) => (
-                <label key={k} className="colorrow">
-                  <span>{label}</span>
-                  <input type="color" value={accents[k]}
-                    onChange={e => setSettings({...settings, accents:{...accents, [k]:e.target.value}})} />
-                </label>
-              ))}
-              <button className="btn sm" style={{marginTop:10}}
-                onClick={() => setSettings({...settings, accents:ACCENT_PRESETS[0].c})}>Reset to default</button>
-            </div>
           </Section>
         </>
       )}
@@ -3146,7 +3289,7 @@ function LegalModal({kind, onClose}){
 const TABS = [
   {id:'brag',     emoji:'🏆', label:'Brag It',    sub:'Extracurriculars', color:'var(--brag)',
    title:'Brag It', tagline:'Everything you have done, written down before you forget it.',
-   subs:[['honor','Honors & awards'],['experience','Experience']]},
+   subs:[['honor','Honors & awards'],['experience','Experience'],['certification','Certifications']]},
   {id:'list',     emoji:'📓', label:'List It',    sub:'To-do', color:'var(--list)',
    title:'List It', tagline:'Daily items feed straight into your schedule.',
    subs:[['daily','Daily'],['weekly','Weekly'],['monthly','Monthly']]},
@@ -3156,17 +3299,20 @@ const TABS = [
   {id:'lock',     emoji:'🔒', label:'Lock It',    sub:'Study mode', color:'var(--lock)',
    title:'Lock It', tagline:'Set a timer, close everything else, bring your friends.',
    subs:[['focus','Focus timer']]},
+  {id:'watch',    emoji:'👀', label:'Watch It',   sub:'Parents', color:'var(--watch)', parentOnly:true,
+   title:'Watch It', tagline:"Follow along with your child's planner.",
+   subs:[['children','Children']]},
   {id:'settings', emoji:'⚙️', label:'Settings',   sub:'Account', color:'var(--set)',
    title:'Settings', tagline:'Your account, how Plan It looks, and what it can do.',
-   subs:[['account','My account'],['avatar','Avatar'],['security','Username & password'],['appearance','Appearance'],
+   subs:[['account','My account'],['security','Username & password'],
          ['notifications','Notifications'],['pro','Plan It Pro'],['legal','Legal']]},
 ];
-const BASE_ACCENTS = {brag:'#E09A12', list:'#0F9E68', organize:'#5350E8', lock:'#E03F7C', settings:'#5A6178'};
+const BASE_ACCENTS = {brag:'#E09A12', list:'#0F9E68', organize:'#5350E8', lock:'#E03F7C', settings:'#5A6178', watch:'#0E8F86'};
 
 function App({user, onSignOut}){
   const [ready, setReady] = useState(false);
   const [tab, setTab] = useState('organize');
-  const [sub, setSub] = useState({brag:'honor', list:'daily', organize:'daily', lock:'focus', settings:'account'});
+  const [sub, setSub] = useState({brag:'honor', list:'daily', organize:'daily', lock:'focus', settings:'account', watch:'children'});
   const [date, setDate] = useState(new Date());
   const [store, setStore] = useState(() => ({tasks:[], events:[], ecs:[], lock:{sessions:0,minutes:0,day:iso(new Date())}}));
   const [toastMsg, setToastMsg] = useState(null);
@@ -3211,43 +3357,18 @@ function App({user, onSignOut}){
 
   const toast = useCallback(msg => { setToastMsg(msg); setTimeout(() => setToastMsg(null), 2200); }, []);
 
+  const isParent = user.role === 'parent';
+  // Every write goes through here, so a parent account cannot change anything
+  // even if a control slips through the interface.
+  const guard = fn => (...args) => {
+    if(isParent){ toast('Parent accounts can look, but not edit'); return; }
+    fn(...args);
+  };
+
   const settings = store.settings || DEFAULT_SETTINGS;
   const setSettings = next => setStore(s => ({...s, settings:next}));
 
-  const avatar = settings.avatar || user.avatar || DEFAULT_AVATAR;
-  const avatarSave = useRef(null);
-  const setAvatar = a => {
-    setStore(s => ({...s, settings:{...(s.settings || DEFAULT_SETTINGS), avatar:a}}));
-    clearTimeout(avatarSave.current);
-    avatarSave.current = setTimeout(() => { saveProfile(user.id, {avatar:a}).catch(() => {}); }, 800);
-  };
 
-  // theme + custom tab colours live on <html> so modals and the shield get them too
-  useEffect(() => {
-    const root = document.documentElement;
-    const apply = () => {
-      const dark = settings.theme === 'dark' ||
-        (settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      root.setAttribute('data-theme', dark ? 'dark' : 'light');
-    };
-    apply();
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    if(settings.theme === 'system' && mq.addEventListener){
-      mq.addEventListener('change', apply);
-      return () => mq.removeEventListener('change', apply);
-    }
-  }, [settings.theme]);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    const a = settings.accents;
-    ['brag','list','organize','lock'].forEach(k => {
-      const hex = (a && a[k]) || BASE_ACCENTS[k];
-      if(a && a[k]) root.style.setProperty('--' + k, hex);
-      else root.style.removeProperty('--' + k);
-      root.style.setProperty('--' + (k === 'organize' ? 'org' : k) + '-ink', inkOn(hex));
-    });
-  }, [settings.accents]);
 
   const resetPlanner = async () => {
     if(!window.confirm('Delete every task, calendar entry, and activity in this planner? This cannot be undone.')) return;
@@ -3391,12 +3512,12 @@ function App({user, onSignOut}){
     const doc = db().collection('rooms').doc(room).collection('peers').doc(user.id);
     const write = () => doc.set({
       name: (roomName || '').trim() || 'Someone',
-      av: avatar, camOn, focusing: running, min: store.lock.minutes, at: Date.now()
+      camOn, focusing: running, min: store.lock.minutes, at: Date.now()
     }, {merge:true}).catch(() => {});
     write();
     const hb = setInterval(write, 20000);
     return () => clearInterval(hb);
-  }, [room, user.id, roomName, avatar, camOn, running, store.lock.minutes]);
+  }, [room, user.id, roomName, camOn, running, store.lock.minutes]);
 
   const {remote: remoteStreams, status: peerStatus} = useVideoMesh({
     room, myId:user.id, camOn, camPeers, streamRef:camStream, streamTick:camTick
@@ -3446,6 +3567,20 @@ function App({user, onSignOut}){
       .catch(() => { setCamOn(false); toast('Could not open the camera'); });
     return () => { dead = true; };
   }, [camOn, toast]);
+  // A drag interrupted by switching tabs never sees its pointerup, which would
+  // leave the page scroll-locked. Clear that whenever we come back.
+  useEffect(() => {
+    const unstick = () => { if(!document.hidden) document.body.classList.remove('dragging'); };
+    document.addEventListener('visibilitychange', unstick);
+    window.addEventListener('focus', unstick);
+    window.addEventListener('pointerup', unstick);
+    return () => {
+      document.removeEventListener('visibilitychange', unstick);
+      window.removeEventListener('focus', unstick);
+      window.removeEventListener('pointerup', unstick);
+    };
+  }, []);
+
   // reminders for scheduled blocks, while Plan It is open
   const fired = useRef({});
   useEffect(() => {
@@ -3469,21 +3604,25 @@ function App({user, onSignOut}){
   }, [settings.notify.on, settings.notify.before, store.tasks]);
 
   // mutators
-  const addTask    = t => setStore(s => ({...s, tasks:[...s.tasks, {...t, id:uid()}]}));
-  const updateTask = (id,p) => setStore(s => ({...s, tasks:s.tasks.map(t => t.id === id ? {...t, ...p} : t)}));
-  const removeTask = id => setStore(s => ({...s, tasks:s.tasks.filter(t => t.id !== id)}));
-  const addEvent    = e => setStore(s => ({...s, events:[...s.events, {...e, id:uid()}]}));
-  const updateEvent = (id,p) => setStore(s => ({...s, events:s.events.map(e => e.id === id ? {...e, ...p} : e)}));
-  const removeEvent = id => setStore(s => ({...s, events:s.events.filter(e => e.id !== id)}));
-  const addEc    = e => setStore(s => ({...s, ecs:[...s.ecs, {...e, id:uid()}]}));
-  const updateEc = (id,p) => setStore(s => ({...s, ecs:s.ecs.map(e => e.id === id ? {...e, ...p} : e)}));
-  const removeEc = id => setStore(s => ({...s, ecs:s.ecs.filter(e => e.id !== id)}));
+  const _addTask    = t => setStore(s => ({...s, tasks:[...s.tasks, {...t, id:uid()}]}));
+  const _updateTask = (id,p) => setStore(s => ({...s, tasks:s.tasks.map(t => t.id === id ? {...t, ...p} : t)}));
+  const _removeTask = id => setStore(s => ({...s, tasks:s.tasks.filter(t => t.id !== id)}));
+  const _addEvent    = e => setStore(s => ({...s, events:[...s.events, {...e, id:uid()}]}));
+  const _updateEvent = (id,p) => setStore(s => ({...s, events:s.events.map(e => e.id === id ? {...e, ...p} : e)}));
+  const _removeEvent = id => setStore(s => ({...s, events:s.events.filter(e => e.id !== id)}));
+  const _addEc    = e => setStore(s => ({...s, ecs:[...s.ecs, {...e, id:uid()}]}));
+  const _updateEc = (id,p) => setStore(s => ({...s, ecs:s.ecs.map(e => e.id === id ? {...e, ...p} : e)}));
+  const _removeEc = id => setStore(s => ({...s, ecs:s.ecs.filter(e => e.id !== id)}));
+
+  const addTask = guard(_addTask), updateTask = guard(_updateTask), removeTask = guard(_removeTask);
+  const addEvent = guard(_addEvent), updateEvent = guard(_updateEvent), removeEvent = guard(_removeEvent);
+  const addEc = guard(_addEc), updateEc = guard(_updateEc), removeEc = guard(_removeEc);
 
   const meta = TABS.find(t => t.id === tab);
-  const accentHex = (settings.accents && settings.accents[tab]) || BASE_ACCENTS[tab];
+  const accentHex = BASE_ACCENTS[tab];
 
   // the lock screen takes its mood from whatever Lock It is set to
-  const lockHex = (settings.accents && settings.accents.lock) || BASE_ACCENTS.lock;
+  const lockHex = BASE_ACCENTS.lock;
   const shieldStyle = useMemo(() => {
     const [h, sat] = hexToHsl(lockHex);
     const S = Math.max(8, Math.min(58, sat));          // keep it deep, never neon
@@ -3501,7 +3640,7 @@ function App({user, onSignOut}){
     <div className="app" style={{'--accent':accentHex, '--accent-soft':hexRgba(accentHex, .16), '--accent-ink':inkOn(accentHex)}}>
       <nav className="rail" aria-label="Sections">
         <div className="brand"><Mark size={34} /><b>Plan It</b><span>{new Date().getFullYear()}</span></div>
-        {TABS.filter(t => t.id !== 'settings').map(t => (
+        {TABS.filter(t => t.id !== 'settings' && (!t.parentOnly || isParent)).map(t => (
           <button key={t.id} className={'tab' + (tab === t.id ? ' on' : '')} style={{'--tabcolor':t.color}}
             disabled={running && t.id !== 'lock'}
             title={running && t.id !== 'lock' ? 'Locked until the session ends' : t.label}
@@ -3521,7 +3660,7 @@ function App({user, onSignOut}){
             </button>
           ))}
           <div className="rail-account">
-            <Avatar a={avatar} size={34} className="railav" />
+            <Initial name={user.username || user.email} size={34} className="railav" />
             <div className="who">
               <b>{user.username}</b>
               <small>{user.provider === 'google' ? 'Google account' : user.email}</small>
@@ -3535,7 +3674,7 @@ function App({user, onSignOut}){
         </div>
       </nav>
 
-      <main className="pane">
+      <main className={'pane' + (isParent && tab !== 'watch' && tab !== 'settings' ? ' readonly' : '')}>
         <div className="pane-head">
           <div className="title-wrap">
             <div>
@@ -3549,13 +3688,16 @@ function App({user, onSignOut}){
                 className={sub[tab] === k ? 'on' : ''} onClick={() => setSub(p => ({...p,[tab]:k}))}>{l}</button>
             ))}
           </div>
+          {isParent && tab !== 'watch' && tab !== 'settings' && (
+            <div className="viewonly">Viewing only — parent accounts can't change anything here.</div>
+          )}
           <div className="divider" />
         </div>
 
         <div className="pane-body">
           {tab === 'organize' && sub.organize === 'daily' &&
             <Daily date={date} setDate={setDate} tasks={store.tasks} add={addTask} update={updateTask} remove={removeTask} toast={toast}
-              day={store.day || DEFAULT_DAY} setDay={d => setStore(s => ({...s, day:d}))} />}
+              day={store.day || user.day || DEFAULT_DAY} setDay={d => setStore(s => ({...s, day:d}))} />}
           {tab === 'organize' && sub.organize === 'weekly' &&
             <Weekly date={date} setDate={setDate} tasks={store.tasks} events={store.events} addEvent={addEvent} removeEvent={removeEvent} setDaily={goDaily} />}
           {tab === 'organize' && sub.organize === 'monthly' &&
@@ -3568,16 +3710,18 @@ function App({user, onSignOut}){
           {tab === 'brag' &&
             <BragIt sub={sub.brag} ecs={store.ecs} add={addEc} update={updateEc} remove={removeEc} />}
 
+          {tab === 'watch' && <WatchIt user={user} toast={toast} />}
+
           {tab === 'settings' &&
             <Settings sub={sub.settings} user={user} onSignOut={onSignOut} settings={settings}
-              setSettings={setSettings} toast={toast} avatar={avatar} setAvatar={setAvatar} />}
+              setSettings={setSettings} toast={toast} />}
 
           {tab === 'lock' &&
             <LockIt lock={store.lock} running={running} left={left} minutes={minutes}
               start={startTimer} pause={pauseTimer} reset={resetTimer} toast={toast}
               mode={mode} setMode={setMode} pomo={pomo} setPomo={setPomo}
               phase={phase} cycle={cycle} addCycle={addCycle}
-              avatar={avatar} camOn={camOn} setCamOn={toggleCam} camFull={camFull}
+              camOn={camOn} setCamOn={toggleCam} camFull={camFull}
               camCount={othersOn + (camOn ? 1 : 0)} remoteStreams={remoteStreams} camTick={camTick}
               room={room} setRoom={setRoom} members={members} myId={user.id}
               name={roomName} setName={setRoomName} />}
@@ -3586,6 +3730,7 @@ function App({user, onSignOut}){
 
       {running && ReactDOM.createPortal(
         <div className="shield" style={shieldStyle}>
+          <div className="shieldinner">
           <div className="eyebrow" style={{color:'var(--shield-dim)',letterSpacing:'.2em'}}>
             {mode === 'pomo' && phase
               ? (phase === 'work' ? `Work · cycle ${cycle} of ${pomo.cycles}` : 'Break')
@@ -3597,11 +3742,11 @@ function App({user, onSignOut}){
             : 'Plan It is closed until the timer ends. Put the phone face down.'}</div>
           {room && (
             <div className="seats">
-              <Seat me name={roomName || 'You'} av={avatar} focusing
+              <Seat me name={roomName || 'You'} focusing
                 stream={camOn ? camStream.current : null} tick={camTick}
                 bursts={bursts[user.id] || []} />
               {members.filter(m => m.id !== user.id).slice(0,8).map(m => (
-                <Seat key={m.id} name={m.name} av={m.av} focusing={m.focusing}
+                <Seat key={m.id} name={m.name} focusing={m.focusing}
                   stream={remoteStreams[m.id] || null} tick={camTick}
                   bursts={bursts[m.id] || []}
                   note={m.camOn && !remoteStreams[m.id]
@@ -3632,9 +3777,10 @@ function App({user, onSignOut}){
               </button>
             )}
           </div>
+          </div>
         </div>, document.body)}
 
-      {!store.day && (
+      {!store.day && !user.day && (
         <DayEditor first day={DEFAULT_DAY} onClose={() => setStore(s => ({...s, day:DEFAULT_DAY}))}
           onSave={d => setStore(s => ({...s, day:d}))} />
       )}
@@ -3675,7 +3821,7 @@ function Root(){
         try{
           const snap = await withTimeout(db().collection('users').doc(u.uid).get());
           // no username yet -> Auth shows the "pick a username" step
-          setUser(snap.exists ? {...toUser(u), username: snap.data().username} : null);
+          setUser(snap.exists ? {...toUser(u), ...snap.data()} : null);
         }catch(e){
           // Firestore unreachable: let them into their planner rather than
           // stranding them on a loading screen, but say so.
@@ -3696,6 +3842,7 @@ function Root(){
   if(!CONFIG.FIREBASE.apiKey) return <SetupNeeded />;
   if(checking) return <Booting />;
   if(!user) return <Auth />;
+  if(!user.onboarded) return <Onboarding user={user} onDone={() => window.location.reload()} />;
   return <>
     {dbWarn && <div className="dbwarn">Couldn't reach Firestore, so your username isn't loaded. Your planner still works.</div>}
     <App key={user.id} user={user} onSignOut={signOut} />
