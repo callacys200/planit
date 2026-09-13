@@ -1595,8 +1595,6 @@ function EcEditor({ec, onClose, onSave}){
 }
 
 /* ============ LOCK IT ============ */
-const AV = ['#E03F7C','#5350E8','#0F9E68','#E09A12','#2F80ED','#8A5CF6'];
-const avColor = n => AV[[...n].reduce((a,c) => a + c.charCodeAt(0), 0) % AV.length];
 
 function LockIt({lock, running, left, minutes, start, pause, reset, toast,
                  mode, setMode, pomo, setPomo, phase, cycle, addCycle,
