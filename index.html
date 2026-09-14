@@ -432,6 +432,13 @@
   .rolecard b{display:block;font-size:15px}
   .rolecard small{display:block;color:var(--ink35);font-size:12.5px;margin-top:2px;line-height:1.45}
   .roleicon{font-size:22px;line-height:1;margin-top:1px}
+  .childrow{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);
+    border-radius:12px;margin-bottom:8px;background:var(--card)}
+  .childrow.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .childrow .txt{flex:1;min-width:0}
+  .childrow b{font-size:14.5px}
+  .childrow .meta{font-size:12px;color:var(--ink35);margin-top:1px}
+  .viewonly .btn{vertical-align:middle}
   .linkbanner{margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;
     flex-wrap:wrap;background:#EEF0FF;border:1px solid #CBD0F5;color:#3A3E8C;border-radius:11px;
     padding:9px 10px 9px 13px;font-size:13px;font-weight:600}
@@ -768,6 +775,27 @@ async function loadStore(userId){
 
 async function saveStore(userId, data){
   await DB.set(dataKey(userId), JSON.stringify(data));
+}
+
+// Stored as one JSON string rather than nested fields: it's a single small
+// document, it round-trips exactly, and there is nothing to query on.
+async function pushPlanner(userId, data){
+  try{
+    await withTimeout(db().collection('planner').doc(userId).set({
+      json: JSON.stringify(data), at: Date.now()
+    }), 10000);
+  }catch(e){ /* offline is fine — the local copy is the real one */ }
+}
+
+function watchPlanner(childId, cb){
+  return db().collection('planner').doc(childId).onSnapshot(
+    d => {
+      if(!d.exists) return cb(null);
+      try{ cb({data: JSON.parse(d.data().json), at: d.data().at}); }
+      catch(e){ cb(null); }
+    },
+    () => cb(undefined)   // undefined = couldn't read
+  );
 }
 function seed(){
   return {
@@ -2769,7 +2797,7 @@ function Onboarding({user, onDone}){
 const Err = ({msg}) => msg ? <div className="formerr" role="alert">{msg}</div> : null;
 
 /* ============ WATCH IT ============ */
-function WatchIt({user, toast}){
+function WatchIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
   const [links, setLinks] = useState(null);
   const [childName, setChildName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -2798,35 +2826,105 @@ function WatchIt({user, toast}){
 
   const remove = async l => {
     if(!window.confirm(`Remove the connection to ${l.childUsername}?`)) return;
-    try{ await db().collection('links').doc(l.id).delete(); toast('Removed'); load(); }
-    catch(e){ setErr('Could not remove that.'); }
+    try{
+      await db().collection('links').doc(l.id).delete();
+      if(viewChildId === l.childUid) setViewChild(null, '');
+      toast('Removed'); load();
+    }catch(e){ setErr('Could not remove that.'); }
   };
 
   const approved = (links || []).filter(l => l.status === 'approved');
+  const waiting  = (links || []).filter(l => l.status !== 'approved');
+  const d = childStore && childStore.data;
+  const lock = (d && d.lock) || {};
+  const today = iso(new Date());
+  const dueToday = d ? d.tasks.filter(t => t.scope === 'daily' && t.date === today) : [];
+  const soon = d ? d.events
+    .filter(e => e.date >= today && e.date <= iso(addDays(new Date(), 14)))
+    .sort((a,b) => a.date.localeCompare(b.date)) : [];
 
   return (
-    <div style={{maxWidth:660}}>
+    <div style={{maxWidth:700}}>
       <Section title="Your children" hint="A child appears here once they accept your request.">
         {links === null ? <div className="card" style={{color:'var(--ink35)'}}>Loading…</div>
           : links.length === 0
           ? <Empty title="Nobody connected yet" hint="Add your child's username below to send a request." />
-          : links.map(l => (
-            <div key={l.id} className="todo" style={{alignItems:'center'}}>
-              <Initial name={l.childUsername} size={34} />
-              <div className="txt">
-                <b>{l.childUsername}</b>
-                <div className="meta">
-                  {l.status === 'approved' ? 'Connected' :
-                   l.status === 'declined' ? 'Declined the request' : 'Waiting for them to accept'}
+          : <>
+              {approved.map(l => (
+                <div key={l.id} className={'childrow' + (viewChildId === l.childUid ? ' on' : '')}>
+                  <Initial name={l.childUsername} size={38} />
+                  <div className="txt">
+                    <b>{l.childUsername}</b>
+                    <div className="meta">{viewChildId === l.childUid ? 'Showing their planner' : 'Connected'}</div>
+                  </div>
+                  <div className="todo-actions">
+                    {viewChildId === l.childUid
+                      ? <button className="btn sm" onClick={() => setViewChild(null, '')}>Stop viewing</button>
+                      : <button className="btn sm primary" onClick={() => setViewChild(l.childUid, l.childUsername)}>View planner</button>}
+                    <XBtn onClick={() => remove(l)} label="Remove" />
+                  </div>
                 </div>
-              </div>
-              <div className="todo-actions">
-                <span className={'status' + (l.status === 'approved' ? ' focusing' : '')}>{l.status}</span>
-                <XBtn onClick={() => remove(l)} label="Remove" />
-              </div>
-            </div>
-          ))}
+              ))}
+              {waiting.map(l => (
+                <div key={l.id} className="todo" style={{alignItems:'center'}}>
+                  <Initial name={l.childUsername} size={34} />
+                  <div className="txt">
+                    <b>{l.childUsername}</b>
+                    <div className="meta">{l.status === 'declined' ? 'Declined the request' : 'Waiting for them to accept'}</div>
+                  </div>
+                  <div className="todo-actions">
+                    <span className="status">{l.status}</span>
+                    <XBtn onClick={() => remove(l)} label="Remove" />
+                  </div>
+                </div>
+              ))}
+            </>}
       </Section>
+
+      {viewChildId && (
+        <Section title="How they're doing">
+          {childStore === null ? <div className="card" style={{color:'var(--ink35)'}}>Loading their planner…</div>
+            : childStore === undefined
+            ? <div className="card soft" style={{color:'var(--ink60)',fontSize:13.5,lineHeight:1.6}}>
+                Couldn't read their planner. They may not have opened Plan It since syncing was added —
+                ask them to sign in once.
+              </div>
+            : <>
+                <div className="row" style={{gap:12,flexWrap:'wrap',marginBottom:14}}>
+                  <div className="card" style={{flex:1,minWidth:150}}>
+                    <div className="eyebrow">Minutes focused</div>
+                    <div className="mono" style={{fontSize:26,fontWeight:500}}>{lock.minutes || 0}</div>
+                  </div>
+                  <div className="card" style={{flex:1,minWidth:150}}>
+                    <div className="eyebrow">Sessions finished</div>
+                    <div className="mono" style={{fontSize:26,fontWeight:500}}>{lock.sessions || 0}</div>
+                  </div>
+                  <div className="card" style={{flex:1,minWidth:150}}>
+                    <div className="eyebrow">On today's list</div>
+                    <div className="mono" style={{fontSize:26,fontWeight:500}}>
+                      {dueToday.filter(t => t.done).length}/{dueToday.length}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="eyebrow" style={{marginBottom:8}}>Coming up in the next two weeks</div>
+                {soon.length === 0
+                  ? <Empty title="Nothing marked on their calendar" hint="Tests, deadlines, and birthdays would show here." />
+                  : soon.slice(0,8).map(e => (
+                    <div key={e.id} className="todo" style={{alignItems:'center'}}>
+                      <span style={{width:9,height:9,borderRadius:99,background:evColor(e.type),flex:'none'}} />
+                      <div className="txt"><b>{e.title}</b>
+                        <div className="meta">{evLabel(e.type)} · {fmtDay(parseISO(e.date))}</div></div>
+                    </div>
+                  ))}
+
+                <div className="card soft" style={{marginTop:14,fontSize:13,color:'var(--ink60)'}}>
+                  Their full planner is open in the other tabs while you're viewing — read only.
+                  <button className="btn sm" style={{marginLeft:10}} onClick={() => goTab('organize')}>Open their calendar</button>
+                </div>
+              </>}
+        </Section>
+      )}
 
       <Section title="Add a child">
         <div className="card">
@@ -2837,19 +2935,6 @@ function WatchIt({user, toast}){
           {note && <div className="formnote">{note}</div>}
           <Err msg={err} />
           <button className="btn primary" disabled={busy} onClick={add}>{busy ? 'Sending…' : 'Send request'}</button>
-        </div>
-      </Section>
-
-      <Section title="What's coming here">
-        <div className="card soft" style={{color:'var(--ink60)', fontSize:13.5, lineHeight:1.65}}>
-          <b style={{color:'var(--ink)'}}>To be decided.</b> This page will grow into a place to see how
-          {approved.length ? ` ${approved.map(l => l.childUsername).join(' and ')} is` : ' your child is'} doing —
-          upcoming tests, what's overdue, how much they've focused this week.
-          <div style={{marginTop:10}}>
-            One thing worth knowing now: planner entries are stored in each person's own browser, not on a
-            server. Showing you their actual tasks means syncing that data first — a real piece of work rather
-            than a switch to flip.
-          </div>
         </div>
       </Section>
     </div>
@@ -3337,6 +3422,7 @@ const BASE_ACCENTS = {brag:'#E09A12', list:'#0F9E68', organize:'#5350E8', lock:'
 
 function App({user, onSignOut}){
   const [ready, setReady] = useState(false);
+  const isParent = user.role === 'parent';
   const [tab, setTab] = useState('organize');
   const [sub, setSub] = useState({brag:'honor', list:'daily', organize:'daily', lock:'focus', settings:'account', watch:'children'});
   const [date, setDate] = useState(new Date());
@@ -3377,13 +3463,26 @@ function App({user, onSignOut}){
   useEffect(() => {
     if(!ready) return;
     if(firstSave.current){ firstSave.current = false; }
-    const t = setTimeout(() => saveStore(user.id, store), 400);
+    const t = setTimeout(() => {
+      saveStore(user.id, store);
+      if(!isParent) pushPlanner(user.id, store);
+    }, 600);
     return () => clearTimeout(t);
-  }, [store, ready, user.id]);
+  }, [store, ready, user.id, isParent]);
+
+  const [viewChildId, setViewChildId] = useState(null);
+  const [viewChildName, setViewChildName] = useState('');
+  const [childStore, setChildStore] = useState(null);   // null = loading, undefined = no access
+  useEffect(() => {
+    if(!isParent || !viewChildId){ setChildStore(null); return; }
+    setChildStore(null);
+    return watchPlanner(viewChildId, res => setChildStore(res === undefined ? undefined : (res ? res : null)));
+  }, [isParent, viewChildId]);
+
+  // what the four planner tabs actually render: yours, or the child you picked
+  const view = (isParent && childStore) ? childStore.data : store;
 
   const toast = useCallback(msg => { setToastMsg(msg); setTimeout(() => setToastMsg(null), 2200); }, []);
-
-  const isParent = user.role === 'parent';
 
   // a request sitting unseen in settings is a request that never gets answered
   const [pendingLinks, setPendingLinks] = useState(0);
@@ -3737,35 +3836,45 @@ function App({user, onSignOut}){
           )}
 
           {isParent && tab !== 'watch' && tab !== 'settings' && (
-            <div className="viewonly">Viewing only — parent accounts can't change anything here.</div>
+            viewChildId
+              ? <div className="viewonly">
+                  Viewing <b>{viewChildName}</b>'s planner — read only.
+                  <button className="btn sm" style={{marginLeft:10}} onClick={() => setTab('watch')}>Switch child</button>
+                </div>
+              : <div className="viewonly">
+                  Pick a child in Watch It to see their planner.
+                  <button className="btn sm" style={{marginLeft:10}} onClick={() => setTab('watch')}>Go to Watch It</button>
+                </div>
           )}
           <div className="divider" />
         </div>
 
         <div className="pane-body">
           {tab === 'organize' && sub.organize === 'daily' &&
-            <Daily date={date} setDate={setDate} tasks={store.tasks} add={addTask} update={updateTask} remove={removeTask} toast={toast}
-              day={store.day || user.day || DEFAULT_DAY} setDay={d => setStore(s => ({...s, day:d}))} />}
+            <Daily date={date} setDate={setDate} tasks={view.tasks} add={addTask} update={updateTask} remove={removeTask} toast={toast}
+              day={view.day || user.day || DEFAULT_DAY} setDay={d => setStore(s => ({...s, day:d}))} />}
           {tab === 'organize' && sub.organize === 'weekly' &&
-            <Weekly date={date} setDate={setDate} tasks={store.tasks} events={store.events} addEvent={addEvent} removeEvent={removeEvent} setDaily={goDaily} />}
+            <Weekly date={date} setDate={setDate} tasks={view.tasks} events={view.events} addEvent={addEvent} removeEvent={removeEvent} setDaily={goDaily} />}
           {tab === 'organize' && sub.organize === 'monthly' &&
-            <Monthly date={date} setDate={setDate} events={store.events} addEvent={addEvent} updateEvent={updateEvent} removeEvent={removeEvent} setDaily={goDaily} />}
+            <Monthly date={date} setDate={setDate} events={view.events} addEvent={addEvent} updateEvent={updateEvent} removeEvent={removeEvent} setDaily={goDaily} />}
 
           {tab === 'list' &&
-            <ListIt sub={sub.list} date={date} setDate={setDate} tasks={store.tasks} add={addTask} update={updateTask} remove={removeTask}
+            <ListIt sub={sub.list} date={date} setDate={setDate} tasks={view.tasks} add={addTask} update={updateTask} remove={removeTask}
               setTab={t => { setTab(t); setSub(p => ({...p, organize:'daily'})); }} />}
 
           {tab === 'brag' &&
-            <BragIt sub={sub.brag} ecs={store.ecs} add={addEc} update={updateEc} remove={removeEc} />}
+            <BragIt sub={sub.brag} ecs={view.ecs} add={addEc} update={updateEc} remove={removeEc} />}
 
-          {tab === 'watch' && <WatchIt user={user} toast={toast} />}
+          {tab === 'watch' && <WatchIt user={user} toast={toast} viewChildId={viewChildId}
+            childStore={childStore} goTab={t => setTab(t)}
+            setViewChild={(id, name) => { setViewChildId(id); setViewChildName(name); }} />}
 
           {tab === 'settings' &&
             <Settings sub={sub.settings} user={user} onSignOut={onSignOut} settings={settings}
               setSettings={setSettings} toast={toast} onLinksChange={refreshLinks} />}
 
           {tab === 'lock' &&
-            <LockIt lock={store.lock} running={running} left={left} minutes={minutes}
+            <LockIt lock={view.lock || {}} running={running} left={left} minutes={minutes}
               start={startTimer} pause={pauseTimer} reset={resetTimer} toast={toast}
               mode={mode} setMode={setMode} pomo={pomo} setPomo={setPomo}
               phase={phase} cycle={cycle} addCycle={addCycle}
