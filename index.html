@@ -432,6 +432,10 @@
   .rolecard b{display:block;font-size:15px}
   .rolecard small{display:block;color:var(--ink35);font-size:12.5px;margin-top:2px;line-height:1.45}
   .roleicon{font-size:22px;line-height:1;margin-top:1px}
+  .linkbanner{margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    flex-wrap:wrap;background:#EEF0FF;border:1px solid #CBD0F5;color:#3A3E8C;border-radius:11px;
+    padding:9px 10px 9px 13px;font-size:13px;font-weight:600}
+  .tabdot{position:absolute;top:11px;right:11px;width:8px;height:8px;border-radius:99px;background:#E03F7C}
   .viewonly{margin-top:14px;background:#EAF6F5;border:1px solid #BFE0DC;color:#0B6B63;
     border-radius:11px;padding:9px 13px;font-size:12.5px;font-weight:600}
   .readonly .btn.primary,.readonly .addbar,.readonly .iconbtn,
@@ -2561,6 +2565,17 @@ async function saveProfile(uid, fields){
 }
 
 /* ============ ROLES & PARENT LINKS ============ */
+// Store the birthday, work the age out each time — otherwise it's wrong by
+// the next birthday and nobody thinks to update it.
+const ageFrom = dob => {
+  if(!dob) return null;
+  const b = parseISO(dob), n = new Date();
+  let a = n.getFullYear() - b.getFullYear();
+  const m = n.getMonth() - b.getMonth();
+  if(m < 0 || (m === 0 && n.getDate() < b.getDate())) a--;
+  return (a >= 0 && a < 120) ? a : null;
+};
+
 const linkId = (childUid, parentUid) => `${childUid}_${parentUid}`;
 
 async function findUidByUsername(username){
@@ -2574,7 +2589,13 @@ async function requestLink({parentUid, parentEmail, parentName, childUsername}){
   if(!childUid) throw new Error('No account with that username. Check the spelling with them.');
   if(childUid === parentUid) throw new Error("That's your own username.");
   const ref = db().collection('links').doc(linkId(childUid, parentUid));
-  const existing = await withTimeout(ref.get());
+  let existing;
+  try{ existing = await withTimeout(ref.get()); }
+  catch(e){
+    throw new Error(e.code === 'permission-denied'
+      ? 'Firestore rules are out of date — republish them from the console, then try again.'
+      : 'Could not reach the database. Check your connection.');
+  }
   if(existing.exists){
     const st = existing.data().status;
     throw new Error(st === 'approved'
@@ -2593,7 +2614,7 @@ const linksForChild  = uid => db().collection('links').where('childUid','==',uid
 function Onboarding({user, onDone}){
   const [step, setStep] = useState('role');
   const [role, setRole] = useState(null);
-  const [age, setAge] = useState('');
+  const [dob, setDob] = useState('');
   const [email, setEmail] = useState(user.email || '');
   const [childName, setChildName] = useState('');
   const [day, setDay] = useState(DEFAULT_DAY);
@@ -2606,7 +2627,7 @@ function Onboarding({user, onDone}){
     try{
       await saveProfile(user.id, {
         role, onboarded:true,
-        ...(role === 'student' ? {age: age || ''} : {parentEmail: email.trim()}),
+        ...(role === 'student' ? {dob} : {parentEmail: email.trim()}),
         day
       });
       onDone();
@@ -2655,19 +2676,23 @@ function Onboarding({user, onDone}){
                     <span><b>I'm a parent</b><small>Follow along with your child's planner — viewing only</small></span>
                   </button>
                   <button className="pillbtn" disabled={!role}
-                    onClick={() => setStep(role === 'student' ? 'age' : 'parent')}>Continue <IconArrow /></button>
+                    onClick={() => setStep(role === 'student' ? 'dob' : 'parent')}>Continue <IconArrow /></button>
                 </>
               )}
 
-              {step === 'age' && (
+              {step === 'dob' && (
                 <>
-                  <h2>How old are you?</h2>
-                  <p className="csub">Just so the planner fits your school year.</p>
-                  <label className="flabel">Age</label>
-                  <input className="finput" type="number" min="5" max="100" value={age}
-                    onChange={e => setAge(e.target.value)} placeholder="Enter your age here" autoFocus />
+                  <h2>When's your birthday?</h2>
+                  <p className="csub">Plan It works your age out from this, so it stays right every year.</p>
+                  <label className="flabel">Date of birth</label>
+                  <input className="finput" type="date" value={dob} max={iso(new Date())}
+                    onChange={e => setDob(e.target.value)} autoFocus />
+                  {ageFrom(dob) !== null && (
+                    <div className="formnote">That makes you {ageFrom(dob)}.</div>
+                  )}
                   <Err msg={err} />
-                  <button className="pillbtn" onClick={() => setStep('day')}>Continue <IconArrow /></button>
+                  <button className="pillbtn" disabled={!dob || ageFrom(dob) === null}
+                    onClick={() => setStep('day')}>Continue <IconArrow /></button>
                   <button className="undertext" onClick={() => setStep('role')}>Back</button>
                 </>
               )}
@@ -2721,7 +2746,7 @@ function Onboarding({user, onDone}){
                   <button className="pillbtn" disabled={busy} onClick={finish}>
                     {busy ? 'Finishing…' : 'Start planning'} <IconArrow />
                   </button>
-                  <button className="undertext" onClick={() => setStep('age')}>Back</button>
+                  <button className="undertext" onClick={() => setStep('dob')}>Back</button>
                 </>
               )}
             </div>
@@ -2833,7 +2858,7 @@ function WatchIt({user, toast}){
 
 /* ============ SETTINGS ============ */
 // A student's view of who has asked to follow along, and who already does.
-function ParentAccess({user, toast}){
+function ParentAccess({user, toast, onChange}){
   const [links, setLinks] = useState(null);
   const load = useCallback(async () => {
     try{
@@ -2847,12 +2872,12 @@ function ParentAccess({user, toast}){
     try{
       await db().collection('links').doc(l.id).update({status, decidedAt:Date.now()});
       toast(status === 'approved' ? 'Access granted' : 'Request declined');
-      load();
+      load(); onChange && onChange();
     }catch(e){ toast('Could not save that'); }
   };
   const revoke = async l => {
     if(!window.confirm(`Stop ${l.parentName || 'this parent'} from following your planner?`)) return;
-    try{ await db().collection('links').doc(l.id).delete(); toast('Access removed'); load(); }
+    try{ await db().collection('links').doc(l.id).delete(); toast('Access removed'); load(); onChange && onChange(); }
     catch(e){ toast('Could not remove that'); }
   };
 
@@ -2908,7 +2933,7 @@ async function changeUsername(newName, user, oldName){
   await withTimeout(batch.commit(), 10000);
 }
 
-function Settings({sub, user, onSignOut, settings, setSettings, toast}){
+function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksChange}){
   const auth = initFirebase();
   const [profile, setProfile] = useState(null);
   const [err, setErr] = useState('');
@@ -2929,7 +2954,7 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast}){
   const [form, setForm] = useState(null);
   useEffect(() => {
     if(profile && !form) setForm({
-      name: profile.name || '', age: profile.age || '', grade: profile.grade || '',
+      name: profile.name || '', dob: profile.dob || '', grade: profile.grade || '',
       gender: profile.gender || '', school: profile.school || ''
     });
   }, [profile, form]);
@@ -2938,7 +2963,7 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast}){
     setBusy(true); setErr(''); setNote('');
     try{
       await saveProfile(user.id, {
-        name:form.name.trim(), age:form.age, grade:form.grade,
+        name:form.name.trim(), dob:form.dob, grade:form.grade,
         gender:form.gender, school:form.school.trim(), email:user.email
       });
       setNote('Saved.');
@@ -3035,7 +3060,10 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast}){
               <div className="card">
                 <Field label="Name"><input value={form.name} onChange={e => setForm({...form, name:e.target.value})} placeholder="Enter your name here" /></Field>
                 <div className="grid2">
-                  <Field label="Age"><input type="number" min="1" max="120" value={form.age} onChange={e => setForm({...form, age:e.target.value})} placeholder="Enter your age here" /></Field>
+                  <Field label={ageFrom(form.dob) !== null ? `Date of birth — age ${ageFrom(form.dob)}` : 'Date of birth'}>
+                    <input type="date" value={form.dob} max={iso(new Date())}
+                      onChange={e => setForm({...form, dob:e.target.value})} />
+                  </Field>
                   <Field label="Grade">
                     <select value={form.grade} onChange={e => setForm({...form, grade:e.target.value})}>
                       <option value="">Prefer not to say</option>
@@ -3061,7 +3089,7 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast}){
         </>
       )}
 
-      {sub === 'account' && user.role !== 'parent' && <ParentAccess user={user} toast={toast} />}
+      {sub === 'account' && user.role !== 'parent' && <ParentAccess user={user} toast={toast} onChange={onLinksChange} />}
       {sub === 'account' && user.role === 'parent' && (
         <Section title="Your children" hint="Add another child from the Watch It tab.">
           <div className="card soft" style={{fontSize:13.5, color:'var(--ink60)'}}>
@@ -3356,6 +3384,16 @@ function App({user, onSignOut}){
   const toast = useCallback(msg => { setToastMsg(msg); setTimeout(() => setToastMsg(null), 2200); }, []);
 
   const isParent = user.role === 'parent';
+
+  // a request sitting unseen in settings is a request that never gets answered
+  const [pendingLinks, setPendingLinks] = useState(0);
+  const refreshLinks = useCallback(() => {
+    if(isParent) return;
+    linksForChild(user.id)
+      .then(snap => setPendingLinks(snap.docs.filter(d => d.data().status === 'pending').length))
+      .catch(() => {});
+  }, [user.id, isParent]);
+  useEffect(() => { refreshLinks(); }, [refreshLinks]);
   // Every write goes through here, so a parent account cannot change anything
   // even if a control slips through the interface.
   const guard = fn => (...args) => {
@@ -3655,6 +3693,7 @@ function App({user, onSignOut}){
               onClick={() => setTab(t.id)} aria-current={tab === t.id}>
               <span className="emoji">{t.emoji}</span>
               <span><span className="lbl">{t.label}</span><span className="sub">{t.sub}</span></span>
+              {t.id === 'settings' && pendingLinks > 0 && <i className="tabdot" />}
             </button>
           ))}
           <div className="rail-account">
@@ -3686,6 +3725,17 @@ function App({user, onSignOut}){
                 className={sub[tab] === k ? 'on' : ''} onClick={() => setSub(p => ({...p,[tab]:k}))}>{l}</button>
             ))}
           </div>
+          {!isParent && pendingLinks > 0 && tab !== 'settings' && (
+            <div className="linkbanner">
+              <span>
+                {pendingLinks === 1 ? 'A parent has asked' : `${pendingLinks} parents have asked`} to follow your planner.
+              </span>
+              <button className="btn sm" onClick={() => { setTab('settings'); setSub(p => ({...p, settings:'account'})); }}>
+                Review
+              </button>
+            </div>
+          )}
+
           {isParent && tab !== 'watch' && tab !== 'settings' && (
             <div className="viewonly">Viewing only — parent accounts can't change anything here.</div>
           )}
@@ -3712,7 +3762,7 @@ function App({user, onSignOut}){
 
           {tab === 'settings' &&
             <Settings sub={sub.settings} user={user} onSignOut={onSignOut} settings={settings}
-              setSettings={setSettings} toast={toast} />}
+              setSettings={setSettings} toast={toast} onLinksChange={refreshLinks} />}
 
           {tab === 'lock' &&
             <LockIt lock={store.lock} running={running} left={left} minutes={minutes}
