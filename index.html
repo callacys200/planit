@@ -102,7 +102,11 @@
   }
   .tape button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(20,23,42,.14);position:relative}
   .tape button.on::after{content:"";position:absolute;left:14px;right:14px;bottom:4px;height:2.5px;border-radius:2px;background:var(--accent)}
-  .pane-body{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:18px 26px 40px}
+  .pane-body{--panepad:18px;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;padding:var(--panepad) 26px 40px}
+  .dayhead{position:sticky;top:calc(var(--panepad) * -1);z-index:6;background:var(--card);
+    margin:calc(var(--panepad) * -1) 0 14px;padding:var(--panepad) 0 12px;
+    box-shadow:0 12px 10px -10px rgba(20,23,42,.10)}
   .divider{height:1px;background:var(--line);margin:16px 0 0}
 
   /* ---------- bits ---------- */
@@ -172,6 +176,15 @@
   .block .bt{font-weight:600;font-size:13px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .block .bm{font-size:10.5px;color:var(--ink60);margin-top:1px}
   .block.done .bt{text-decoration:line-through;opacity:.55}
+  .blockcolors{display:flex;gap:7px;flex-wrap:wrap}
+  .bc{width:28px;height:28px;border-radius:99px;border:2px solid transparent;padding:0;cursor:pointer;
+    box-shadow:0 0 0 1px var(--line) inset;transition:.14s}
+  .bc:hover{transform:scale(1.08)}
+  .bc.on{border-color:var(--ink)}
+  .bc.none{background:repeating-linear-gradient(45deg,#fff,#fff 4px,#DDE1EE 4px,#DDE1EE 8px)}
+  .onweek{display:inline-block;margin-left:6px;padding:0 4px;border-radius:4px;font-size:9px;
+    font-weight:700;letter-spacing:.04em;background:currentColor;color:var(--card);opacity:.65;vertical-align:1px}
+  .cdot{width:7px;height:7px;border-radius:99px;display:inline-block;margin-right:5px;vertical-align:1px}
   .block .grip{position:absolute;left:0;right:0;bottom:0;height:9px;cursor:ns-resize;touch-action:none}
   @media (pointer:coarse){ .block .grip{height:18px} }
   .block .grip::after{content:"";position:absolute;left:50%;bottom:3px;width:22px;height:2.5px;margin-left:-11px;border-radius:2px;background:currentColor;opacity:.22}
@@ -212,6 +225,14 @@
   .daycol h4{background:#F7F8FC;padding:7px 9px;font-size:12px;font-weight:700;border-bottom:1px solid var(--line);font-family:"Bricolage Grotesque",sans-serif}
   .daycol h4 small{display:block;font-weight:500;color:var(--ink35);font-family:"IBM Plex Mono",monospace;font-size:10px}
   .daycol.is-today h4{background:var(--accent-soft)}
+  .daycol.dropping{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .weektray{margin-top:16px;padding:12px;border:1.5px dashed var(--line);border-radius:var(--r);background:var(--soft)}
+  .weektray-items{display:flex;gap:8px;flex-wrap:wrap}
+  .weekchip{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--line);
+    background:var(--card);border-radius:99px;font-size:13px;font-weight:600;cursor:grab;touch-action:pan-y;
+    max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .weekchip:hover{border-color:var(--accent)}
+  .weekchip:active{cursor:grabbing}
   .daycol .inner{padding:8px;display:grid;grid-template-rows:1fr;gap:6px;flex:1;min-height:0}
   .daypills{display:grid;grid-auto-rows:min-content;gap:6px;align-content:start;min-height:0}
   .pill{border-radius:8px;padding:5px 7px;font-size:11.5px;line-height:1.3;border-left:3px solid;overflow-wrap:anywhere}
@@ -233,8 +254,19 @@
   .todo.done .txt b{text-decoration:line-through;color:var(--ink35)}
   .todo .meta{font-size:11.5px;color:var(--ink35);margin-top:2px}
   .addbar{display:flex;gap:8px;margin-bottom:14px}
-  .addbar input{flex:1;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:#FBFBFE}
-  .addbar input:focus{background:#fff;border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+  .addwrap{flex:1;position:relative;display:flex;align-items:center}
+  .addplus{position:absolute;left:13px;font-size:19px;line-height:1;font-weight:600;
+    color:var(--accent);opacity:.75;pointer-events:none}
+  .addbar input{flex:1;padding:12px 14px 12px 34px;border:2px dashed var(--accent);border-radius:12px;
+    background:var(--accent-soft);color:var(--ink);transition:.15s}
+  .addbar input::placeholder{color:var(--ink60);opacity:.9}
+  .addbar input:focus{background:var(--card);border-style:solid;outline:none;
+    box-shadow:0 0 0 3px var(--accent-soft)}
+  .addbar.shake input{animation:nudge .45s cubic-bezier(.36,.07,.19,.97)}
+  @keyframes nudge{
+    10%,90%{transform:translateX(-2px)} 20%,80%{transform:translateX(4px)}
+    30%,50%,70%{transform:translateX(-7px)} 40%,60%{transform:translateX(7px)}
+  }
   .bar{height:6px;border-radius:99px;background:#EEF0F7;overflow:hidden}
   .bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
 
@@ -442,6 +474,22 @@
   .linkbanner{margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;
     flex-wrap:wrap;background:#EEF0FF;border:1px solid #CBD0F5;color:#3A3E8C;border-radius:11px;
     padding:9px 10px 9px 13px;font-size:13px;font-weight:600}
+  .tabcount{position:absolute;top:9px;right:9px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;
+    background:#E03F7C;color:#fff;font-size:10.5px;font-weight:700;font-style:normal;display:grid;
+    place-items:center;line-height:1}
+  .nowcard{display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid var(--line);
+    border-radius:12px;background:var(--soft);margin-bottom:14px}
+  .nowcard b{font-size:14px}
+  .nowdot{width:10px;height:10px;border-radius:99px;background:#C6CBDC;flex:none}
+  .nowdot.on{background:#0F9E68;box-shadow:0 0 0 4px rgba(15,158,104,.18)}
+  .reqcard{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:12px;
+    padding:14px;margin-bottom:10px;background:var(--soft)}
+  .newsitem{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+  .newsitem:last-child{border-bottom:0}
+  .newsemoji{font-size:22px;line-height:1;margin-top:1px;flex:none}
+  .newstag{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    padding:3px 7px;border-radius:99px;background:var(--soft);border:1px solid var(--line);color:var(--ink60)}
+  .newsitem.fresh .newstag{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
   .tabdot{position:absolute;top:11px;right:11px;width:8px;height:8px;border-radius:99px;background:#E03F7C}
   .viewonly{margin-top:14px;background:#EAF6F5;border:1px solid #BFE0DC;color:#0B6B63;
     border-radius:11px;padding:9px 13px;font-size:12.5px;font-weight:600}
@@ -601,7 +649,8 @@
     .modal-foot > *,.timerbtns > *{width:100%;justify-content:center}
     :root{--gut:46px}
     .pane-head{padding:14px 12px 0}
-    .pane-body{padding:12px 12px 40px}
+    .dayhead{padding-bottom:10px}
+    .pane-body{--panepad:12px;padding:var(--panepad) 12px 40px}
     .pane{border-radius:14px 0 0 14px}
     .grid2{grid-template-columns:1fr}
     .modal-body{padding:14px 16px}
@@ -730,6 +779,21 @@ const relLum = hex => {
 // rather than having to be darkened until white text works on it.
 const inkOn = hex => (1.05/(relLum(hex)+0.05)) >= 3.0 ? '#FFFFFF' : '#17181F';
 
+// Colours for time blocks. Named so the picker reads as choices rather than
+// swatches, and dark enough that the label stays readable on the tint.
+const BLOCK_COLORS = [
+  {id:'indigo', label:'Indigo', hex:'#5350E8'},
+  {id:'green',  label:'Green',  hex:'#0F9E68'},
+  {id:'amber',  label:'Amber',  hex:'#E09A12'},
+  {id:'pink',   label:'Pink',   hex:'#E03F7C'},
+  {id:'blue',   label:'Blue',   hex:'#2F80ED'},
+  {id:'purple', label:'Purple', hex:'#8A5CF6'},
+  {id:'teal',   label:'Teal',   hex:'#0E8F86'},
+  {id:'rust',   label:'Rust',   hex:'#D2622B'},
+  {id:'slate',  label:'Slate',  hex:'#5A6178'},
+];
+const blockHex = id => (BLOCK_COLORS.find(c => c.id === id) || {}).hex;
+
 const ROW = 58;
 const DEFAULT_DAY = {wake:'07:00', sleep:'23:00'};
 const DEFAULT_SETTINGS = {notify:{on:false, before:10}};
@@ -780,21 +844,21 @@ async function saveStore(userId, data){
 // Stored as one JSON string rather than nested fields: it's a single small
 // document, it round-trips exactly, and there is nothing to query on.
 async function pushPlanner(userId, data){
-  try{
-    await withTimeout(db().collection('planner').doc(userId).set({
-      json: JSON.stringify(data), at: Date.now()
-    }), 10000);
-  }catch(e){ /* offline is fine — the local copy is the real one */ }
+  await withTimeout(db().collection('planner').doc(userId).set({
+    json: JSON.stringify(data), at: Date.now()
+  }, {merge:true}), 10000);
 }
 
 function watchPlanner(childId, cb){
   return db().collection('planner').doc(childId).onSnapshot(
     d => {
-      if(!d.exists) return cb(null);
-      try{ cb({data: JSON.parse(d.data().json), at: d.data().at}); }
-      catch(e){ cb(null); }
+      if(!d.exists) return cb({empty:true});
+      try{ cb({data: JSON.parse(d.data().json), at: d.data().at, status: d.data().status || null}); }
+      catch(e){ cb({error:'Their planner could not be read.'}); }
     },
-    () => cb(undefined)   // undefined = couldn't read
+    err => cb({error: err.code === 'permission-denied'
+      ? 'Permission denied — republish the Firestore rules, then reload.'
+      : (err.message || 'Could not reach the database.')})
   );
 }
 function seed(){
@@ -1041,8 +1105,29 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
 
   const hours = [];
   for(let m = startM; m < endM; m += 60) hours.push(m);
-  const mid = clampM(Math.round((startM + span/2)/60)*60);
-  const newBlock = () => setEditing({id:null, title:'', start:wire(mid), end:wire(Math.min(endM, mid+60)), date:dk});
+
+  // The earliest slot that doesn't collide with anything, looking from the end
+  // of the first thing on the day. School 8–4 means the next block lands at 4.
+  const firstFree = (dur = 60) => {
+    const busy = scheduled
+      .map(t => {
+        const a = norm(toMin(t.start));
+        return {s:a, e:Math.max(norm(toMin(t.end)), a + 15)};
+      })
+      .sort((a,b) => a.s - b.s);
+    if(busy.length === 0) return clampM(Math.round(wakeM/5)*5);
+    let cur = busy[0].e;
+    for(let i = 1; i < busy.length; i++){
+      if(cur + dur <= busy[i].s) break;      // the gap here is big enough
+      cur = Math.max(cur, busy[i].e);
+    }
+    return Math.max(startM, Math.min(endM - dur, cur));
+  };
+
+  const newBlock = () => {
+    const s0 = firstFree(60);
+    setEditing({id:null, title:'', start:wire(s0), end:wire(Math.min(endM, s0 + 60)), date:dk});
+  };
 
   // shaded strips for the minutes before waking and after sleeping
   const preTop = (wakeM - startM)/60*ROW;
@@ -1050,7 +1135,7 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
 
   return (
     <div>
-      <div className="spread" style={{marginBottom:14}}>
+      <div className="spread dayhead">
         <DateNav label={fmtDay(date)} onPrev={() => setDate(addDays(date,-1))} onNext={() => setDate(addDays(date,1))} onToday={() => setDate(new Date())} />
         <div className="row" style={{gap:8}}>
           <button className="btn" onClick={() => setDayEdit(true)} title="Change your wake and sleep times">
@@ -1087,11 +1172,18 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
                     <div key={t.id}
                       className={'block' + (drag && drag.id === t.id ? ' dragging' : '') + (t.done ? ' done' : '')}
                       style={{top:(t.s - startM)/60*ROW + 1, height:Math.max(24, (t.e - t.s)/60*ROW - 2),
-                              left:`calc(${t.lane*w}% + 6px)`, width:`calc(${w}% - 12px)`}}
+                              left:`calc(${t.lane*w}% + 6px)`, width:`calc(${w}% - 12px)`,
+                              ...(blockHex(t.color) ? {
+                                background: hexRgba(blockHex(t.color), .17),
+                                borderLeftColor: blockHex(t.color)
+                              } : {})}}
                       onPointerDown={e => { if(!e.target.classList.contains('grip')) onDown(e, t, 'move'); }}
                       onDoubleClick={() => setEditing(t)}>
                       <div className="bt">{t.title}</div>
-                      <div className="bm mono">{pretty(t.start)} – {pretty(t.end)}</div>
+                      <div className="bm mono">
+                        {pretty(t.start)} – {pretty(t.end)}
+                        {t.onWeek && <span className="onweek" title="Shown on the weekly calendar">W</span>}
+                      </div>
                       <div className="grip" onPointerDown={e => onDown(e, t, 'resize')} />
                     </div>
                   );
@@ -1116,8 +1208,9 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
                   <div style={{fontWeight:600,fontSize:13.5}}>{t.title}</div>
                   <div style={{fontSize:11,color:'var(--ink35)'}}>Drag to place, or</div>
                   <button className="btn sm" style={{marginTop:5}} onClick={() => {
-                    update(t.id, {start:wire(mid), end:wire(Math.min(endM, mid+60))});
-                    toast(`Placed at ${pretty(wire(mid))} — drag to adjust`);
+                    const s0 = firstFree(60);
+                    update(t.id, {start:wire(s0), end:wire(Math.min(endM, s0 + 60))});
+                    toast(`Placed at ${pretty(wire(s0))} — drag to adjust`);
                   }}>Auto-place</button>
                 </div>
               </div>
@@ -1139,7 +1232,8 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
           )}
 
           <div className="card soft" style={{marginTop:14,fontSize:12.5,color:'var(--ink60)'}}>
-            Drag a block to move it, pull the bottom edge to change its length, double-click empty space to add one. On a phone, press and hold a block first, then drag — a normal swipe scrolls the day.
+            New blocks land in the first free slot after your first commitment. Drag a block to move it,
+            pull the bottom edge to change its length, double-click empty space to add one at that time. On a phone, press and hold a block first, then drag — a normal swipe scrolls the day.
           </div>
         </div>
       </div>
@@ -1194,7 +1288,9 @@ function DayEditor({day, onClose, onSave, first}){
 }
 
 function BlockEditor({block, day, onClose, onSave, onDelete}){
-  const [f, setF] = useState({title:block.title||'', start:block.start||day.wake, end:block.end||day.sleep, date:block.date});
+  const [f, setF] = useState({title:block.title||'', start:block.start||day.wake,
+    end:block.end||day.sleep, date:block.date, color:block.color || null,
+    onWeek: !!block.onWeek});
   const set = (k,v) => setF(p => ({...p,[k]:v}));
   const save = () => { if(!f.title.trim()) return; onSave({...block, ...f, title:f.title.trim()}); };
   return (
@@ -1211,13 +1307,35 @@ function BlockEditor({block, day, onClose, onSave, onDelete}){
         <Field label="Ends"><input type="time" value={f.end} onChange={e => set('end', e.target.value)} /></Field>
       </div>
       <Field label="Date"><input type="date" value={f.date} onChange={e => set('date', e.target.value)} /></Field>
+      <label className="row" style={{gap:9,margin:'2px 0 16px',fontSize:13.5,fontWeight:500,alignItems:'flex-start'}}>
+        <input type="checkbox" checked={f.onWeek} onChange={e => set('onWeek', e.target.checked)}
+          style={{width:16,height:16,marginTop:2,flex:'none'}} />
+        <span>
+          Show this on the weekly calendar
+          <small style={{display:'block',color:'var(--ink35)',fontWeight:400,fontSize:12,marginTop:1}}>
+            Off by default, so the week stays a summary rather than a copy of every day.
+          </small>
+        </span>
+      </label>
+      <div className="field">
+        <span>Colour</span>
+        <div className="blockcolors">
+          <button className={'bc none' + (!f.color ? ' on' : '')} onClick={() => set('color', null)}
+            title="Default" aria-label="Default colour" />
+          {BLOCK_COLORS.map(c => (
+            <button key={c.id} className={'bc' + (f.color === c.id ? ' on' : '')}
+              style={{background:c.hex}} onClick={() => set('color', c.id)}
+              title={c.label} aria-label={c.label} />
+          ))}
+        </div>
+      </div>
       {block.id && <button className="btn sm" onClick={() => onSave({...block, ...f, start:null, end:null})}>Move back to unscheduled</button>}
     </Modal>
   );
 }
 
 /* ============ ORGANIZE IT — weekly ============ */
-function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily}){
+function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily, update, toast}){
   const s = startOfWeek(date);
   const days = Array.from({length:7}, (_,i) => addDays(s,i));
   const wk = weekKey(date);
@@ -1226,9 +1344,88 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily})
   const weekTodos = tasks.filter(t => t.scope === 'weekly' && t.anchor === wk);
   const [newEv, setNewEv] = useState(null);
 
+  // Things from List It that aren't on the week yet: unscheduled items from
+  // these seven days, plus this week's goals.
+  const spare = [
+    ...tasks.filter(t => t.scope === 'daily' && !t.onWeek && inWeek(t.date) && !t.done),
+    ...weekTodos.filter(t => !t.done)
+  ];
+
+  const [drag, setDrag] = useState(null);
+  const [ghost, setGhost] = useState(null);
+  const [overDay, setOverDay] = useState(null);
+  const hold = useRef(null);
+
+  const beginDrag = (pt, task) => {
+    setDrag(task);
+    setGhost({x:pt.clientX, y:pt.clientY, label:task.title});
+  };
+
+  const onGrab = (e, task) => {
+    if(e.pointerType === 'touch'){
+      const sx = e.clientX, sy = e.clientY;
+      const stop = () => {
+        clearTimeout(hold.current); hold.current = null;
+        window.removeEventListener('pointermove', watch);
+        window.removeEventListener('pointerup', stop);
+      };
+      const watch = m => {
+        if(Math.abs(m.clientY - sy) > 10 || Math.abs(m.clientX - sx) > 10) stop();
+      };
+      window.addEventListener('pointermove', watch);
+      window.addEventListener('pointerup', stop);
+      hold.current = setTimeout(() => {
+        stop();
+        if(navigator.vibrate) navigator.vibrate(8);
+        beginDrag({clientX:sx, clientY:sy}, task);
+      }, 260);
+      return;
+    }
+    e.preventDefault();
+    beginDrag(e, task);
+  };
+
+  useEffect(() => {
+    if(!drag) return;
+    const dayUnder = (x, y) => {
+      const el = document.elementFromPoint(x, y);
+      const col = el && el.closest ? el.closest('[data-day]') : null;
+      return col ? col.getAttribute('data-day') : null;
+    };
+    const move = e => {
+      setGhost(g => g && {...g, x:e.clientX, y:e.clientY});
+      setOverDay(dayUnder(e.clientX, e.clientY));
+    };
+    const up = e => {
+      const dk2 = dayUnder(e.clientX, e.clientY);
+      if(dk2){
+        update(drag.id, {scope:'daily', date:dk2, onWeek:true, anchor:null});
+        toast(`Moved to ${DOW[parseISO(dk2).getDay()]}`);
+      }
+      setDrag(null); setGhost(null); setOverDay(null);
+      document.body.classList.remove('dragging');
+    };
+    const block = ev => ev.preventDefault();
+    document.body.classList.add('dragging');
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+    document.addEventListener('touchmove', block, {passive:false});
+    const bail = () => { setDrag(null); setGhost(null); setOverDay(null); document.body.classList.remove('dragging'); };
+    window.addEventListener('blur', bail);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      window.removeEventListener('blur', bail);
+      document.removeEventListener('touchmove', block);
+      document.body.classList.remove('dragging');
+    };
+  }, [drag, update, toast]);
+
   return (
     <div>
-      <div className="spread" style={{marginBottom:14}}>
+      <div className="spread dayhead">
         <DateNav label={fmtWeek(date)} onPrev={() => setDate(addDays(date,-7))} onNext={() => setDate(addDays(date,7))} onToday={() => setDate(new Date())} />
         <button className="btn primary" onClick={() => setNewEv({title:'', date:iso(date), type:'deadline', note:''})}>+ Add to the week</button>
       </div>
@@ -1237,9 +1434,10 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily})
         {days.map(d => {
           const dk = iso(d);
           const evs = events.filter(e => e.date === dk);
-          const blocks = tasks.filter(t => t.scope === 'daily' && t.date === dk);
+          const blocks = tasks.filter(t => t.scope === 'daily' && t.date === dk && t.onWeek);
           return (
-            <div key={dk} className={'daycol' + (sameDay(d, new Date()) ? ' is-today' : '')}>
+            <div key={dk} data-day={dk}
+              className={'daycol' + (sameDay(d, new Date()) ? ' is-today' : '') + (overDay === dk ? ' dropping' : '')}>
               <h4>{DOW[d.getDay()]}<small>{MON[d.getMonth()].slice(0,3)} {d.getDate()}</small></h4>
               <div className="inner">
                 <div className="daypills">
@@ -1250,7 +1448,8 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily})
                   </div>
                 ))}
                 {blocks.slice(0,4).map(t => (
-                  <div key={t.id} className="pill" style={{borderLeftColor:'var(--line)', background:'var(--soft)', color:'var(--ink60)'}}>
+                  <div key={t.id} className="pill"
+                    style={{borderLeftColor: blockHex(t.color) || 'var(--line)', background:'var(--soft)', color:'var(--ink60)'}}>
                     {t.start && <span className="mono" style={{fontSize:10}}>{pretty(t.start)} </span>}{t.title}
                   </div>
                 ))}
@@ -1261,6 +1460,26 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily})
           );
         })}
       </div>
+
+      {spare.length > 0 && (
+        <div className="weektray">
+          <div className="eyebrow" style={{marginBottom:8}}>
+            From List It — drag onto a day to put it on the week
+          </div>
+          <div className="weektray-items">
+            {spare.map(t => (
+              <button key={t.id} className="weekchip" onPointerDown={e => onGrab(e, t)}
+                title="Drag onto a day">
+                <IconGrip />
+                {blockHex(t.color) && <i className="cdot" style={{background:blockHex(t.color)}} />}
+                {t.title}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {ghost && <div className="ghost" style={{left:ghost.x+12, top:ghost.y-14}}>{ghost.label}</div>}
 
       <div className="divider" style={{margin:'22px 0 18px'}} />
       <div className="wkbottom">
@@ -1311,7 +1530,7 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
 
   return (
     <div>
-      <div className="spread" style={{marginBottom:14}}>
+      <div className="spread dayhead">
         <DateNav label={fmtMonth(date)} onPrev={() => setDate(addMonths(date,-1))} onNext={() => setDate(addMonths(date,1))} onToday={() => setDate(new Date())} />
         <button className="btn primary" onClick={() => setEditing({title:'', date:iso(date), type:'test', note:''})}>+ Add a date</button>
       </div>
@@ -1403,8 +1622,17 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab}){
   const doneCount = items.filter(t => t.done).length;
   const pct = items.length ? Math.round(doneCount/items.length*100) : 0;
 
+  const inputRef = useRef(null);
+  const [shake, setShake] = useState(false);
+
   const submit = () => {
-    const v = text.trim(); if(!v) return;
+    const v = text.trim();
+    if(!v){
+      setShake(true);
+      if(inputRef.current) inputRef.current.focus();
+      setTimeout(() => setShake(false), 500);
+      return;
+    }
     add(sub === 'daily'
       ? {title:v, scope:'daily', date:anchor, start:null, end:null, done:false}
       : {title:v, scope:sub, anchor, done:false});
@@ -1428,8 +1656,12 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab}){
         </div>
       </div>
 
-      <div className="addbar">
-        <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} placeholder={placeholder} />
+      <div className={'addbar' + (shake ? ' shake' : '')}>
+        <div className="addwrap">
+          <span className="addplus" aria-hidden="true">+</span>
+          <input ref={inputRef} value={text} onChange={e => setText(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && submit()} placeholder={placeholder} />
+        </div>
         <button className="btn primary" onClick={submit}>Add</button>
       </div>
 
@@ -1441,7 +1673,12 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab}){
             <Check on={t.done} onClick={() => update(t.id, {done:!t.done})} />
             <div className="txt">
               <b>{t.title}</b>
-              {sub === 'daily' && <div className="meta">{t.start ? `Scheduled ${pretty(t.start)} – ${pretty(t.end)}` : 'Not on the schedule yet'}</div>}
+              {sub === 'daily' && (
+              <div className="meta">
+                {blockHex(t.color) && <i className="cdot" style={{background:blockHex(t.color)}} />}
+                {t.start ? `Scheduled ${pretty(t.start)} – ${pretty(t.end)}` : 'Not on the schedule yet'}
+              </div>
+            )}
             </div>
             <div className="todo-actions">
               {sub === 'daily' && !t.start && (
@@ -1888,6 +2125,24 @@ const usernameWriteError = e => {
   return (e && e.message) || 'Could not save that username. Try again.';
 };
 
+// A referral is a row owned by the person who was referred, naming who sent
+// them. That way nobody can inflate their own count by writing to someone
+// else's record — the rules only let you write your own.
+async function recordReferral(newUid, refName){
+  const name = (refName || '').trim();
+  if(!name) return;
+  try{
+    const refUid = await findUidByUsername(name);
+    if(!refUid || refUid === newUid) return;
+    await withTimeout(db().collection('referrals').doc(newUid).set({
+      referrerUid: refUid, referrerUsername: name, at: Date.now()
+    }), 8000);
+  }catch(e){ /* never block a signup over this */ }
+}
+
+const countReferrals = uid =>
+  db().collection('referrals').where('referrerUid','==',uid).get().then(s0 => s0.size);
+
 const FB_ERRORS = {
   'auth/email-already-in-use':'An account already uses that email. Log in instead.',
   'auth/invalid-email':'That email address is missing something. Check it over.',
@@ -1920,15 +2175,15 @@ const GMark = () => (
 );
 
 const PANELS = [
-  {eyebrow:'How it fits together', title:'Your list becomes your day',
-   body:'Anything you put on the daily to-do list waits in a tray beside the schedule. Drag it onto the grid and it has a time.',
+  {eyebrow:'List It → Organize It', title:'Everything in your head, in one schedule',
+   body:'Dump it all out first — homework, the email you owe, the thing you keep forgetting. Then drag each one onto a time or a day until the whole scattered list is a schedule you can actually follow.',
    foot:'List It → Organize It', emoji:'📓'},
   {eyebrow:'Why Brag It exists', title:'Write it down while you remember it',
    body:'Positions, dates, hours, and awards are almost impossible to reconstruct two years later. Log them the week they happen.',
    foot:'Brag It', emoji:'🏆'},
-  {eyebrow:'The day is yours', title:'The schedule starts when you wake up',
-   body:'Set your wake and sleep times once and the grid is built between them — past midnight, if that is when you sleep.',
-   foot:'Organize It → Daily', emoji:'📅'},
+  {eyebrow:'Lock It', title:'Lock in together, not alone',
+   body:'Share a room code and up to nine of you focus in the same room. Cameras if you want them, a thumbs up or a hand raised when you need one.',
+   foot:'Lock It', emoji:'🔒'},
 ];
 
 // Your logo file, sitting next to index.html in the repo. If it's missing or
@@ -1980,7 +2235,7 @@ function SetupNeeded(){
 
 function Auth(){
   const auth = initFirebase();
-  const [mode, setMode] = useState('up');            // 'up' | 'in'
+  const [mode, setMode] = useState(null);            // null = choose | 'up' | 'in'
   const [step, setStep] = useState('form');          // 'form' | 'verify' | 'username'
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -2061,6 +2316,7 @@ function Auth(){
 
     try{
       await reserveUsername(u, cred.user);
+      await recordReferral(cred.user.uid, refBy);
     }catch(e){
       // someone claimed it in the seconds between the check and the write
       try{ await cred.user.delete(); }catch(e2){}
@@ -2082,6 +2338,7 @@ function Auth(){
     setBusy(true); setErr('');
     try{
       await reserveUsername(u, auth.currentUser);
+      await recordReferral(auth.currentUser.uid, refBy);
       await auth.currentUser.updateProfile({displayName:u});
       window.location.reload();
     }catch(e){ setAvail('taken'); setErr(usernameWriteError(e)); setBusy(false); }
@@ -2157,7 +2414,9 @@ function Auth(){
   };
 
   const p = PANELS[panel];
-  const script = mode === 'in' ? "welcome back, let's get to work" : "let's get your year in one place";
+  const script = mode === 'in' ? "welcome back, let's get to work"
+    : mode === 'up' ? "let's get your year in one place"
+    : "your year, in one place";
 
   return (
     <div className="authpage">
@@ -2179,6 +2438,25 @@ function Auth(){
 
           <div className="authcard">
             <div className="cardbody">
+
+              {mode === null && step === 'form' && (
+                <>
+                  <h2>Welcome to Plan It</h2>
+                  <p className="csub">New here, or coming back?</p>
+                  <button className="pillbtn" onClick={() => { setMode('up'); setStep('form'); }}>
+                    Sign up <IconArrow />
+                  </button>
+                  <button className="btn" style={{width:'100%',justifyContent:'center',marginTop:10}}
+                    onClick={() => { setMode('in'); setStep('form'); }}>Log in</button>
+                  <div className="or"><span>OR</span></div>
+                  <button className="gbtn" disabled={busy} onClick={withGoogle}><GMark /> Continue with Google</button>
+                  <Err />
+                  <p className="fineprint" style={{marginTop:18}}>
+                    Signing up takes a minute: confirm your email, pick a username, then tell us whether
+                    you're a student or a parent.
+                  </p>
+                </>
+              )}
 
               {step === 'verify' && (
                 <>
@@ -2214,6 +2492,9 @@ function Auth(){
                   <input className="finput" autoFocus value={username} onChange={e => setUsername(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && claimUsername()} placeholder="Enter your username here" autoComplete="username" />
                   <Avail />
+                  <label className="flabel">Referred by <span style={{fontWeight:400,color:'var(--ink35)'}}>(optional)</span></label>
+                  <input className="finput" value={refBy} onChange={e => setRefBy(e.target.value)}
+                    placeholder="Their Plan It username" autoComplete="off" />
                   <Err />
                   <button className="pillbtn" disabled={busy || avail === 'taken' || avail === 'invalid'} onClick={claimUsername}>
                     {busy ? 'Saving…' : 'Save username'} <IconArrow />
@@ -2247,6 +2528,9 @@ function Auth(){
                       <span>{strengthLabel}</span>
                     </div>
                   )}
+                  <label className="flabel">Referred by <span style={{fontWeight:400,color:'var(--ink35)'}}>(optional)</span></label>
+                  <input className="finput" value={refBy} onChange={e => setRefBy(e.target.value)}
+                    placeholder="Their Plan It username" autoComplete="off" />
                   <Err />
                   <button className="pillbtn" disabled={busy || avail === 'taken' || avail === 'invalid'} onClick={signUp}>
                     {busy ? 'Creating…' : 'Continue'} <IconArrow />
@@ -2273,11 +2557,12 @@ function Auth(){
                   <Note />
                   <Err />
                   <button className="pillbtn" disabled={busy} onClick={logIn}>{busy ? 'Checking…' : 'Continue'} <IconArrow /></button>
+                  <button className="undertext" onClick={() => setMode(null)}>Back</button>
                 </>
               )}
             </div>
 
-            {step === 'form' && (
+            {step === 'form' && mode && (
               <div className="cardfoot">
                 {mode === 'up'
                   ? <>Already have an account? <button onClick={() => setMode('in')}>Log in</button></>
@@ -2837,6 +3122,14 @@ function WatchIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
   const waiting  = (links || []).filter(l => l.status !== 'approved');
   const d = childStore && childStore.data;
   const lock = (d && d.lock) || {};
+  const st = childStore && childStore.status;
+  const live = !!(st && Date.now() - (st.at || 0) < 3*60000);   // heartbeat every minute
+  const lastSeen = st && st.at ? (() => {
+    const mins = Math.round((Date.now() - st.at)/60000);
+    if(mins < 60) return `${mins} min ago`;
+    const hrs = Math.round(mins/60);
+    return hrs < 24 ? `${hrs} hr ago` : `${Math.round(hrs/24)} d ago`;
+  })() : 'a while ago';
   const today = iso(new Date());
   const dueToday = d ? d.tasks.filter(t => t.scope === 'daily' && t.date === today) : [];
   const soon = d ? d.events
@@ -2884,12 +3177,30 @@ function WatchIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
       {viewChildId && (
         <Section title="How they're doing">
           {childStore === null ? <div className="card" style={{color:'var(--ink35)'}}>Loading their planner…</div>
-            : childStore === undefined
+            : childStore.error
+            ? <div className="formerr">{childStore.error}</div>
+            : childStore.empty
             ? <div className="card soft" style={{color:'var(--ink60)',fontSize:13.5,lineHeight:1.6}}>
-                Couldn't read their planner. They may not have opened Plan It since syncing was added —
-                ask them to sign in once.
+                Nothing uploaded yet. Ask them to open Plan It and change something — a task, a tick, anything.
+                Their planner uploads a moment after any edit.
               </div>
             : <>
+                <div className="nowcard">
+                  <span className={'nowdot' + (live ? ' on' : '')} />
+                  <div style={{flex:1, minWidth:0}}>
+                    <b>{!st ? 'No activity yet'
+                      : live && st.room ? `In study room ${st.room}${st.focusing ? ' — focusing' : ''}`
+                      : live && st.focusing ? 'Focusing right now'
+                      : live ? 'Plan It is open'
+                      : `Last active ${lastSeen}`}</b>
+                    {live && st && st.room && (
+                      <div style={{fontSize:12.5, color:'var(--ink35)', marginTop:2}}>
+                        Studying with others in a shared room
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="row" style={{gap:12,flexWrap:'wrap',marginBottom:14}}>
                   <div className="card" style={{flex:1,minWidth:150}}>
                     <div className="eyebrow">Minutes focused</div>
@@ -2919,7 +3230,8 @@ function WatchIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
                   ))}
 
                 <div className="card soft" style={{marginTop:14,fontSize:13,color:'var(--ink60)'}}>
-                  Their full planner is open in the other tabs while you're viewing — read only.
+                  Their calendars, lists, honors, activities, and certifications are all open in the other
+                  tabs while you're viewing — read only.
                   <button className="btn sm" style={{marginLeft:10}} onClick={() => goTab('organize')}>Open their calendar</button>
                 </div>
               </>}
@@ -2942,6 +3254,45 @@ function WatchIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
 }
 
 /* ============ SETTINGS ============ */
+function Referrals({user, toast}){
+  const [count, setCount] = useState(null);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    countReferrals(user.id).then(setCount).catch(() => setCount(0));
+  }, [user.id]);
+
+  const copy = () => {
+    navigator.clipboard.writeText(user.username)
+      .then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); })
+      .catch(() => toast('Your code is ' + user.username));
+  };
+
+  const goal = 5;
+  const n = count || 0;
+  return (
+    <Section title="Refer a friend" hint="Your username is your code. They type it in when they sign up.">
+      <div className="card">
+        <div className="spread" style={{marginBottom:14}}>
+          <div>
+            <div className="eyebrow">Your code</div>
+            <b className="mono roomcode" style={{fontSize:20}}>{user.username}</b>
+          </div>
+          <button className="btn sm" onClick={copy}>{copied ? 'Copied' : 'Copy'}</button>
+        </div>
+        <div className="row" style={{justifyContent:'space-between',fontSize:12.5,color:'var(--ink60)',marginBottom:6}}>
+          <span>{count === null ? 'Counting…' : `${n} of ${goal} friends joined`}</span>
+          <span className="mono">{Math.min(100, Math.round(n/goal*100))}%</span>
+        </div>
+        <div className="bar"><i style={{width:Math.min(100, n/goal*100) + '%'}} /></div>
+        <div style={{fontSize:12.5,color:'var(--ink35)',marginTop:10,lineHeight:1.5}}>
+          Five sign-ups earns free Pro for three months. Pro isn't built yet — your count is being kept
+          either way, so nothing is lost by sharing now.
+        </div>
+      </div>
+    </Section>
+  );
+}
+
 // A student's view of who has asked to follow along, and who already does.
 function ParentAccess({user, toast, onChange}){
   const [links, setLinks] = useState(null);
@@ -3018,7 +3369,7 @@ async function changeUsername(newName, user, oldName){
   await withTimeout(batch.commit(), 10000);
 }
 
-function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksChange}){
+function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksChange, sync, onSyncNow}){
   const auth = initFirebase();
   const [profile, setProfile] = useState(null);
   const [err, setErr] = useState('');
@@ -3172,6 +3523,26 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
             )}
           </Section>
         </>
+      )}
+
+      {sub === 'account' && user.role !== 'parent' && <Referrals user={user} toast={toast} />}
+
+      {sub === 'account' && user.role !== 'parent' && (
+        <Section title="Sync" hint="Your planner uploads so a connected parent can see it.">
+          <div className="card">
+            <div className="spread">
+              <div style={{fontSize:13.5}}>
+                {sync.state === 'ok' ? <><b style={{color:'#0F9E68'}}>Uploaded</b>
+                    <div style={{color:'var(--ink35)',fontSize:12}}>
+                      {new Date(sync.at).toLocaleTimeString()}</div></>
+                 : sync.state === 'saving' ? 'Uploading…'
+                 : sync.state === 'err' ? <span style={{color:'#B92A61'}}>{sync.msg}</span>
+                 : 'Nothing uploaded yet this session.'}
+              </div>
+              <button className="btn" onClick={onSyncNow}>Sync now</button>
+            </div>
+          </div>
+        </Section>
       )}
 
       {sub === 'account' && user.role !== 'parent' && <ParentAccess user={user} toast={toast} onChange={onLinksChange} />}
@@ -3396,6 +3767,71 @@ function LegalModal({kind, onClose}){
   );
 }
 
+/* ============ NOTIFICATIONS ============ */
+// Everything here is flagged as planned rather than live. A promo that reads
+// as active but can't be claimed is worse than one that says "coming".
+const NEWS = [
+  {id:'founding30', emoji:'🎁', tag:'Planned', title:'Founding 30 — Pro free for life',
+   body:"The first 30 people to make a Plan It account keep Pro forever, at no cost. We're still counting, and we'll get in touch once Pro exists."},
+  {id:'refer5', emoji:'👥', tag:'Planned', title:'Bring five friends, get Pro free',
+   body:'Your username is your referral code. Five people type it in when they sign up and Pro is on us for three months — see your count in Settings.'},
+  {id:'prosoon', emoji:'✨', tag:'Coming soon', title:"What Pro will include",
+   body:'Your planner synced across devices, Brag It exported as a formatted activities résumé, repeating tasks and class schedules, bigger study rooms, and full focus history.'},
+  {id:'survey', emoji:'📋', tag:'Coming soon', title:'Tell us what to build next',
+   body:"A short survey is going here. What you'd add, what gets in your way, what you'd actually pay for."},
+];
+
+function NewsPanel({onClose, readIds, markRead, requests = [], onDecide}){
+  // News gets marked read on open; requests don't — they stay until answered.
+  useEffect(() => { markRead(NEWS.map(n => n.id)); }, [markRead]);
+  return (
+    <Modal title="Notifications" onClose={onClose}
+      footer={<button className="btn primary" onClick={onClose}>Close</button>}>
+
+      {requests.length > 0 && (
+        <div style={{marginBottom:20}}>
+          <div className="eyebrow" style={{marginBottom:9}}>Needs your answer</div>
+          {requests.map(l => (
+            <div key={l.id} className="reqcard">
+              <div className="row" style={{gap:11, marginBottom:11}}>
+                <Initial name={l.parentName || l.parentEmail} size={36} />
+                <div style={{minWidth:0}}>
+                  <b style={{fontSize:14.5, display:'block'}}>{l.parentName || 'A parent'}</b>
+                  <div style={{fontSize:12.5, color:'var(--ink35)'}}>{l.parentEmail}</div>
+                </div>
+              </div>
+              <p style={{margin:'0 0 12px', fontSize:13, color:'var(--ink60)', lineHeight:1.55}}>
+                They're asking to follow your planner. They'd be able to see your calendar, lists, activities,
+                and focus minutes — and change none of it. You can undo this later in Settings.
+              </p>
+              <div className="row" style={{gap:8}}>
+                <button className="btn primary" onClick={() => onDecide(l.id, 'approved')}>Allow</button>
+                <button className="btn" onClick={() => onDecide(l.id, 'declined')}>Decline</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <p style={{margin:'0 0 16px', color:'var(--ink60)', fontSize:13.5}}>
+        Plan It is early. Nothing below is live yet — this is what's being built.
+      </p>
+      {NEWS.map(n => (
+        <div key={n.id} className={'newsitem' + (readIds.includes(n.id) ? '' : ' fresh')}>
+          <span className="newsemoji">{n.emoji}</span>
+          <div>
+            <div className="row" style={{gap:8, marginBottom:3, flexWrap:'wrap'}}>
+              <b style={{fontSize:14.5}}>{n.title}</b>
+              <span className="newstag">{n.tag}</span>
+            </div>
+            <p style={{margin:0, color:'var(--ink60)', fontSize:13, lineHeight:1.55}}>{n.body}</p>
+          </div>
+        </div>
+      ))}
+    </Modal>
+  );
+}
+
 /* ============ APP ============ */
 const TABS = [
   {id:'brag',     emoji:'🏆', label:'Brag It',    sub:'Extracurriculars', color:'var(--brag)',
@@ -3423,6 +3859,8 @@ const BASE_ACCENTS = {brag:'#E09A12', list:'#0F9E68', organize:'#5350E8', lock:'
 function App({user, onSignOut}){
   const [ready, setReady] = useState(false);
   const isParent = user.role === 'parent';
+  const [sync, setSync] = useState({state:'idle'});
+  const [newsOpen, setNewsOpen] = useState(false);
   const [tab, setTab] = useState('organize');
   const [sub, setSub] = useState({brag:'honor', list:'daily', organize:'daily', lock:'focus', settings:'account', watch:'children'});
   const [date, setDate] = useState(new Date());
@@ -3465,7 +3903,16 @@ function App({user, onSignOut}){
     if(firstSave.current){ firstSave.current = false; }
     const t = setTimeout(() => {
       saveStore(user.id, store);
-      if(!isParent) pushPlanner(user.id, store);
+      if(isParent) return;
+      setSync(s0 => ({...s0, state:'saving'}));
+      pushPlanner(user.id, store)
+        .then(() => setSync({state:'ok', at:Date.now()}))
+        .catch(e => {
+          console.warn('[planit-sync]', e);
+          setSync({state:'err', msg: e.code === 'permission-denied'
+            ? 'Permission denied — the Firestore rules need republishing.'
+            : (e.message || 'Could not reach the database.')});
+        });
     }, 600);
     return () => clearTimeout(t);
   }, [store, ready, user.id, isParent]);
@@ -3474,24 +3921,41 @@ function App({user, onSignOut}){
   const [viewChildName, setViewChildName] = useState('');
   const [childStore, setChildStore] = useState(null);   // null = loading, undefined = no access
   useEffect(() => {
+    if(!isParent || viewChildId) return;
+    linksForParent(user.id).then(snap => {
+      const first = snap.docs.map(d => d.data()).find(l => l.status === 'approved');
+      if(first){ setViewChildId(first.childUid); setViewChildName(first.childUsername); }
+    }).catch(() => {});
+  }, [isParent, viewChildId, user.id]);
+
+  useEffect(() => {
     if(!isParent || !viewChildId){ setChildStore(null); return; }
     setChildStore(null);
-    return watchPlanner(viewChildId, res => setChildStore(res === undefined ? undefined : (res ? res : null)));
+    return watchPlanner(viewChildId, res => setChildStore(res));
   }, [isParent, viewChildId]);
 
   // what the four planner tabs actually render: yours, or the child you picked
-  const view = (isParent && childStore) ? childStore.data : store;
+  const view = (isParent && childStore && childStore.data) ? childStore.data : store;
 
   const toast = useCallback(msg => { setToastMsg(msg); setTimeout(() => setToastMsg(null), 2200); }, []);
 
   // a request sitting unseen in settings is a request that never gets answered
-  const [pendingLinks, setPendingLinks] = useState(0);
+  const [pendingList, setPendingList] = useState([]);
   const refreshLinks = useCallback(() => {
     if(isParent) return;
     linksForChild(user.id)
-      .then(snap => setPendingLinks(snap.docs.filter(d => d.data().status === 'pending').length))
+      .then(snap => setPendingList(snap.docs.map(d => ({id:d.id, ...d.data()}))
+        .filter(l => l.status === 'pending')))
       .catch(() => {});
   }, [user.id, isParent]);
+
+  const decideLink = async (id, status) => {
+    try{
+      await db().collection('links').doc(id).update({status, decidedAt:Date.now()});
+      toast(status === 'approved' ? 'Access granted' : 'Request declined');
+      refreshLinks();
+    }catch(e){ toast('Could not save that'); }
+  };
   useEffect(() => { refreshLinks(); }, [refreshLinks]);
   // Every write goes through here, so a parent account cannot change anything
   // even if a control slips through the interface.
@@ -3502,6 +3966,17 @@ function App({user, onSignOut}){
 
   const settings = store.settings || DEFAULT_SETTINGS;
   const setSettings = next => setStore(s => ({...s, settings:next}));
+
+  const readNews = settings.readNews || [];
+  const unreadNews = NEWS.filter(n => !readNews.includes(n.id)).length + pendingList.length;
+  const markNewsRead = useCallback(ids => {
+    setStore(s0 => {
+      const st = s0.settings || DEFAULT_SETTINGS;
+      const merged = Array.from(new Set([...(st.readNews || []), ...ids]));
+      if(merged.length === (st.readNews || []).length) return s0;
+      return {...s0, settings:{...st, readNews:merged}};
+    });
+  }, []);
 
 
 
@@ -3716,6 +4191,17 @@ function App({user, onSignOut}){
     };
   }, []);
 
+  // A small live status beside the planner: in a room, focusing, or neither.
+  useEffect(() => {
+    if(isParent || !ready) return;
+    const write = () => db().collection('planner').doc(user.id).set({
+      status:{ room: room || null, focusing: running, at: Date.now() }
+    }, {merge:true}).catch(() => {});
+    write();
+    const hb = setInterval(write, 60000);
+    return () => clearInterval(hb);
+  }, [isParent, ready, room, running, user.id]);
+
   // reminders for scheduled blocks, while Plan It is open
   const fired = useRef({});
   useEffect(() => {
@@ -3786,13 +4272,17 @@ function App({user, onSignOut}){
         ))}
 
         <div className="rail-bottom">
+          <button className="tab" onClick={() => setNewsOpen(true)} title="Notifications">
+            <span className="emoji">🔔</span>
+            <span><span className="lbl">Notifications</span><span className="sub">News</span></span>
+            {unreadNews > 0 && <i className="tabcount">{unreadNews}</i>}
+          </button>
           {TABS.filter(t => t.id === 'settings').map(t => (
             <button key={t.id} className={'tab' + (tab === t.id ? ' on' : '')} style={{'--tabcolor':t.color}}
               disabled={running} title={running ? 'Locked until the session ends' : t.label}
               onClick={() => setTab(t.id)} aria-current={tab === t.id}>
               <span className="emoji">{t.emoji}</span>
               <span><span className="lbl">{t.label}</span><span className="sub">{t.sub}</span></span>
-              {t.id === 'settings' && pendingLinks > 0 && <i className="tabdot" />}
             </button>
           ))}
           <div className="rail-account">
@@ -3824,26 +4314,34 @@ function App({user, onSignOut}){
                 className={sub[tab] === k ? 'on' : ''} onClick={() => setSub(p => ({...p,[tab]:k}))}>{l}</button>
             ))}
           </div>
-          {!isParent && pendingLinks > 0 && tab !== 'settings' && (
+          {!isParent && pendingList.length > 0 && (
             <div className="linkbanner">
               <span>
-                {pendingLinks === 1 ? 'A parent has asked' : `${pendingLinks} parents have asked`} to follow your planner.
+                {pendingList.length === 1 ? 'A parent has asked' : `${pendingList.length} parents have asked`} to follow your planner.
               </span>
-              <button className="btn sm" onClick={() => { setTab('settings'); setSub(p => ({...p, settings:'account'})); }}>
-                Review
-              </button>
+              <button className="btn sm" onClick={() => setNewsOpen(true)}>Review</button>
             </div>
           )}
 
           {isParent && tab !== 'watch' && tab !== 'settings' && (
-            viewChildId
+            !viewChildId
               ? <div className="viewonly">
-                  Viewing <b>{viewChildName}</b>'s planner — read only.
-                  <button className="btn sm" style={{marginLeft:10}} onClick={() => setTab('watch')}>Switch child</button>
+                  No child connected yet.
+                  <button className="btn sm" style={{marginLeft:10}} onClick={() => setTab('watch')}>Go to Watch It</button>
+                </div>
+              : childStore === null
+              ? <div className="viewonly">Loading {viewChildName}'s planner…</div>
+              : childStore.error
+              ? <div className="viewonly" style={{background:'#FFF3F6',borderColor:'#F3CEDA',color:'#B92A61'}}>
+                  {childStore.error}
+                </div>
+              : childStore.empty
+              ? <div className="viewonly" style={{background:'#FFF9E9',borderColor:'#F0DEB0',color:'#7A5A10'}}>
+                  {viewChildName} hasn't uploaded anything yet — ask them to open Plan It and change something.
                 </div>
               : <div className="viewonly">
-                  Pick a child in Watch It to see their planner.
-                  <button className="btn sm" style={{marginLeft:10}} onClick={() => setTab('watch')}>Go to Watch It</button>
+                  Viewing <b>{viewChildName}</b>'s planner — read only.
+                  <button className="btn sm" style={{marginLeft:10}} onClick={() => setTab('watch')}>Switch child</button>
                 </div>
           )}
           <div className="divider" />
@@ -3854,7 +4352,8 @@ function App({user, onSignOut}){
             <Daily date={date} setDate={setDate} tasks={view.tasks} add={addTask} update={updateTask} remove={removeTask} toast={toast}
               day={view.day || user.day || DEFAULT_DAY} setDay={d => setStore(s => ({...s, day:d}))} />}
           {tab === 'organize' && sub.organize === 'weekly' &&
-            <Weekly date={date} setDate={setDate} tasks={view.tasks} events={view.events} addEvent={addEvent} removeEvent={removeEvent} setDaily={goDaily} />}
+            <Weekly date={date} setDate={setDate} tasks={view.tasks} events={view.events} addEvent={addEvent}
+              removeEvent={removeEvent} setDaily={goDaily} update={updateTask} toast={toast} />}
           {tab === 'organize' && sub.organize === 'monthly' &&
             <Monthly date={date} setDate={setDate} events={view.events} addEvent={addEvent} updateEvent={updateEvent} removeEvent={removeEvent} setDaily={goDaily} />}
 
@@ -3871,7 +4370,13 @@ function App({user, onSignOut}){
 
           {tab === 'settings' &&
             <Settings sub={sub.settings} user={user} onSignOut={onSignOut} settings={settings}
-              setSettings={setSettings} toast={toast} onLinksChange={refreshLinks} />}
+              setSettings={setSettings} toast={toast} onLinksChange={refreshLinks}
+              sync={sync} onSyncNow={() => {
+                setSync({state:'saving'});
+                pushPlanner(user.id, store)
+                  .then(() => { setSync({state:'ok', at:Date.now()}); toast('Planner uploaded'); })
+                  .catch(e => setSync({state:'err', msg:e.message || e.code}));
+              }} />}
 
           {tab === 'lock' &&
             <LockIt lock={view.lock || {}} running={running} left={left} minutes={minutes}
@@ -3941,6 +4446,9 @@ function App({user, onSignOut}){
         <DayEditor first day={DEFAULT_DAY} onClose={() => setStore(s => ({...s, day:DEFAULT_DAY}))}
           onSave={d => setStore(s => ({...s, day:d}))} />
       )}
+
+      {newsOpen && <NewsPanel onClose={() => setNewsOpen(false)} readIds={readNews} markRead={markNewsRead}
+        requests={pendingList} onDecide={decideLink} />}
 
       {toastMsg && <div className="toast">{toastMsg}</div>}
     </div>
