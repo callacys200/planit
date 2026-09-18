@@ -2316,7 +2316,8 @@ function Auth(){
 
     try{
       await reserveUsername(u, cred.user);
-      await recordReferral(cred.user.uid, refBy);
+      if(source === 'friend') await recordReferral(cred.user.uid, refBy);
+      saveProfile(cred.user.uid, {source}).catch(() => {});
     }catch(e){
       // someone claimed it in the seconds between the check and the write
       try{ await cred.user.delete(); }catch(e2){}
@@ -2338,7 +2339,8 @@ function Auth(){
     setBusy(true); setErr('');
     try{
       await reserveUsername(u, auth.currentUser);
-      await recordReferral(auth.currentUser.uid, refBy);
+      if(source === 'friend') await recordReferral(auth.currentUser.uid, refBy);
+      saveProfile(auth.currentUser.uid, {source}).catch(() => {});
       await auth.currentUser.updateProfile({displayName:u});
       window.location.reload();
     }catch(e){ setAvail('taken'); setErr(usernameWriteError(e)); setBusy(false); }
@@ -2402,6 +2404,30 @@ function Auth(){
     }catch(e){ setErr(fbErr(e)); }
     setBusy(false);
   };
+
+  const SourceFields = () => (
+    <>
+      <label className="flabel">How did you hear about Plan It?</label>
+      <select className="finput" value={source} onChange={e => setSource(e.target.value)}>
+        <option value="">Choose one</option>
+        <option value="friend">A friend told me</option>
+        <option value="social">Social media</option>
+        <option value="search">A search</option>
+        <option value="school">School or a teacher</option>
+        <option value="other">Somewhere else</option>
+      </select>
+      {source === 'friend' && (
+        <>
+          <label className="flabel">Their Plan It username</label>
+          <input className="finput" value={refBy} onChange={e => setRefBy(e.target.value)}
+            placeholder="Enter their username here" autoComplete="off" />
+          <div className="avail hint" style={{marginTop:-10}}>
+            They get credit toward a free month of Pro.
+          </div>
+        </>
+      )}
+    </>
+  );
 
   const Err = () => err ? <div className="formerr" role="alert">{err}</div> : null;
   const Note = () => note ? <div className="formnote">{note}</div> : null;
@@ -2492,9 +2518,7 @@ function Auth(){
                   <input className="finput" autoFocus value={username} onChange={e => setUsername(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && claimUsername()} placeholder="Enter your username here" autoComplete="username" />
                   <Avail />
-                  <label className="flabel">Referred by <span style={{fontWeight:400,color:'var(--ink35)'}}>(optional)</span></label>
-                  <input className="finput" value={refBy} onChange={e => setRefBy(e.target.value)}
-                    placeholder="Their Plan It username" autoComplete="off" />
+                  <SourceFields />
                   <Err />
                   <button className="pillbtn" disabled={busy || avail === 'taken' || avail === 'invalid'} onClick={claimUsername}>
                     {busy ? 'Saving…' : 'Save username'} <IconArrow />
@@ -2528,9 +2552,7 @@ function Auth(){
                       <span>{strengthLabel}</span>
                     </div>
                   )}
-                  <label className="flabel">Referred by <span style={{fontWeight:400,color:'var(--ink35)'}}>(optional)</span></label>
-                  <input className="finput" value={refBy} onChange={e => setRefBy(e.target.value)}
-                    placeholder="Their Plan It username" autoComplete="off" />
+                  <SourceFields />
                   <Err />
                   <button className="pillbtn" disabled={busy || avail === 'taken' || avail === 'invalid'} onClick={signUp}>
                     {busy ? 'Creating…' : 'Continue'} <IconArrow />
@@ -3293,6 +3315,89 @@ function Referrals({user, toast}){
   );
 }
 
+const BUG_AREAS = [
+  ['brag','Brag It'], ['list','List It'], ['organize','Organize It — calendars'],
+  ['lock','Lock It — timer or study rooms'], ['watch','Watch It — parent view'],
+  ['account','Signing in or my account'], ['other','Somewhere else'],
+];
+
+function BugReport({user, toast}){
+  const [area, setArea] = useState('');
+  const [what, setWhat] = useState('');
+  const [steps, setSteps] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [err, setErr] = useState('');
+
+  const send = async () => {
+    if(what.trim().length < 10) return setErr('Tell us a bit more — what went wrong?');
+    setBusy(true); setErr('');
+    try{
+      await withTimeout(db().collection('bugs').add({
+        uid: user.id,
+        username: user.username || '',
+        email: user.email || '',
+        area, what: what.trim(), steps: steps.trim(),
+        // context that saves a round of back-and-forth
+        agent: navigator.userAgent,
+        screen: `${window.innerWidth}x${window.innerHeight}`,
+        at: Date.now()
+      }), 10000);
+      setSent(true); toast('Thanks — that helps');
+    }catch(e){
+      setErr(e.code === 'permission-denied'
+        ? 'Firestore rules need republishing before reports can be sent.'
+        : 'Could not send that. Check your connection and try again.');
+    }
+    setBusy(false);
+  };
+
+  if(sent) return (
+    <Section title="Report a bug">
+      <div className="card" style={{textAlign:'center', padding:'28px 20px'}}>
+        <div style={{fontSize:32, lineHeight:1, marginBottom:10}}>📨</div>
+        <b style={{fontSize:16, display:'block', marginBottom:4}}>Sent</b>
+        <p style={{margin:0, color:'var(--ink60)', fontSize:13.5}}>
+          Thanks for taking the time. There's no reply from here, but it's been logged.
+        </p>
+        <button className="btn" style={{marginTop:16}}
+          onClick={() => { setSent(false); setWhat(''); setSteps(''); setArea(''); }}>Report another</button>
+      </div>
+    </Section>
+  );
+
+  return (
+    <>
+      <Section title="Report a bug" hint="Something broken, confusing, or just wrong? Say so here.">
+        <div className="card">
+          <Field label="Where did it happen?">
+            <select value={area} onChange={e => setArea(e.target.value)}>
+              <option value="">Choose one</option>
+              {BUG_AREAS.map(([k,l]) => <option key={k} value={k}>{l}</option>)}
+            </select>
+          </Field>
+          <Field label="What went wrong?">
+            <textarea value={what} onChange={e => setWhat(e.target.value)}
+              placeholder="The reset button on the timer does nothing when I tap it" />
+          </Field>
+          <Field label="What were you doing just before? (optional)">
+            <textarea value={steps} onChange={e => setSteps(e.target.value)}
+              placeholder="Started a 25 minute session, paused it, then tried to reset" />
+          </Field>
+          {err && <div className="formerr">{err}</div>}
+          <button className="btn primary" disabled={busy} onClick={send}>{busy ? 'Sending…' : 'Send report'}</button>
+        </div>
+      </Section>
+      <Section title="Sent along with it">
+        <div className="card soft" style={{fontSize:12.5, color:'var(--ink60)', lineHeight:1.6}}>
+          Your username, your browser, and your window size — the details that usually explain a bug without
+          having to ask. Nothing from your planner is included.
+        </div>
+      </Section>
+    </>
+  );
+}
+
 // A student's view of who has asked to follow along, and who already does.
 function ParentAccess({user, toast, onChange}){
   const [links, setLinks] = useState(null);
@@ -3670,6 +3775,8 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
         </>
       )}
 
+      {sub === 'feedback' && <BugReport user={user} toast={toast} />}
+
       {sub === 'legal' && (
         <>
           <Section title="Policies">
@@ -3852,7 +3959,7 @@ const TABS = [
   {id:'settings', emoji:'⚙️', label:'Settings',   sub:'Account', color:'var(--set)',
    title:'Settings', tagline:'Your account, how Plan It looks, and what it can do.',
    subs:[['account','My account'],['security','Username & password'],
-         ['notifications','Notifications'],['pro','Plan It Pro'],['legal','Legal']]},
+         ['notifications','Notifications'],['pro','Plan It Pro'],['feedback','Report a bug'],['legal','Legal']]},
 ];
 const BASE_ACCENTS = {brag:'#E09A12', list:'#0F9E68', organize:'#5350E8', lock:'#E03F7C', settings:'#5A6178', watch:'#0E8F86'};
 
