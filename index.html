@@ -65,9 +65,9 @@
   .rail{
     width:210px;flex:none;padding:18px 0 18px 14px;display:flex;flex-direction:column;gap:6px;
   }
-  .brand{display:flex;align-items:center;gap:9px;padding:4px 10px 18px 10px}
+  .brand{display:flex;align-items:center;gap:11px;padding:2px 10px 18px 6px}
   .logomark{flex:none;object-fit:contain;border-radius:5px}
-  .brand b{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:21px;letter-spacing:-.03em}
+  .brand b{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:22px;letter-spacing:-.03em;white-space:nowrap}
   .brand span{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink35);font-family:"IBM Plex Mono",monospace}
   .tab{
     position:relative;display:flex;align-items:center;gap:11px;
@@ -271,9 +271,9 @@
   .bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
 
   /* ---------- brag ---------- */
-  .ec{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:0;border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px;overflow:hidden;background:var(--card)}
+  .ec{cursor:default;user-select:none;display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:0;border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px;overflow:hidden;background:var(--card)}
   .ec .main{padding:16px 18px;min-width:0}
-  .ec .side{background:#FBFAF6;border-left:1px solid var(--line);padding:14px 16px;font-size:12.5px;color:var(--ink60);line-height:1.5}
+  .ec .side{user-select:text;background:#FBFAF6;border-left:1px solid var(--line);padding:14px 16px;font-size:12.5px;color:var(--ink60);line-height:1.5}
   .ec h3{font-size:17px;font-weight:700;overflow-wrap:anywhere}
   .ec .org{color:var(--ink60);font-size:13px;margin-top:1px}
   .prio{display:inline-flex;gap:2.5px;align-items:center;flex:none}
@@ -463,6 +463,13 @@
   .rolecard.on{border-color:var(--org);box-shadow:0 0 0 3px var(--accent-soft)}
   .rolecard b{display:block;font-size:15px}
   .rolecard small{display:block;color:var(--ink35);font-size:12.5px;margin-top:2px;line-height:1.45}
+  .pickrow{display:flex;align-items:flex-start;gap:10px;padding:7px 0;cursor:pointer}
+  .pickrow input{width:16px;height:16px;margin-top:2px;flex:none}
+  .pickrow b{font-size:13.5px;font-weight:600;display:block}
+  .pickrow small{display:block;color:var(--ink35);font-size:12px;margin-top:1px}
+  .respreview{white-space:pre-wrap;font-family:"IBM Plex Mono",monospace;font-size:11.5px;line-height:1.6;
+    background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0;
+    max-height:280px;overflow:auto;color:var(--ink60)}
   .roleicon{font-size:22px;line-height:1;margin-top:1px}
   .childrow{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);
     border-radius:12px;margin-bottom:8px;background:var(--card)}
@@ -477,6 +484,16 @@
   .tabcount{position:absolute;top:9px;right:9px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;
     background:#E03F7C;color:#fff;font-size:10.5px;font-weight:700;font-style:normal;display:grid;
     place-items:center;line-height:1}
+  .chartrow{display:flex;align-items:flex-end;gap:10px;height:150px}
+  .chartbar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;flex:1;height:100%}
+  .chartbar b{font-size:10.5px;color:var(--ink35);font-weight:500}
+  .chartbar i{width:100%;max-width:34px;border-radius:6px 6px 3px 3px;background:var(--accent);opacity:.8;display:block}
+  .chartbar span{font-size:11px;color:var(--ink35)}
+  .histrow{display:flex;align-items:flex-end;gap:10px;margin-bottom:18px;padding:12px;
+    border:1px solid var(--line);border-radius:12px;background:var(--soft)}
+  .histbar{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+  .histbar i{width:100%;max-width:26px;border-radius:5px 5px 2px 2px;background:var(--accent);opacity:.75;display:block}
+  .histbar span{font-size:10.5px;color:var(--ink35)}
   .nowcard{display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid var(--line);
     border-radius:12px;background:var(--soft);margin-bottom:14px}
   .nowcard b{font-size:14px}
@@ -635,7 +652,7 @@
     .rail{width:66px;padding-left:8px}
     .brand span,.tab .lbl,.tab .sub,.rail-foot{display:none}
     .brand{justify-content:center;padding:6px 0 16px}
-    .brand .logomark{width:32px !important;height:32px !important}
+    .brand .logomark{width:40px !important;height:40px !important}
     .tab{justify-content:center;padding:12px 0}
     .pane-head{padding:16px 14px 0}
     .pane-body{padding:14px 14px 40px}
@@ -794,6 +811,38 @@ const BLOCK_COLORS = [
 ];
 const blockHex = id => (BLOCK_COLORS.find(c => c.id === id) || {}).hex;
 
+const REPEATS = [
+  ['none','Does not repeat'], ['daily','Every day'], ['weekdays','Every weekday'],
+  ['weekly','Every week'], ['monthly','Every month'],
+];
+const repeatLabel = r => (REPEATS.find(x => x[0] === r) || REPEATS[0])[1];
+
+// One stored record, expanded on the fly. Nothing is duplicated in storage, so
+// changing a repeating item changes every future copy of it at once.
+const occursOn = (item, dk) => {
+  const base = item.date;
+  if(!base) return false;
+  const r = item.repeat || 'none';
+  if(r === 'none') return dk === base;
+  if(dk < base) return false;
+  if(item.repeatUntil && dk > item.repeatUntil) return false;
+  const b = parseISO(base), d = parseISO(dk);
+  if(r === 'daily')    return true;
+  if(r === 'weekdays') return d.getDay() >= 1 && d.getDay() <= 5;
+  if(r === 'weekly')   return d.getDay() === b.getDay();
+  if(r === 'monthly')  return d.getDate() === b.getDate();
+  return dk === base;
+};
+const isRepeat = item => !!(item.repeat && item.repeat !== 'none');
+
+// A repeating task is ticked off per day, not once for the whole series.
+const isDone = (t, dk) => isRepeat(t) ? (t.doneDates || []).includes(dk) : !!t.done;
+const toggleDone = (t, dk) => {
+  if(!isRepeat(t)) return {done: !t.done};
+  const list = t.doneDates || [];
+  return {doneDates: list.includes(dk) ? list.filter(x => x !== dk) : [...list, dk]};
+};
+
 const ROW = 58;
 const DEFAULT_DAY = {wake:'07:00', sleep:'23:00'};
 const DEFAULT_SETTINGS = {notify:{on:false, before:10}};
@@ -945,7 +994,7 @@ const Check = ({on, onClick}) => (
 /* ============ ORGANIZE IT — daily ============ */
 function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
   const dk = iso(date);
-  const dayTasks = tasks.filter(t => t.scope === 'daily' && t.date === dk);
+  const dayTasks = tasks.filter(t => t.scope === 'daily' && occursOn(t, dk));
   const tray = dayTasks.filter(t => !t.start);
   const [drag, setDrag] = useState(null);
   const [ghost, setGhost] = useState(null);
@@ -1170,7 +1219,7 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
                   const w = 100/t.lanes;
                   return (
                     <div key={t.id}
-                      className={'block' + (drag && drag.id === t.id ? ' dragging' : '') + (t.done ? ' done' : '')}
+                      className={'block' + (drag && drag.id === t.id ? ' dragging' : '') + (isDone(t, dk) ? ' done' : '')}
                       style={{top:(t.s - startM)/60*ROW + 1, height:Math.max(24, (t.e - t.s)/60*ROW - 2),
                               left:`calc(${t.lane*w}% + 6px)`, width:`calc(${w}% - 12px)`,
                               ...(blockHex(t.color) ? {
@@ -1183,6 +1232,7 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
                       <div className="bm mono">
                         {pretty(t.start)} – {pretty(t.end)}
                         {t.onWeek && <span className="onweek" title="Shown on the weekly calendar">W</span>}
+                        {isRepeat(t) && <span className="onweek" title={repeatLabel(t.repeat)}>↻</span>}
                       </div>
                       <div className="grip" onPointerDown={e => onDown(e, t, 'resize')} />
                     </div>
@@ -1290,9 +1340,13 @@ function DayEditor({day, onClose, onSave, first}){
 function BlockEditor({block, day, onClose, onSave, onDelete}){
   const [f, setF] = useState({title:block.title||'', start:block.start||day.wake,
     end:block.end||day.sleep, date:block.date, color:block.color || null,
-    onWeek: !!block.onWeek});
+    onWeek: !!block.onWeek, repeat: block.repeat || 'none'});
+  const [err, setErr] = useState('');
   const set = (k,v) => setF(p => ({...p,[k]:v}));
-  const save = () => { if(!f.title.trim()) return; onSave({...block, ...f, title:f.title.trim()}); };
+  const save = () => {
+    if(!f.title.trim()) return setErr('Give it a name first.');
+    onSave({...block, ...f, title:f.title.trim()});
+  };
   return (
     <Modal title={block.id ? 'Edit time block' : 'New time block'} onClose={onClose}
       footer={<>
@@ -1300,13 +1354,27 @@ function BlockEditor({block, day, onClose, onSave, onDelete}){
         <button className="btn ghost" onClick={onClose}>Cancel</button>
         <button className="btn primary" onClick={save}>Save block</button>
       </>}>
-      <Field label="What are you doing?"><input autoFocus value={f.title} onChange={e => set('title', e.target.value)}
+      <Field label="What are you doing?"><input autoFocus value={f.title}
+        onChange={e => { set('title', e.target.value); setErr(''); }}
         onKeyDown={e => e.key === 'Enter' && save()} placeholder="Enter what you're doing here" /></Field>
+      {err && <div className="formerr">{err}</div>}
       <div className="grid2">
         <Field label="Starts"><input type="time" value={f.start} onChange={e => set('start', e.target.value)} /></Field>
         <Field label="Ends"><input type="time" value={f.end} onChange={e => set('end', e.target.value)} /></Field>
       </div>
-      <Field label="Date"><input type="date" value={f.date} onChange={e => set('date', e.target.value)} /></Field>
+      <div className="grid2">
+        <Field label="Date"><input type="date" value={f.date} onChange={e => set('date', e.target.value)} /></Field>
+        <Field label="Repeats">
+          <select value={f.repeat} onChange={e => set('repeat', e.target.value)}>
+            {REPEATS.map(([k,l]) => <option key={k} value={k}>{l}</option>)}
+          </select>
+        </Field>
+      </div>
+      {f.repeat !== 'none' && (
+        <Field label="Repeat until (optional)">
+          <input type="date" value={f.repeatUntil || ''} onChange={e => set('repeatUntil', e.target.value || null)} />
+        </Field>
+      )}
       <label className="row" style={{gap:9,margin:'2px 0 16px',fontSize:13.5,fontWeight:500,alignItems:'flex-start'}}>
         <input type="checkbox" checked={f.onWeek} onChange={e => set('onWeek', e.target.checked)}
           style={{width:16,height:16,marginTop:2,flex:'none'}} />
@@ -1340,14 +1408,17 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily, 
   const days = Array.from({length:7}, (_,i) => addDays(s,i));
   const wk = weekKey(date);
   const inWeek = d => { const x = parseISO(d); return x >= s && x < addDays(s,7); };
-  const weekEvents = events.filter(e => inWeek(e.date)).sort((a,b) => a.date.localeCompare(b.date));
+  const weekEvents = days.flatMap(d => {
+    const k = iso(d);
+    return events.filter(e => occursOn(e, k)).map(e => ({...e, on:k}));
+  });
   const weekTodos = tasks.filter(t => t.scope === 'weekly' && t.anchor === wk);
   const [newEv, setNewEv] = useState(null);
 
   // Things from List It that aren't on the week yet: unscheduled items from
   // these seven days, plus this week's goals.
   const spare = [
-    ...tasks.filter(t => t.scope === 'daily' && !t.onWeek && inWeek(t.date) && !t.done),
+    ...tasks.filter(t => t.scope === 'daily' && !t.onWeek && inWeek(t.date) && !isDone(t, t.date)),
     ...weekTodos.filter(t => !t.done)
   ];
 
@@ -1433,8 +1504,8 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily, 
       <div className="week">
         {days.map(d => {
           const dk = iso(d);
-          const evs = events.filter(e => e.date === dk);
-          const blocks = tasks.filter(t => t.scope === 'daily' && t.date === dk && t.onWeek);
+          const evs = events.filter(e => occursOn(e, dk));
+          const blocks = tasks.filter(t => t.scope === 'daily' && t.onWeek && occursOn(t, dk));
           return (
             <div key={dk} data-day={dk}
               className={'daycol' + (sameDay(d, new Date()) ? ' is-today' : '') + (overDay === dk ? ' dropping' : '')}>
@@ -1488,11 +1559,14 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily, 
           {weekEvents.length === 0
             ? <Empty title="Nothing on the calendar yet" hint="Add a due date, test, or meeting to see it here." />
             : weekEvents.map(e => (
-              <div key={e.id} className="todo" style={{alignItems:'center'}}>
+              <div key={e.id + e.on} className="todo" style={{alignItems:'center'}}>
                 <span style={{width:9,height:9,borderRadius:99,background:evColor(e.type),flex:'none'}} />
                 <div className="txt">
                   <b>{e.title}</b>
-                  <div className="meta">{evLabel(e.type)} · {fmtDay(parseISO(e.date))}{e.note ? ` · ${e.note}` : ''}</div>
+                  <div className="meta">
+                    {evLabel(e.type)} · {fmtDay(parseISO(e.on))}
+                    {isRepeat(e) ? ` · ${repeatLabel(e.repeat).toLowerCase()}` : ''}{e.note ? ` · ${e.note}` : ''}
+                  </div>
                 </div>
                 <div className="todo-actions"><XBtn onClick={() => removeEvent(e.id)} label="Remove" /></div>
               </div>
@@ -1525,8 +1599,14 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(null);
   const byDay = useMemo(() => {
-    const m = {}; events.forEach(e => { (m[e.date] = m[e.date] || []).push(e); }); return m;
-  }, [events]);
+    const m = {};
+    cells.forEach(d => {
+      const k = iso(d);
+      const list = events.filter(e => occursOn(e, k));
+      if(list.length) m[k] = list;
+    });
+    return m;
+  }, [events, date]);
 
   return (
     <div>
@@ -1589,9 +1669,14 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
 }
 
 function EventEditor({ev, onClose, onSave, onDelete}){
-  const [f, setF] = useState({title:ev.title, date:ev.date, type:ev.type, note:ev.note || ''});
+  const [f, setF] = useState({title:ev.title, date:ev.date, type:ev.type, note:ev.note || '',
+    repeat: ev.repeat || 'none', repeatUntil: ev.repeatUntil || ''});
+  const [err, setErr] = useState('');
   const set = (k,v) => setF(p => ({...p,[k]:v}));
-  const save = () => { if(!f.title.trim()) return; onSave({...ev, ...f, title:f.title.trim()}); };
+  const save = () => {
+    if(!f.title.trim()) return setErr('Give it a name first.');
+    onSave({...ev, ...f, title:f.title.trim()});
+  };
   return (
     <Modal title={ev.id ? 'Edit date' : 'Add a date'} onClose={onClose}
       footer={<>
@@ -1599,8 +1684,10 @@ function EventEditor({ev, onClose, onSave, onDelete}){
         <button className="btn ghost" onClick={onClose}>Cancel</button>
         <button className="btn primary" onClick={save}>Save date</button>
       </>}>
-      <Field label="What is it?"><input autoFocus value={f.title} onChange={e => set('title', e.target.value)}
+      <Field label="What is it?"><input autoFocus value={f.title}
+        onChange={e => { set('title', e.target.value); setErr(''); }}
         onKeyDown={e => e.key === 'Enter' && save()} placeholder="Enter what it is here" /></Field>
+      {err && <div className="formerr">{err}</div>}
       <div className="grid2">
         <Field label="Date"><input type="date" value={f.date} onChange={e => set('date', e.target.value)} /></Field>
         <Field label="Kind">
@@ -1609,17 +1696,29 @@ function EventEditor({ev, onClose, onSave, onDelete}){
           </select>
         </Field>
       </div>
+      <Field label="Repeats">
+        <select value={f.repeat} onChange={e => set('repeat', e.target.value)}>
+          {REPEATS.map(([k,l]) => <option key={k} value={k}>{l}</option>)}
+        </select>
+      </Field>
+      {f.repeat !== 'none' && (
+        <Field label="Repeat until (optional)">
+          <input type="date" value={f.repeatUntil} onChange={e => set('repeatUntil', e.target.value)} />
+        </Field>
+      )}
       <Field label="Notes"><input value={f.note} onChange={e => set('note', e.target.value)} placeholder="Enter notes here" /></Field>
     </Modal>
   );
 }
 
 /* ============ LIST IT ============ */
-function ListIt({sub, date, setDate, tasks, add, update, remove, setTab}){
+function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day}){
   const [text, setText] = useState('');
   const anchor = sub === 'daily' ? iso(date) : sub === 'weekly' ? weekKey(date) : monthKey(date);
-  const items = tasks.filter(t => t.scope === sub && (sub === 'daily' ? t.date === anchor : t.anchor === anchor));
-  const doneCount = items.filter(t => t.done).length;
+  const items = tasks.filter(t => t.scope === sub
+    && (sub === 'daily' ? occursOn(t, anchor) : t.anchor === anchor));
+  const doneCount = items.filter(t => sub === 'daily' ? isDone(t, anchor) : t.done).length;
+  const [editing, setEditing] = useState(null);
   const pct = items.length ? Math.round(doneCount/items.length*100) : 0;
 
   const inputRef = useRef(null);
@@ -1669,29 +1768,35 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab}){
         ? <Empty title={sub === 'daily' ? 'Today is wide open' : sub === 'weekly' ? 'No goals for this week yet' : 'Nothing on the month list yet'}
             hint="Type above and press Enter to start the list." />
         : items.map(t => (
-          <div key={t.id} className={'todo' + (t.done ? ' done' : '')}>
-            <Check on={t.done} onClick={() => update(t.id, {done:!t.done})} />
+          <div key={t.id} className={'todo' + ((sub === 'daily' ? isDone(t, anchor) : t.done) ? ' done' : '')}
+            onDoubleClick={ev => { if(sub === 'daily' && !ev.target.closest('button')) setEditing(t); }}>
+            <Check on={sub === 'daily' ? isDone(t, anchor) : t.done}
+              onClick={() => update(t.id, sub === 'daily' ? toggleDone(t, anchor) : {done:!t.done})} />
             <div className="txt">
               <b>{t.title}</b>
               {sub === 'daily' && (
               <div className="meta">
                 {blockHex(t.color) && <i className="cdot" style={{background:blockHex(t.color)}} />}
                 {t.start ? `Scheduled ${pretty(t.start)} – ${pretty(t.end)}` : 'Not on the schedule yet'}
+                {isRepeat(t) ? ` · ${repeatLabel(t.repeat).toLowerCase()}` : ''}
               </div>
             )}
             </div>
             <div className="todo-actions">
-              {sub === 'daily' && !t.start && (
-                <button className="btn sm" onClick={() => { update(t.id, {start:'15:00', end:'16:00'}); setTab('organize'); }}>Schedule</button>
-              )}
+              {sub === 'daily' && <button className="btn sm" onClick={() => setEditing(t)}>Edit</button>}
               <XBtn onClick={() => remove(t.id)} />
             </div>
           </div>
         ))}
 
+      {editing && <BlockEditor block={editing} day={day || DEFAULT_DAY} onClose={() => setEditing(null)}
+        onSave={b => { update(b.id, b); setEditing(null); }}
+        onDelete={id => { remove(id); setEditing(null); }} />}
+
       {sub === 'daily' && (
         <div className="card soft" style={{marginTop:16,color:'var(--ink60)',fontSize:13}}>
-          Anything here shows up in <b style={{color:'var(--ink)'}}>Organize It → Daily</b>. Drag it onto the schedule to give it a time.
+          Anything here shows up in <b style={{color:'var(--ink)'}}>Organize It → Daily</b>. Double-click an item
+          to set a time, a colour, or make it repeat.
         </div>
       )}
       {sub === 'monthly' && (
@@ -1703,11 +1808,163 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab}){
   );
 }
 
+/* ============ RESUME EXPORT ============ */
+const RESUME_FORMATS = [
+  ['activities', 'Activities list', 'Name, role, dates and a short description each — the shape college applications ask for.'],
+  ['resume',     'Résumé sections', 'Grouped under Experience, Honors and Certifications, ready to paste into a document.'],
+  ['plain',      'Plain list',      'One line per entry. Good for a quick copy into an email or a form.'],
+];
+
+const monthName = ym => {
+  if(!ym) return '';
+  const [y,m] = ym.split('-');
+  return m ? `${MON[+m-1].slice(0,3)} ${y}` : y;
+};
+const rangeText = e => e.ongoing
+  ? `${monthName(e.start)} – present`
+  : [monthName(e.start), monthName(e.end)].filter(Boolean).join(' – ');
+
+function buildResume(list, format){
+  const group = c => list.filter(e => e.category === c)
+    .sort((a,b) => (b.priority || 0) - (a.priority || 0) || (b.start || '').localeCompare(a.start || ''));
+  const exp = group('experience'), hon = group('honor'), cert = group('certification');
+
+  if(format === 'plain'){
+    const line = e => `• ${e.title}${e.role ? ` — ${e.role}` : ''}${e.org ? `, ${e.org}` : ''}${rangeText(e) ? ` (${rangeText(e)})` : ''}`;
+    return [...exp, ...hon, ...cert].map(line).join('\n');
+  }
+
+  if(format === 'activities'){
+    return [...exp, ...hon, ...cert].map(e => {
+      const head = [e.role, e.org].filter(Boolean).join(', ');
+      const bits = [
+        e.title,
+        head && `   ${head}`,
+        rangeText(e) && `   ${rangeText(e)}`,
+        e.notes && `   ${e.notes}`,
+        (e.awards || []).length && `   Awards: ${e.awards.join(', ')}`,
+      ].filter(Boolean);
+      return bits.join('\n');
+    }).join('\n\n');
+  }
+
+  const section = (label, rows) => rows.length ? [
+    label.toUpperCase(),
+    '─'.repeat(label.length + 4),
+    ...rows.map(e => {
+      const head = [e.title, e.role, e.org].filter(Boolean).join(' — ');
+      const lines = [`${head}${rangeText(e) ? `   (${rangeText(e)})` : ''}`];
+      if(e.notes) lines.push(`    ${e.notes}`);
+      if((e.awards || []).length) lines.push(`    Awards: ${e.awards.join(', ')}`);
+      return lines.join('\n');
+    })
+  ].join('\n') : '';
+
+  return [section('Experience', exp), section('Honors & awards', hon), section('Certifications', cert)]
+    .filter(Boolean).join('\n\n');
+}
+
+function ResumeExport({ecs, onClose, toast}){
+  const [format, setFormat] = useState('activities');
+  const [picked, setPicked] = useState(() => ecs.map(e => e.id));
+
+  const toggle = id => setPicked(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  const groups = [
+    ['experience','Experience'], ['honor','Honors & awards'], ['certification','Certifications'],
+  ].map(([k,label]) => [k, label, ecs.filter(e => e.category === k)]).filter(g => g[2].length);
+
+  const allIn = rows => rows.every(e => picked.includes(e.id));
+  const toggleGroup = rows => setPicked(p => allIn(rows)
+    ? p.filter(id => !rows.some(e => e.id === id))
+    : Array.from(new Set([...p, ...rows.map(e => e.id)])));
+
+  const chosen = ecs.filter(e => picked.includes(e.id));
+  const text = buildResume(chosen, format);
+
+  const copy = () => navigator.clipboard.writeText(text)
+    .then(() => toast('Copied to the clipboard'))
+    .catch(() => toast('Could not copy — select the preview and copy it'));
+
+  const download = () => {
+    const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `plan-it-activities-${iso(new Date())}.txt`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Downloaded');
+  };
+
+  // The browser's own print dialog is also the way to a PDF — "Save as PDF"
+  // is a destination in it, so this covers both without a PDF library.
+  const print = () => {
+    const w = window.open('', '_blank', 'width=820,height=900');
+    if(!w) return toast('Allow pop-ups to print');
+    w.document.write(`<!doctype html><meta charset="utf-8"><title>Activities</title>
+      <style>
+        body{font-family:Georgia,'Times New Roman',serif;max-width:40rem;margin:48px auto;padding:0 24px;
+             color:#111;line-height:1.5}
+        pre{white-space:pre-wrap;font:inherit;margin:0}
+        @media print{body{margin:0}}
+      </style>
+      <pre>${text.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</pre>`);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 300);
+  };
+
+  return (
+    <Modal title="Export as a résumé" onClose={onClose}
+      footer={<>
+        <button className="btn ghost" onClick={onClose}>Close</button>
+        <button className="btn" onClick={download}>Download</button>
+        <button className="btn" onClick={print}>Print / PDF</button>
+        <button className="btn primary" onClick={copy}>Copy</button>
+      </>}>
+
+      <div className="eyebrow" style={{marginBottom:8}}>Format</div>
+      {RESUME_FORMATS.map(([k, label, hint]) => (
+        <button key={k} className={'rolecard' + (format === k ? ' on' : '')} onClick={() => setFormat(k)}>
+          <span><b>{label}</b><small>{hint}</small></span>
+        </button>
+      ))}
+
+      <div className="eyebrow" style={{margin:'20px 0 8px'}}>What to include</div>
+      {groups.map(([k, label, rows]) => (
+        <div key={k} style={{marginBottom:14}}>
+          <div className="spread" style={{marginBottom:6}}>
+            <b style={{fontSize:13.5}}>{label}</b>
+            <button className="btn sm ghost" onClick={() => toggleGroup(rows)}>
+              {allIn(rows) ? 'None' : 'All'}
+            </button>
+          </div>
+          {rows.map(e => (
+            <label key={e.id} className="pickrow">
+              <input type="checkbox" checked={picked.includes(e.id)} onChange={() => toggle(e.id)} />
+              <span>
+                <b>{e.title}</b>
+                {(e.role || e.org) && <small>{[e.role, e.org].filter(Boolean).join(', ')}</small>}
+              </span>
+            </label>
+          ))}
+        </div>
+      ))}
+
+      <div className="eyebrow" style={{margin:'20px 0 8px'}}>Preview</div>
+      {chosen.length === 0
+        ? <Empty title="Nothing selected" hint="Tick at least one entry above." />
+        : <pre className="respreview">{text}</pre>}
+    </Modal>
+  );
+}
+
 /* ============ BRAG IT ============ */
-function BragIt({sub, ecs, add, update, remove}){
+function BragIt({sub, ecs, add, update, remove, toast}){
   const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('priority');
   const [editing, setEditing] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => { if(sub !== 'experience' && filter === 'awarded') setFilter('all'); }, [sub, filter]);
 
@@ -1744,6 +2001,7 @@ function BragIt({sub, ecs, add, update, remove}){
             <option value="recent">Most recent first</option>
             <option value="az">A – Z</option>
           </select>
+          <button className="btn" onClick={() => setExporting(true)} disabled={ecs.length === 0}>Export résumé</button>
           <button className="btn primary" onClick={() => setEditing({category:sub, title:'', org:'', role:'', start:'', end:'', ongoing:true, priority:3, goal:'', awards:[], notes:''})}>
             + Add {sub === 'honor' ? 'an honor' : 'an activity'}
           </button>
@@ -1758,7 +2016,11 @@ function BragIt({sub, ecs, add, update, remove}){
               : sub === 'certification' ? 'Add a course, licence, or training you completed — CPR, lifeguarding, a language test, an online course.'
               : 'Add a club, job, sport, internship, or volunteer role.'} />
         : list.map(e => (
-          <div key={e.id} className="ec">
+          <div key={e.id} className="ec" onDoubleClick={ev => {
+            // let a double-click inside the notes or on a button do its own thing
+            if(ev.target.closest('button') || ev.target.closest('.side')) return;
+            setEditing(e);
+          }} title="Double-click to edit">
             <div className="main">
               <div className="spread" style={{alignItems:'flex-start'}}>
                 <div style={{minWidth:0}}>
@@ -1804,6 +2066,8 @@ function BragIt({sub, ecs, add, update, remove}){
           </div>
         ))}
 
+      {exporting && <ResumeExport ecs={ecs} toast={toast} onClose={() => setExporting(false)} />}
+
       {editing && <EcEditor ec={editing} onClose={() => setEditing(null)}
         onSave={v => { v.id ? update(v.id, v) : add(v); setEditing(null); }} />}
     </div>
@@ -1813,8 +2077,9 @@ function BragIt({sub, ecs, add, update, remove}){
 function EcEditor({ec, onClose, onSave}){
   const [f, setF] = useState({...ec, awards:(ec.awards || []).join(', ')});
   const set = (k,v) => setF(p => ({...p,[k]:v}));
+  const [err, setErr] = useState('');
   const save = () => {
-    if(!f.title.trim()) return;
+    if(!f.title.trim()) return setErr('Give it a name first.');
     onSave({...f, title:f.title.trim(), awards:f.awards.split(',').map(s => s.trim()).filter(Boolean)});
   };
   return (
@@ -1823,7 +2088,9 @@ function EcEditor({ec, onClose, onSave}){
       : ec.category === 'certification' ? 'New certification'
       : 'New activity'} onClose={onClose}
       footer={<><button className="btn ghost" onClick={onClose}>Cancel</button><button className="btn primary" onClick={save}>Save entry</button></>}>
-      <Field label="Name"><input autoFocus value={f.title} onChange={e => set('title', e.target.value)} placeholder="Enter the name here" /></Field>
+      <Field label="Name"><input autoFocus value={f.title}
+        onChange={e => { set('title', e.target.value); setErr(''); }} placeholder="Enter the name here" /></Field>
+      {err && <div className="formerr">{err}</div>}
       <div className="grid2">
         <Field label="Organization"><input value={f.org} onChange={e => set('org', e.target.value)} placeholder="Enter the organization here" /></Field>
         <Field label="Your position"><input value={f.role} onChange={e => set('role', e.target.value)} placeholder="Enter your position here" /></Field>
@@ -1865,7 +2132,7 @@ function EcEditor({ec, onClose, onSave}){
 
 /* ============ LOCK IT ============ */
 
-function LockIt({lock, running, left, minutes, start, pause, reset, toast,
+function LockIt({sub, lock, running, left, minutes, start, pause, reset, toast,
                  mode, setMode, pomo, setPomo, phase, cycle, addCycle,
                  camOn, setCamOn, camFull, camCount, remoteStreams, camTick,
                  room, setRoom, members, myId, name, setName}){
@@ -1906,6 +2173,8 @@ function LockIt({lock, running, left, minutes, start, pause, reset, toast,
   };
 
   const mm = Math.floor(left/60), ss = left%60;
+
+  if(sub === 'reports') return <Reports lock={lock} />;
 
   return (
     <div className="lockgrid">
@@ -1980,11 +2249,11 @@ function LockIt({lock, running, left, minutes, start, pause, reset, toast,
 
         <div className="row" style={{gap:12,marginTop:14,flexWrap:'wrap'}}>
           <div className="card" style={{flex:1,minWidth:150}}>
-            <div className="eyebrow">Sessions finished</div>
+            <div className="eyebrow">Sessions today</div>
             <div className="mono" style={{fontSize:26,fontWeight:500}}>{lock.sessions}</div>
           </div>
           <div className="card" style={{flex:1,minWidth:150}}>
-            <div className="eyebrow">Minutes focused</div>
+            <div className="eyebrow">Minutes today</div>
             <div className="mono" style={{fontSize:26,fontWeight:500}}>{lock.minutes}</div>
           </div>
         </div>
@@ -3225,11 +3494,11 @@ function WatchIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
 
                 <div className="row" style={{gap:12,flexWrap:'wrap',marginBottom:14}}>
                   <div className="card" style={{flex:1,minWidth:150}}>
-                    <div className="eyebrow">Minutes focused</div>
+                    <div className="eyebrow">Minutes today</div>
                     <div className="mono" style={{fontSize:26,fontWeight:500}}>{lock.minutes || 0}</div>
                   </div>
                   <div className="card" style={{flex:1,minWidth:150}}>
-                    <div className="eyebrow">Sessions finished</div>
+                    <div className="eyebrow">Sessions today</div>
                     <div className="mono" style={{fontSize:26,fontWeight:500}}>{lock.sessions || 0}</div>
                   </div>
                   <div className="card" style={{flex:1,minWidth:150}}>
@@ -3239,6 +3508,20 @@ function WatchIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
                     </div>
                   </div>
                 </div>
+
+                {(lock.history || []).length > 0 && (
+                  <>
+                    <div className="eyebrow" style={{marginBottom:8}}>Recent days</div>
+                    <div className="histrow">
+                      {(lock.history || []).slice(-7).map(h => (
+                        <div key={h.date} className="histbar" title={`${h.minutes} min on ${h.date}`}>
+                          <i style={{height:Math.max(4, Math.min(60, h.minutes)) + 'px'}} />
+                          <span className="mono">{DOW[parseISO(h.date).getDay()].slice(0,1)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
 
                 <div className="eyebrow" style={{marginBottom:8}}>Coming up in the next two weeks</div>
                 {soon.length === 0
@@ -3874,6 +4157,84 @@ function LegalModal({kind, onClose}){
   );
 }
 
+/* ============ STUDY REPORT ============ */
+function buildReport(lock){
+  const lk = lock || {};
+  const hist = lk.history || [];
+  const days = [...hist.slice(-6), {date:lk.day || iso(new Date()), minutes:lk.minutes || 0, sessions:lk.sessions || 0}];
+  const minutes = days.reduce((a,d) => a + (d.minutes || 0), 0);
+  const sessions = days.reduce((a,d) => a + (d.sessions || 0), 0);
+  const partners = Object.values(lk.partners || {}).sort((a,b) => b.mins - a.mins);
+  const best = days.reduce((a,d) => (d.minutes || 0) > (a.minutes || 0) ? d : a, days[0] || {});
+  return {days, minutes, sessions, partners, best,
+          today: lk.minutes || 0, todaySessions: lk.sessions || 0};
+}
+
+function Reports({lock}){
+  const r = buildReport(lock);
+  const peak = Math.max(10, ...r.days.map(d => d.minutes || 0));
+  const hrs = Math.floor(r.minutes/60), mins = r.minutes % 60;
+
+  return (
+    <div style={{maxWidth:680}}>
+      <Section title="The last seven days">
+        <div className="row" style={{gap:12, flexWrap:'wrap', marginBottom:16}}>
+          <div className="card" style={{flex:1, minWidth:150}}>
+            <div className="eyebrow">Time focused</div>
+            <div className="mono" style={{fontSize:26, fontWeight:500}}>
+              {hrs ? `${hrs}h ${mins}m` : `${mins}m`}
+            </div>
+          </div>
+          <div className="card" style={{flex:1, minWidth:150}}>
+            <div className="eyebrow">Sessions</div>
+            <div className="mono" style={{fontSize:26, fontWeight:500}}>{r.sessions}</div>
+          </div>
+          <div className="card" style={{flex:1, minWidth:150}}>
+            <div className="eyebrow">Best day</div>
+            <div className="mono" style={{fontSize:26, fontWeight:500}}>{r.best.minutes || 0}m</div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="chartrow">
+            {r.days.map((d,i) => (
+              <div key={d.date || i} className="chartbar" title={`${d.minutes || 0} min`}>
+                <b className="mono">{d.minutes || 0}</b>
+                <i style={{height:Math.round((d.minutes || 0)/peak*90) + 4 + 'px'}} />
+                <span className="mono">{d.date ? DOW[parseISO(d.date).getDay()].slice(0,1) : '·'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Section>
+
+      <Section title="Who you studied with" hint="Minutes spent in a room together while the timer was running.">
+        {r.partners.length === 0
+          ? <Empty title="No study partners yet" hint="Join a room in the Focus timer and start a session with someone." />
+          : r.partners.slice(0,8).map((p,i) => (
+            <div key={p.name + i} className="todo" style={{alignItems:'center'}}>
+              <Initial name={p.name} size={32} />
+              <div className="txt">
+                <b>{p.name}</b>
+                <div className="meta">{p.mins} min together</div>
+              </div>
+              {i === 0 && <div className="todo-actions"><span className="status focusing">Most</span></div>}
+            </div>
+          ))}
+      </Section>
+
+      <Section title="Today">
+        <div className="card soft" style={{fontSize:13.5, color:'var(--ink60)', lineHeight:1.6}}>
+          {r.today === 0
+            ? "Nothing logged yet today. Minutes count from the moment a session starts, even if you stop early."
+            : <>You've focused <b style={{color:'var(--ink)'}}>{r.today} minutes</b> today
+               across {r.todaySessions} finished {r.todaySessions === 1 ? 'session' : 'sessions'}.</>}
+        </div>
+      </Section>
+    </div>
+  );
+}
+
 /* ============ NOTIFICATIONS ============ */
 // Everything here is flagged as planned rather than live. A promo that reads
 // as active but can't be claimed is worse than one that says "coming".
@@ -3888,7 +4249,7 @@ const NEWS = [
    body:"A short survey is going here. What you'd add, what gets in your way, what you'd actually pay for."},
 ];
 
-function NewsPanel({onClose, readIds, markRead, requests = [], onDecide}){
+function NewsPanel({onClose, readIds, markRead, requests = [], onDecide, report, onOpenReports}){
   // News gets marked read on open; requests don't — they stay until answered.
   useEffect(() => { markRead(NEWS.map(n => n.id)); }, [markRead]);
   return (
@@ -3917,6 +4278,38 @@ function NewsPanel({onClose, readIds, markRead, requests = [], onDecide}){
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {report && report.minutes > 0 && (
+        <div style={{marginBottom:20}}>
+          <div className="eyebrow" style={{marginBottom:9}}>Your study report</div>
+          <div className="reqcard">
+            <div className="row" style={{gap:14, flexWrap:'wrap', marginBottom:10}}>
+              <div>
+                <div className="eyebrow">Last 7 days</div>
+                <b className="mono" style={{fontSize:21}}>
+                  {Math.floor(report.minutes/60) ? `${Math.floor(report.minutes/60)}h ${report.minutes%60}m` : `${report.minutes}m`}
+                </b>
+              </div>
+              <div>
+                <div className="eyebrow">Sessions</div>
+                <b className="mono" style={{fontSize:21}}>{report.sessions}</b>
+              </div>
+              {report.partners[0] && (
+                <div style={{minWidth:0}}>
+                  <div className="eyebrow">Most with</div>
+                  <b style={{fontSize:16}}>{report.partners[0].name}</b>
+                </div>
+              )}
+            </div>
+            <p style={{margin:'0 0 12px', fontSize:13, color:'var(--ink60)', lineHeight:1.55}}>
+              {report.partners[0]
+                ? `You and ${report.partners[0].name} have put in ${report.partners[0].mins} minutes in the same room. Your best day was ${report.best.minutes} minutes.`
+                : `Your best day this week was ${report.best.minutes} minutes. Join a study room and you'll see who you focus with most.`}
+            </p>
+            <button className="btn primary" onClick={onOpenReports}>See the full report</button>
+          </div>
         </div>
       )}
 
@@ -3952,7 +4345,7 @@ const TABS = [
    subs:[['daily','Daily'],['weekly','Weekly'],['monthly','Monthly']]},
   {id:'lock',     emoji:'🔒', label:'Lock It',    sub:'Study mode', color:'var(--lock)',
    title:'Lock It', tagline:'Set a timer, close everything else, bring your friends.',
-   subs:[['focus','Focus timer']]},
+   subs:[['focus','Focus timer'],['reports','Reports']]},
   {id:'watch',    emoji:'👀', label:'Watch It',   sub:'Parents', color:'var(--watch)', parentOnly:true,
    title:'Watch It', tagline:"Follow along with your child's planner.",
    subs:[['children','Children']]},
@@ -4075,13 +4468,17 @@ function App({user, onSignOut}){
   const setSettings = next => setStore(s => ({...s, settings:next}));
 
   const readNews = settings.readNews || [];
-  const unreadNews = NEWS.filter(n => !readNews.includes(n.id)).length + pendingList.length;
+  const report = useMemo(() => buildReport(store.lock), [store.lock]);
+  const thisWeek = weekKey(new Date());
+  const reportUnread = report.minutes > 0 && settings.reportSeen !== thisWeek ? 1 : 0;
+  const unreadNews = NEWS.filter(n => !readNews.includes(n.id)).length + pendingList.length + reportUnread;
   const markNewsRead = useCallback(ids => {
     setStore(s0 => {
       const st = s0.settings || DEFAULT_SETTINGS;
       const merged = Array.from(new Set([...(st.readNews || []), ...ids]));
-      if(merged.length === (st.readNews || []).length) return s0;
-      return {...s0, settings:{...st, readNews:merged}};
+      const week = weekKey(new Date());
+      if(merged.length === (st.readNews || []).length && st.reportSeen === week) return s0;
+      return {...s0, settings:{...st, readNews:merged, reportSeen:week}};
     });
   }, []);
 
@@ -4298,6 +4695,46 @@ function App({user, onSignOut}){
     };
   }, []);
 
+  // Credit a minute to everyone in the room with you, but only while the timer
+  // is running — sitting in a room chatting isn't studying together.
+  const membersRef = useRef(members);
+  useEffect(() => { membersRef.current = members; }, [members]);
+  useEffect(() => {
+    if(isParent || !room || !running) return;
+    const tick = () => setStore(s0 => {
+      const lk = s0.lock || {};
+      const partners = {...(lk.partners || {})};
+      let changed = false;
+      (membersRef.current || []).forEach(m => {
+        if(m.id === user.id) return;
+        const prev = partners[m.id] || {name:m.name, mins:0};
+        partners[m.id] = {name:m.name || prev.name, mins:prev.mins + 1};
+        changed = true;
+      });
+      return changed ? {...s0, lock:{...lk, partners}} : s0;
+    });
+    const i = setInterval(tick, 60000);
+    return () => clearInterval(i);
+  }, [isParent, room, running, user.id]);
+
+  // Focus stats are a daily figure, so they roll over at midnight. Yesterday's
+  // total is kept in a short history rather than thrown away.
+  useEffect(() => {
+    if(!ready) return;
+    const rollover = () => setStore(s0 => {
+      const today = iso(new Date());
+      const lk = s0.lock || {};
+      if(lk.day === today) return s0;
+      const history = (lk.day && (lk.minutes || lk.sessions))
+        ? [...(lk.history || []), {date:lk.day, minutes:lk.minutes || 0, sessions:lk.sessions || 0}].slice(-14)
+        : (lk.history || []);
+      return {...s0, lock:{sessions:0, minutes:0, seconds:0, day:today, history, partners:lk.partners || {}}};
+    });
+    rollover();
+    const i = setInterval(rollover, 60000);
+    return () => clearInterval(i);
+  }, [ready]);
+
   // A small live status beside the planner: in a room, focusing, or neither.
   useEffect(() => {
     if(isParent || !ready) return;
@@ -4367,7 +4804,7 @@ function App({user, onSignOut}){
   return (
     <div className="app" style={{'--accent':accentHex, '--accent-soft':hexRgba(accentHex, .16), '--accent-ink':inkOn(accentHex)}}>
       <nav className="rail" aria-label="Sections">
-        <div className="brand"><Mark size={34} /><b>Plan It</b><span>{new Date().getFullYear()}</span></div>
+        <div className="brand"><Mark size={46} /><b>Plan It</b></div>
         {TABS.filter(t => t.id !== 'settings' && (!t.parentOnly || isParent)).map(t => (
           <button key={t.id} className={'tab' + (tab === t.id ? ' on' : '')} style={{'--tabcolor':t.color}}
             disabled={running && t.id !== 'lock'}
@@ -4466,10 +4903,11 @@ function App({user, onSignOut}){
 
           {tab === 'list' &&
             <ListIt sub={sub.list} date={date} setDate={setDate} tasks={view.tasks} add={addTask} update={updateTask} remove={removeTask}
+              day={view.day || user.day || DEFAULT_DAY}
               setTab={t => { setTab(t); setSub(p => ({...p, organize:'daily'})); }} />}
 
           {tab === 'brag' &&
-            <BragIt sub={sub.brag} ecs={view.ecs} add={addEc} update={updateEc} remove={removeEc} />}
+            <BragIt sub={sub.brag} ecs={view.ecs} add={addEc} update={updateEc} remove={removeEc} toast={toast} />}
 
           {tab === 'watch' && <WatchIt user={user} toast={toast} viewChildId={viewChildId}
             childStore={childStore} goTab={t => setTab(t)}
@@ -4486,7 +4924,7 @@ function App({user, onSignOut}){
               }} />}
 
           {tab === 'lock' &&
-            <LockIt lock={view.lock || {}} running={running} left={left} minutes={minutes}
+            <LockIt sub={sub.lock} lock={view.lock || {}} running={running} left={left} minutes={minutes}
               start={startTimer} pause={pauseTimer} reset={resetTimer} toast={toast}
               mode={mode} setMode={setMode} pomo={pomo} setPomo={setPomo}
               phase={phase} cycle={cycle} addCycle={addCycle}
@@ -4555,7 +4993,8 @@ function App({user, onSignOut}){
       )}
 
       {newsOpen && <NewsPanel onClose={() => setNewsOpen(false)} readIds={readNews} markRead={markNewsRead}
-        requests={pendingList} onDecide={decideLink} />}
+        requests={pendingList} onDecide={decideLink} report={report}
+        onOpenReports={() => { setNewsOpen(false); setTab('lock'); setSub(p => ({...p, lock:'reports'})); }} />}
 
       {toastMsg && <div className="toast">{toastMsg}</div>}
     </div>
