@@ -2650,6 +2650,8 @@ function Auth(){
   const [cool, setCool] = useState(0);
   const [panel, setPanel] = useState(0);
   const [avail, setAvail] = useState(null);          // null | 'checking' | 'free' | 'taken' | 'invalid' | 'offline'
+  const [refBy, setRefBy] = useState('');
+  const [source, setSource] = useState('');
 
   // reloaded mid-flow, or signed in with Google but never picked a username
   useEffect(() => { (async () => {
