@@ -236,6 +236,16 @@
   .pill.draggable:active,.ev.draggable:active{cursor:grabbing}
   .cell.dropping{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
   .weektray-items{display:flex;gap:8px;flex-wrap:wrap}
+  .inboxrow{display:flex;align-items:center;gap:10px;padding:9px 10px;background:var(--card);
+    border:1px solid var(--line);border-radius:11px;margin-bottom:7px}
+  .inboxrow:last-child{margin-bottom:0}
+  .inboxrow .txt{flex:1;min-width:0}
+  .inboxrow .txt b{font-size:13.5px;font-weight:600;display:block;word-break:break-word}
+  .inboxrow .meta{font-size:11.5px;color:var(--ink35);margin-top:1px}
+  .inboxrow.done .txt b{text-decoration:line-through;color:var(--ink35)}
+  .grabber{border:0;background:transparent;padding:2px 4px;color:var(--ink35);cursor:grab;
+    touch-action:pan-y;display:grid;place-items:center;flex:none}
+  .grabber:active{cursor:grabbing}
   .weekchip{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--line);
     background:var(--card);border-radius:99px;font-size:13px;font-weight:600;cursor:grab;touch-action:pan-y;
     max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -504,7 +514,12 @@
   .tabcount{position:absolute;top:9px;right:9px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;
     background:#E03F7C;color:#fff;font-size:10.5px;font-weight:700;font-style:normal;display:grid;
     place-items:center;line-height:1}
+  .reportgrid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:22px;align-items:start}
+  @media (max-width:1000px){.reportgrid{grid-template-columns:1fr}}
   .chartrow{display:flex;align-items:flex-end;gap:10px;height:150px}
+  .chartrow.dense{gap:3px}
+  .chartrow.dense .chartbar{grid-template-rows:0 1fr 16px}
+  .chartrow.dense .chartbar span{font-size:9px}
   .chartbar{display:grid;grid-template-rows:16px 1fr 18px;align-items:end;justify-items:center;
     gap:5px;flex:1;height:100%}
   .chartbar.today i{opacity:1;box-shadow:0 0 0 3px var(--accent-soft)}
@@ -1461,10 +1476,11 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
 
   // Things from List It that aren't on the week yet: unscheduled items from
   // these seven days, plus this week's goals.
-  // Only unscheduled day tasks. Week goals used to be draggable here too, but
-  // dropping one turned it into a day task and it vanished from the goals list —
-  // which made it look like deleting from List It hadn't worked.
-  const spare = tasks.filter(t => t.scope === 'daily' && !t.onWeek && inWeek(t.date) && !isDone(t, t.date));
+  // Every day task in this week, whether or not it's on the calendar. Putting
+  // something on the week shouldn't take it out of the list you manage it from.
+  const inbox = tasks.filter(t => t.scope === 'daily' && inWeek(t.date))
+    .sort((a,b) => (a.date || '').localeCompare(b.date || '')
+      || (a.start || '~').localeCompare(b.start || '~'));
 
   const [drag, setDrag] = useState(null);
   const [ghost, setGhost] = useState(null);
@@ -1589,24 +1605,38 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
         })}
       </div>
 
-      {(spare.length > 0 || drag) && (
-        <div className={'weektray' + (overDay === 'tray' ? ' over' : '')} data-tray>
-          <div className="eyebrow" style={{marginBottom:8}}>
-            From List It — drag onto a day, or drag one back here to take it off the week
-          </div>
-          <div className="weektray-items">
-            {spare.length === 0 && <span style={{fontSize:12.5,color:'var(--ink35)'}}>Drop here to take it off the week</span>}
-            {spare.map(t => (
-              <button key={t.id} className="weekchip" onPointerDown={e => onGrab(e, t)}
-                title="Drag onto a day">
-                <IconGrip />
-                {blockHex(t.color) && <i className="cdot" style={{background:blockHex(t.color)}} />}
-                {t.title}
-              </button>
-            ))}
-          </div>
+      <div className={'weektray' + (overDay === 'tray' ? ' over' : '')} data-tray>
+        <div className="eyebrow" style={{marginBottom:8}}>
+          From List It — drag onto a day to put it on the week, or back here to take it off
         </div>
-      )}
+        {inbox.length === 0
+          ? <span style={{fontSize:12.5,color:'var(--ink35)'}}>Nothing on this week's lists yet.</span>
+          : inbox.map(t => {
+            const done = isDone(t, t.date);
+            return (
+              <div key={t.id} className={'inboxrow' + (done ? ' done' : '')}
+                onDoubleClick={ev => { if(!ev.target.closest('button')) setEditTask(t); }}
+                title="Double-click to edit">
+                <button className="grabber" onPointerDown={e => onGrab(e, t, t.onWeek ? 'day' : 'tray')}
+                  title="Drag onto a day"><IconGrip /></button>
+                <Check on={done} onClick={() => update(t.id, toggleDone(t, t.date))} />
+                <div className="txt">
+                  <b>{t.title}</b>
+                  <div className="meta">
+                    {blockHex(t.color) && <i className="cdot" style={{background:blockHex(t.color)}} />}
+                    {t.onWeek ? `On ${DOW[parseISO(t.date).getDay()]}` : 'Not on the week'}
+                    {t.start ? ` · ${pretty(t.start)}` : ''}
+                    {isRepeat(t) ? ` · ${repeatLabel(t.repeat).toLowerCase()}` : ''}
+                  </div>
+                </div>
+                <div className="todo-actions">
+                  <button className="btn sm" onClick={() => setEditTask(t)}>Edit</button>
+                  <XBtn onClick={() => remove(t.id)} />
+                </div>
+              </div>
+            );
+          })}
+      </div>
 
       {ghost && <div className="ghost" style={{left:ghost.x+12, top:ghost.y-14}}>{ghost.label}</div>}
 
@@ -3799,10 +3829,10 @@ function ViewIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
 
                 <div className="eyebrow" style={{marginBottom:8}}>This week</div>
                 <div className="histrow">
-                  {buildReport(lock).days.map(h => (
-                    <div key={h.date} className="histbar" title={`${h.minutes} min on ${fmtDay(parseISO(h.date))}`}>
+                  {buildReport(lock, 'week').bars.map(h => (
+                    <div key={h.key} className="histbar" title={`${h.minutes} min`}>
                       <i style={{height:Math.max(3, Math.min(60, h.minutes)) + 'px'}} />
-                      <span className="mono">{DOW[parseISO(h.date).getDay()].slice(0,1)}</span>
+                      <span className="mono">{h.label}</span>
                     </div>
                   ))}
                 </div>
@@ -4495,91 +4525,151 @@ function LegalModal({kind, onClose}){
 }
 
 /* ============ STUDY REPORT ============ */
-function buildReport(lock){
+function buildReport(lock, range = 'week'){
   const lk = lock || {};
   const byDate = {};
   (lk.history || []).forEach(h => { byDate[h.date] = h; });
   if(lk.day) byDate[lk.day] = {date:lk.day, minutes:lk.minutes || 0, sessions:lk.sessions || 0};
+  const get = k => byDate[k] || {date:k, minutes:0, sessions:0};
+  const today = iso(new Date());
 
-  // Always seven days, Sunday through Saturday, so quiet days keep their place
-  // instead of the chart collapsing to whatever happened to have activity.
-  const start = startOfWeek(new Date());
-  const days = Array.from({length:7}, (_,i) => {
-    const k = iso(addDays(start, i));
-    const h = byDate[k] || {};
-    return {date:k, minutes:h.minutes || 0, sessions:h.sessions || 0};
-  });
+  let bars = [], partners;
+  if(range === 'month'){
+    // every day of the current month, so quiet days keep their place
+    const first = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const days = new Date(first.getFullYear(), first.getMonth()+1, 0).getDate();
+    bars = Array.from({length:days}, (_,i) => {
+      const k = iso(addDays(first, i));
+      const d = get(k);
+      return {key:k, label:String(i+1), minutes:d.minutes, sessions:d.sessions, now:k === today};
+    });
+    partners = lk.partnersMonth || {};
+  } else if(range === 'all'){
+    // one bar per month, oldest first
+    const months = {};
+    Object.values(byDate).forEach(d => {
+      const k = d.date.slice(0,7);
+      months[k] = months[k] || {minutes:0, sessions:0};
+      months[k].minutes += d.minutes || 0;
+      months[k].sessions += d.sessions || 0;
+    });
+    bars = Object.keys(months).sort().slice(-12).map(k => ({
+      key:k, label:MON[+k.slice(5,7)-1].slice(0,1),
+      minutes:months[k].minutes, sessions:months[k].sessions, now:k === today.slice(0,7)
+    }));
+    partners = lk.partnersAll || {};
+  } else {
+    const start = startOfWeek(new Date());
+    bars = Array.from({length:7}, (_,i) => {
+      const k = iso(addDays(start, i));
+      const d = get(k);
+      return {key:k, label:DOW[parseISO(k).getDay()].slice(0,1),
+              minutes:d.minutes, sessions:d.sessions, now:k === today};
+    });
+    partners = lk.partners || {};
+  }
 
-  const minutes = days.reduce((a,d) => a + d.minutes, 0);
-  const sessions = days.reduce((a,d) => a + d.sessions, 0);
-  const partners = Object.values(lk.partners || {}).sort((a,b) => b.mins - a.mins);
-  const best = days.reduce((a,d) => d.minutes > a.minutes ? d : a, days[0]);
-  return {days, minutes, sessions, partners, best,
+  const minutes = bars.reduce((a2,d) => a2 + d.minutes, 0);
+  const sessions = bars.reduce((a2,d) => a2 + d.sessions, 0);
+  const best = bars.reduce((a2,d) => d.minutes > a2.minutes ? d : a2, bars[0] || {minutes:0});
+  return {bars, days:bars, minutes, sessions, best,
+          partners: Object.values(partners).sort((x,y) => y.mins - x.mins),
           today: lk.minutes || 0, todaySessions: lk.sessions || 0};
 }
 
+const RANGES = [['week','This week'],['month','This month'],['all','All time']];
+
 function Reports({lock}){
-  const r = buildReport(lock);
-  const peak = Math.max(10, ...r.days.map(d => d.minutes));
+  const [range, setRange] = useState('week');
+  const r = buildReport(lock, range);
+  const peak = Math.max(10, ...r.bars.map(d => d.minutes));
   const hrs = Math.floor(r.minutes/60), mins = r.minutes % 60;
+  const heading = range === 'week' ? `This week · ${fmtWeek(new Date())}`
+    : range === 'month' ? `This month · ${fmtMonth(new Date())}` : 'All time';
 
   return (
-    <div style={{maxWidth:680}}>
-      <Section title="The last seven days">
-        <div className="row" style={{gap:12, flexWrap:'wrap', marginBottom:16}}>
-          <div className="card" style={{flex:1, minWidth:150}}>
-            <div className="eyebrow">Time focused</div>
-            <div className="mono" style={{fontSize:26, fontWeight:500}}>
-              {hrs ? `${hrs}h ${mins}m` : `${mins}m`}
-            </div>
-          </div>
-          <div className="card" style={{flex:1, minWidth:150}}>
-            <div className="eyebrow">Sessions</div>
-            <div className="mono" style={{fontSize:26, fontWeight:500}}>{r.sessions}</div>
-          </div>
-          <div className="card" style={{flex:1, minWidth:150}}>
-            <div className="eyebrow">Best day</div>
-            <div className="mono" style={{fontSize:26, fontWeight:500}}>{r.best.minutes || 0}m</div>
-          </div>
-        </div>
+    <div>
+      <div className="modeswitch" style={{marginBottom:18}}>
+        {RANGES.map(([k,l]) => (
+          <button key={k} className={range === k ? 'on' : ''} onClick={() => setRange(k)}>{l}</button>
+        ))}
+      </div>
 
-        <div className="card">
-          <div className="chartrow">
-            {r.days.map((d,i) => (
-              <div key={d.date} className={'chartbar' + (d.date === iso(new Date()) ? ' today' : '')}
-                title={`${d.minutes} min on ${fmtDay(parseISO(d.date))}`}>
-                <b className="mono">{d.minutes || ''}</b>
-                <i style={{height:Math.round(d.minutes/peak*86) + 3 + 'px'}} />
-                <span className="mono">{DOW[parseISO(d.date).getDay()].slice(0,1)}</span>
+      <div className="reportgrid">
+        <div>
+          <Section title={heading}
+            hint={range === 'week' ? 'Resets on Sunday.'
+              : range === 'month' ? 'Resets on the 1st.' : 'Everything since you started.'}>
+            <div className="row" style={{gap:12, flexWrap:'wrap', marginBottom:16}}>
+              <div className="card" style={{flex:1, minWidth:140}}>
+                <div className="eyebrow">Time focused</div>
+                <div className="mono" style={{fontSize:26, fontWeight:500}}>
+                  {hrs ? `${hrs}h ${mins}m` : `${mins}m`}
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </Section>
-
-      <Section title="Who you studied with" hint="Minutes spent in a room together while the timer was running.">
-        {r.partners.length === 0
-          ? <Empty title="No study partners yet" hint="Join a room in the Focus timer and start a session with someone." />
-          : r.partners.slice(0,8).map((p,i) => (
-            <div key={p.name + i} className="todo" style={{alignItems:'center'}}>
-              <Initial name={p.name} size={32} />
-              <div className="txt">
-                <b>{p.name}</b>
-                <div className="meta">{p.mins} min together</div>
+              <div className="card" style={{flex:1, minWidth:140}}>
+                <div className="eyebrow">Sessions</div>
+                <div className="mono" style={{fontSize:26, fontWeight:500}}>{r.sessions}</div>
               </div>
-              {i === 0 && <div className="todo-actions"><span className="status focusing">Most</span></div>}
+              <div className="card" style={{flex:1, minWidth:140}}>
+                <div className="eyebrow">Best {range === 'all' ? 'month' : 'day'}</div>
+                <div className="mono" style={{fontSize:26, fontWeight:500}}>{r.best.minutes || 0}m</div>
+              </div>
             </div>
-          ))}
-      </Section>
 
-      <Section title="Today">
-        <div className="card soft" style={{fontSize:13.5, color:'var(--ink60)', lineHeight:1.6}}>
-          {r.today === 0
-            ? "Nothing logged yet today. Minutes count from the moment a session starts, even if you stop early."
-            : <>You've focused <b style={{color:'var(--ink)'}}>{r.today} minutes</b> today
-               across {r.todaySessions} finished {r.todaySessions === 1 ? 'session' : 'sessions'}.</>}
+            <div className="card">
+              <div className={'chartrow' + (r.bars.length > 12 ? ' dense' : '')}>
+                {r.bars.map(d => (
+                  <div key={d.key} className={'chartbar' + (d.now ? ' today' : '')}
+                    title={`${d.minutes} min`}>
+                    <b className="mono">{r.bars.length > 12 ? '' : (d.minutes || '')}</b>
+                    <i style={{height:Math.round(d.minutes/peak*86) + 3 + 'px'}} />
+                    <span className="mono">{d.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Section>
+
+          {range === 'week' && lock && lock.lastWeek && lock.lastWeek.minutes > 0 && (
+            <Section title="Last week">
+              <div className="card soft" style={{fontSize:13.5, color:'var(--ink60)', lineHeight:1.6}}>
+                {fmtWeek(parseISO(lock.lastWeek.weekOf))} — <b style={{color:'var(--ink)'}}>{lock.lastWeek.minutes} minutes</b>
+                {' '}across {lock.lastWeek.sessions} {lock.lastWeek.sessions === 1 ? 'session' : 'sessions'}
+                {lock.lastWeek.top ? <>, most of it with <b style={{color:'var(--ink)'}}>{lock.lastWeek.top}</b>.</> : '.'}
+              </div>
+            </Section>
+          )}
         </div>
-      </Section>
+
+        <div>
+          <Section title="Who you studied with"
+            hint={range === 'week' ? 'Minutes in a room together this week.'
+              : range === 'month' ? 'Minutes together this month.' : 'Minutes together since you started.'}>
+            {r.partners.length === 0
+              ? <Empty title="No study partners yet" hint="Join a room and start a session with someone." />
+              : r.partners.slice(0,10).map((p,i) => (
+                <div key={p.name + i} className="todo" style={{alignItems:'center'}}>
+                  <Initial name={p.name} size={30} />
+                  <div className="txt">
+                    <b>{p.name}</b>
+                    <div className="meta">{p.mins} min together</div>
+                  </div>
+                  {i === 0 && <div className="todo-actions"><span className="status focusing">Most</span></div>}
+                </div>
+              ))}
+          </Section>
+
+          <Section title="Today">
+            <div className="card soft" style={{fontSize:13.5, color:'var(--ink60)', lineHeight:1.6}}>
+              {r.today === 0
+                ? "Nothing logged yet today. Minutes count from the moment a session starts, even if you stop early."
+                : <>You've focused <b style={{color:'var(--ink)'}}>{r.today} minutes</b> today
+                   across {r.todaySessions} finished {r.todaySessions === 1 ? 'session' : 'sessions'}.</>}
+            </div>
+          </Section>
+        </div>
+      </div>
     </div>
   );
 }
@@ -5071,31 +5161,69 @@ function App({user, onSignOut}){
     const tick = () => setStore(s0 => {
       const lk = s0.lock || {};
       const partners = {...(lk.partners || {})};
+      const partnersMonth = {...(lk.partnersMonth || {})};
+      const partnersAll = {...(lk.partnersAll || {})};
       let changed = false;
       (membersRef.current || []).forEach(m => {
         if(m.id === user.id) return;
-        const prev = partners[m.id] || {name:m.name, mins:0};
-        partners[m.id] = {name:m.name || prev.name, mins:prev.mins + 1};
+        [partners, partnersMonth, partnersAll].forEach(bag => {
+          const prev = bag[m.id] || {name:m.name, mins:0};
+          bag[m.id] = {name:m.name || prev.name, mins:prev.mins + 1};
+        });
         changed = true;
       });
-      return changed ? {...s0, lock:{...lk, partners}} : s0;
+      return changed ? {...s0, lock:{...lk, partners, partnersMonth, partnersAll}} : s0;
     });
     const i = setInterval(tick, 60000);
     return () => clearInterval(i);
   }, [isParent, room, running, user.id]);
 
-  // Focus stats are a daily figure, so they roll over at midnight. Yesterday's
-  // total is kept in a short history rather than thrown away.
+  // Focus stats are a daily figure and the report is a weekly one, so two
+  // things roll over here: the day counters at midnight, and the study-partner
+  // tally when a new week starts. Last week is kept as a one-line summary.
   useEffect(() => {
     if(!ready) return;
     const rollover = () => setStore(s0 => {
       const today = iso(new Date());
+      const wk = weekKey(new Date());
       const lk = s0.lock || {};
-      if(lk.day === today) return s0;
-      const history = (lk.day && (lk.minutes || lk.sessions))
-        ? [...(lk.history || []), {date:lk.day, minutes:lk.minutes || 0, sessions:lk.sessions || 0}].slice(-14)
-        : (lk.history || []);
-      return {...s0, lock:{sessions:0, minutes:0, seconds:0, day:today, history, partners:lk.partners || {}}};
+      const mo0 = monthKey(new Date());
+      const dayChanged = lk.day !== today;
+      const weekChanged = (lk.weekOf || wk) !== wk;
+      const monthChanged = (lk.monthOf || mo0) !== mo0;
+      if(!dayChanged && !weekChanged && !monthChanged) return s0;
+
+      let next = {...lk};
+
+      if(dayChanged){
+        const history = (lk.day && (lk.minutes || lk.sessions))
+          ? [...(lk.history || []), {date:lk.day, minutes:lk.minutes || 0, sessions:lk.sessions || 0}].slice(-400)
+          : (lk.history || []);
+        next = {...next, sessions:0, minutes:0, seconds:0, day:today, history};
+      }
+
+      if(weekChanged){
+        // summarise the week that just ended before clearing it
+        const prevStart = lk.weekOf;
+        const inPrev = (next.history || []).filter(h => prevStart && weekKey(parseISO(h.date)) === prevStart);
+        const top = Object.values(lk.partners || {}).sort((a,b) => b.mins - a.mins)[0];
+        next = {...next,
+          lastWeek: prevStart ? {
+            weekOf: prevStart,
+            minutes: inPrev.reduce((a,h) => a + (h.minutes || 0), 0),
+            sessions: inPrev.reduce((a,h) => a + (h.sessions || 0), 0),
+            top: top ? top.name : null,
+            topMins: top ? top.mins : 0,
+          } : (lk.lastWeek || null),
+          partners: {},
+          weekOf: wk,
+        };
+      }
+      const mo = monthKey(new Date());
+      if((lk.monthOf || mo) !== mo) next = {...next, partnersMonth:{}, monthOf:mo};
+      if(!lk.monthOf) next.monthOf = mo;
+      if(!lk.weekOf) next.weekOf = wk;
+      return {...s0, lock:next};
     });
     rollover();
     const i = setInterval(rollover, 60000);
