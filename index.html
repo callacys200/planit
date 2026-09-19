@@ -283,6 +283,13 @@
   .ec .main{padding:16px 18px;min-width:0}
   .ec .side{user-select:text;background:#FBFAF6;border-left:1px solid var(--line);padding:14px 16px;font-size:12.5px;color:var(--ink60);line-height:1.5}
   .ec h3{font-size:17px;font-weight:700;overflow-wrap:anywhere}
+  .metatag{font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:99px;
+    background:var(--soft);border:1px solid var(--line);color:var(--ink60)}
+  .metatag.strong{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+  .ecdesc{margin:12px 0 0;font-size:13.5px;line-height:1.6;color:var(--ink60)}
+  .counter{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink35);font-weight:500}
+  .counter.over{color:#B92A61}
+  .field > span.spread{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .ec .org{color:var(--ink60);font-size:13px;margin-top:1px}
   .prio{display:inline-flex;gap:2.5px;align-items:center;flex:none}
   .prio i{width:6px;height:13px;flex:none;border-radius:2px;background:#E2E5EF;display:block}
@@ -498,13 +505,15 @@
     background:#E03F7C;color:#fff;font-size:10.5px;font-weight:700;font-style:normal;display:grid;
     place-items:center;line-height:1}
   .chartrow{display:flex;align-items:flex-end;gap:10px;height:150px}
-  .chartbar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;flex:1;height:100%}
+  .chartbar{display:grid;grid-template-rows:16px 1fr 18px;align-items:end;justify-items:center;
+    gap:5px;flex:1;height:100%}
+  .chartbar.today i{opacity:1;box-shadow:0 0 0 3px var(--accent-soft)}
   .chartbar b{font-size:10.5px;color:var(--ink35);font-weight:500}
-  .chartbar i{width:100%;max-width:34px;border-radius:6px 6px 3px 3px;background:var(--accent);opacity:.8;display:block}
-  .chartbar span{font-size:11px;color:var(--ink35)}
+  .chartbar i{width:100%;max-width:34px;border-radius:6px 6px 3px 3px;background:var(--accent);opacity:.75;display:block;align-self:end}
+  .chartbar span{font-size:11px;color:var(--ink35);align-self:center}
   .histrow{display:flex;align-items:flex-end;gap:10px;margin-bottom:18px;padding:12px;
     border:1px solid var(--line);border-radius:12px;background:var(--soft)}
-  .histbar{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+  .histbar{display:grid;grid-template-rows:1fr 16px;align-items:end;justify-items:center;gap:6px;flex:1}
   .histbar i{width:100%;max-width:26px;border-radius:5px 5px 2px 2px;background:var(--accent);opacity:.75;display:block}
   .histbar span{font-size:10.5px;color:var(--ink35)}
   .nowcard{display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid var(--line);
@@ -740,6 +749,9 @@ const CONFIG = {
   // Optional. A Stripe Payment Link makes the Pro button live — Stripe hosts
   // the checkout page, so no server is needed. Leave empty to show it as
   // "not available yet" instead of pretending to sell something.
+  // Your own account's user ID, from Firebase Console → Authentication → Users.
+  // Fill this in and Settings shows you where signups are coming from.
+  ADMIN_UID: '',
   PRO_CHECKOUT_URL: '',
   PRO_PRICE: '$3',
   // Shown at the bottom of the privacy policy and terms.
@@ -1382,7 +1394,6 @@ function BlockEditor({block, day, onClose, onSave, onDelete}){
     <Modal title={block.id ? 'Edit time block' : 'New time block'} onClose={onClose}
       footer={<>
         {block.id && <button className="btn danger" onClick={() => onDelete(block.id)}>Delete</button>}
-        <button className="btn ghost" onClick={onClose}>Cancel</button>
         <button className="btn primary" onClick={save}>Save block</button>
       </>}>
       <Field label="What are you doing?"><input autoFocus value={f.title}
@@ -1450,10 +1461,10 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
 
   // Things from List It that aren't on the week yet: unscheduled items from
   // these seven days, plus this week's goals.
-  const spare = [
-    ...tasks.filter(t => t.scope === 'daily' && !t.onWeek && inWeek(t.date) && !isDone(t, t.date)),
-    ...weekTodos.filter(t => !t.done)
-  ];
+  // Only unscheduled day tasks. Week goals used to be draggable here too, but
+  // dropping one turned it into a day task and it vanished from the goals list —
+  // which made it look like deleting from List It hadn't worked.
+  const spare = tasks.filter(t => t.scope === 'daily' && !t.onWeek && inWeek(t.date) && !isDone(t, t.date));
 
   const [drag, setDrag] = useState(null);
   const [ghost, setGhost] = useState(null);
@@ -1815,7 +1826,6 @@ function EventEditor({ev, onClose, onSave, onDelete}){
     <Modal title={ev.id ? 'Edit date' : 'Add a date'} onClose={onClose}
       footer={<>
         {onDelete && <button className="btn danger" onClick={onDelete}>Delete</button>}
-        <button className="btn ghost" onClick={onClose}>Cancel</button>
         <button className="btn primary" onClick={save}>Save date</button>
       </>}>
       <Field label="What is it?"><input autoFocus value={f.title}
@@ -1944,7 +1954,7 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day}){
 
 /* ============ RESUME EXPORT ============ */
 const RESUME_FORMATS = [
-  ['activities', 'Activities list', 'Name, role, dates and a short description each — the shape college applications ask for.'],
+  ['activities', 'Common App order', 'Type, position, organization, grades, hours and description — the fields the application asks for, in its order.'],
   ['resume',     'Résumé sections', 'Grouped under Experience, Honors and Certifications, ready to paste into a document.'],
   ['plain',      'Plain list',      'One line per entry. Good for a quick copy into an email or a form.'],
 ];
@@ -1960,41 +1970,51 @@ const rangeText = e => e.ongoing
 
 function buildResume(list, format){
   const group = c => list.filter(e => e.category === c)
-    .sort((a,b) => (b.priority || 0) - (a.priority || 0) || (b.start || '').localeCompare(a.start || ''));
+    .sort((a,b) => (b.priority || 0) - (a.priority || 0));
   const exp = group('experience'), hon = group('honor'), cert = group('certification');
 
+  const expLines = e => [
+    e.title + (e.actType ? `  [${e.actType}]` : ''),
+    e.position && `   Position: ${e.position}`,
+    e.org && `   ${e.org}`,
+    [gradeText(e.grades), timeText(e)].filter(Boolean).join(' · ').replace(/^/, '   '),
+    e.desc && `   ${e.desc}`,
+    e.college === 'yes' && '   Continuing in college',
+  ].filter(x => x && x.trim());
+
+  const honLines = e => [
+    e.title,
+    [gradeText(e.grades), (e.levels || []).join(', ')].filter(Boolean).join(' · ').replace(/^/, '   '),
+  ].filter(x => x && x.trim());
+
+  const certLines = e => [
+    e.title,
+    e.org && `   ${e.org}`,
+    (e.start || e.end) && `   ${e.ongoing ? monthName(e.start) + ' · no expiry'
+      : [monthName(e.start), monthName(e.end)].filter(Boolean).join(' – ')}`,
+  ].filter(x => x && x.trim());
+
+  const linesFor = e => e.category === 'honor' ? honLines(e)
+    : e.category === 'certification' ? certLines(e) : expLines(e);
+
   if(format === 'plain'){
-    const line = e => `• ${e.title}${e.role ? ` — ${e.role}` : ''}${e.org ? `, ${e.org}` : ''}${rangeText(e) ? ` (${rangeText(e)})` : ''}`;
-    return [...exp, ...hon, ...cert].map(line).join('\n');
+    return [...exp, ...hon, ...cert].map(e => {
+      const bits = [e.title, e.position, e.org, gradeText(e.grades), timeText(e)].filter(Boolean);
+      return '• ' + bits.join(' — ');
+    }).join('\n');
   }
 
   if(format === 'activities'){
-    return [...exp, ...hon, ...cert].map(e => {
-      const head = [e.role, e.org].filter(Boolean).join(', ');
-      const bits = [
-        e.title,
-        head && `   ${head}`,
-        rangeText(e) && `   ${rangeText(e)}`,
-        e.notes && `   ${e.notes}`,
-        (e.awards || []).length && `   Awards: ${e.awards.join(', ')}`,
-      ].filter(Boolean);
-      return bits.join('\n');
-    }).join('\n\n');
+    return [...exp, ...hon, ...cert].map(e => linesFor(e).join('\n')).join('\n\n');
   }
 
   const section = (label, rows) => rows.length ? [
     label.toUpperCase(),
     '─'.repeat(label.length + 4),
-    ...rows.map(e => {
-      const head = [e.title, e.role, e.org].filter(Boolean).join(' — ');
-      const lines = [`${head}${rangeText(e) ? `   (${rangeText(e)})` : ''}`];
-      if(e.notes) lines.push(`    ${e.notes}`);
-      if((e.awards || []).length) lines.push(`    Awards: ${e.awards.join(', ')}`);
-      return lines.join('\n');
-    })
+    ...rows.map(e => linesFor(e).join('\n'))
   ].join('\n') : '';
 
-  return [section('Experience', exp), section('Honors & awards', hon), section('Certifications', cert)]
+  return [section('Activities', exp), section('Honors', hon), section('Certifications', cert)]
     .filter(Boolean).join('\n\n');
 }
 
@@ -2094,38 +2114,61 @@ function ResumeExport({ecs, onClose, toast}){
 }
 
 /* ============ BRAG IT ============ */
+// Field names, limits and option lists follow the Common App's Activities and
+// Honors sections, so entries can be copied across without rewriting them.
+const ACT_TYPES = [
+  'Academic','Art','Athletics: Club','Athletics: JV/Varsity','Career Oriented',
+  'Community Service (Volunteer)','Computer/Technology','Cultural','Dance','Debate/Speech',
+  'Environmental','Family Responsibilities','Foreign Exchange','Internship','Journalism/Publication',
+  'Junior R.O.T.C.','Music: Instrumental','Music: Vocal','Religious','Research','Robotics',
+  'School Spirit','Science/Math','Social Justice','Student Govt./Politics','Theater/Drama',
+  'Work (Paid)','Other Club/Activity','Other',
+];
+const GRADES = [['9','9th'],['10','10th'],['11','11th'],['12','12th'],['pg','After 12th']];
+const RECOGNITION = ['School','State/Regional','National','International'];
+const LIMITS = {desc:150, org:100, position:50, title:100};
+
+const gradeText = g => (g || []).length
+  ? 'Grades ' + (g || []).map(x => x === 'pg' ? 'post-grad' : x).join(', ')
+  : '';
+const timeText = e => {
+  const h = e.hoursPerWeek, w = e.weeksPerYear;
+  return [h && `${h} hrs/week`, w && `${w} weeks/year`].filter(Boolean).join(' · ');
+};
+
+function Counter({value, max}){
+  const n = (value || '').length;
+  return <span className={'counter' + (n > max ? ' over' : '')}>{n} / {max}</span>;
+}
+
 function BragIt({sub, ecs, add, update, remove, toast}){
   const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('priority');
   const [editing, setEditing] = useState(null);
   const [exporting, setExporting] = useState(false);
 
-  useEffect(() => { if(sub !== 'experience' && filter === 'awarded') setFilter('all'); }, [sub, filter]);
+  useEffect(() => { setFilter('all'); }, [sub]);
 
   const list = useMemo(() => {
     let l = ecs.filter(e => e.category === sub);
-    if(filter === 'ongoing') l = l.filter(e => e.ongoing);
-    if(filter === 'finished') l = l.filter(e => !e.ongoing);
-    if(filter === 'awarded') l = l.filter(e => (e.awards || []).length > 0);
+    if(filter !== 'all') l = l.filter(e => (e.grades || []).includes(filter));
     const c = [...l];
-    if(sort === 'priority') c.sort((a,b) => b.priority - a.priority);
+    if(sort === 'priority') c.sort((a,b) => (b.priority || 0) - (a.priority || 0));
     if(sort === 'recent') c.sort((a,b) => (b.start || '').localeCompare(a.start || ''));
     if(sort === 'az') c.sort((a,b) => a.title.localeCompare(b.title));
     return c;
   }, [ecs, sub, filter, sort]);
 
-  const fmtRange = e => {
-    const f = s => { if(!s) return ''; const [y,m] = s.split('-'); return m ? `${MON[+m-1].slice(0,3)} ${y}` : y; };
-    if(e.ongoing) return `${f(e.start)} – present`;
-    return [f(e.start), f(e.end)].filter(Boolean).join(' – ') || 'No dates set';
-  };
+  const blank = {category:sub, title:'', org:'', desc:'', actType:'', position:'', hasPosition:false,
+    grades:[], hoursPerWeek:'', weeksPerYear:'', college:'', levels:[], start:'', end:'', ongoing:true,
+    priority:3, notes:''};
 
   return (
     <div>
-      <div className="spread" style={{marginBottom:16}}>
+      <div className="spread dayhead">
         <div className="row" style={{gap:7,flexWrap:'wrap'}}>
-          {[['all','All'],['ongoing','Ongoing'],['finished','Finished'],
-            ...(sub === 'experience' ? [['awarded','With awards']] : [])].map(([k,l]) => (
+          <button className={'chip' + (filter === 'all' ? ' on' : '')} onClick={() => setFilter('all')}>All</button>
+          {sub !== 'certification' && GRADES.map(([k,l]) => (
             <button key={k} className={'chip' + (filter === k ? ' on' : '')} onClick={() => setFilter(k)}>{l}</button>
           ))}
         </div>
@@ -2136,8 +2179,8 @@ function BragIt({sub, ecs, add, update, remove, toast}){
             <option value="az">A – Z</option>
           </select>
           <button className="btn" onClick={() => setExporting(true)} disabled={ecs.length === 0}>Export résumé</button>
-          <button className="btn primary" onClick={() => setEditing({category:sub, title:'', org:'', role:'', start:'', end:'', ongoing:true, priority:3, goal:'', awards:[], notes:''})}>
-            + Add {sub === 'honor' ? 'an honor' : 'an activity'}
+          <button className="btn primary" onClick={() => setEditing(blank)}>
+            + Add {sub === 'honor' ? 'an honor' : sub === 'certification' ? 'a certification' : 'an activity'}
           </button>
         </div>
       </div>
@@ -2146,12 +2189,11 @@ function BragIt({sub, ecs, add, update, remove, toast}){
         ? <Empty title={sub === 'honor' ? 'No honors logged yet'
               : sub === 'certification' ? 'No certifications logged yet'
               : 'No activities logged yet'}
-            hint={sub === 'honor' ? 'Add an award, scholarship, or recognition while you still remember the date.'
-              : sub === 'certification' ? 'Add a course, licence, or training you completed — CPR, lifeguarding, a language test, an online course.'
-              : 'Add a club, job, sport, internship, or volunteer role.'} />
+            hint={sub === 'honor' ? 'Add an award or recognition while you still remember which grade you were in.'
+              : sub === 'certification' ? 'Add a course, licence, or training you completed — CPR, lifeguarding, a language test.'
+              : 'Add a club, job, sport, internship, or volunteer role, in the shape the Common App asks for.'} />
         : list.map(e => (
           <div key={e.id} className="ec" onDoubleClick={ev => {
-            // let a double-click inside the notes or on a button do its own thing
             if(ev.target.closest('button') || ev.target.closest('.side')) return;
             setEditing(e);
           }} title="Double-click to edit">
@@ -2159,7 +2201,10 @@ function BragIt({sub, ecs, add, update, remove, toast}){
               <div className="spread" style={{alignItems:'flex-start'}}>
                 <div style={{minWidth:0}}>
                   <h3>{e.title}</h3>
-                  <div className="org">{[e.role, e.org].filter(Boolean).join(' · ')}</div>
+                  <div className="org">
+                    {[e.position, e.org].filter(Boolean).join(' · ')}
+                    {!e.position && !e.org && e.actType ? e.actType : ''}
+                  </div>
                 </div>
                 <div className="ec-actions">
                   <span className="prio" title={`Importance ${e.priority} of 5`}>
@@ -2170,32 +2215,24 @@ function BragIt({sub, ecs, add, update, remove, toast}){
                 </div>
               </div>
 
-              <div className="row" style={{gap:9,marginTop:10,flexWrap:'wrap'}}>
-                <span className={'tagline-badge' + (e.ongoing ? '' : ' past')}>
-                  {sub === 'certification'
-                    ? (e.ongoing ? 'No expiry' : 'Expires')
-                    : (e.ongoing ? <><i className="livedot" />Ongoing</> : 'Finished')}
-                </span>
-                <span className="mono" style={{fontSize:12,color:'var(--ink60)'}}>{fmtRange(e)}</span>
+              <div className="row" style={{gap:7,marginTop:10,flexWrap:'wrap'}}>
+                {e.actType && <span className="metatag">{e.actType}</span>}
+                {gradeText(e.grades) && <span className="metatag">{gradeText(e.grades)}</span>}
+                {timeText(e) && <span className="metatag">{timeText(e)}</span>}
+                {(e.levels || []).map(l => <span key={l} className="metatag strong">{l}</span>)}
+                {e.college === 'yes' && <span className="metatag strong">Continuing in college</span>}
+                {sub === 'certification' && (e.start || e.end) && (
+                  <span className="metatag">
+                    {e.ongoing ? `${monthName(e.start)} · no expiry` : [monthName(e.start), monthName(e.end)].filter(Boolean).join(' – ')}
+                  </span>
+                )}
               </div>
 
-              {(e.awards || []).length > 0 && (
-                <div style={{marginTop:12}}>
-                  <div className="eyebrow" style={{marginBottom:6}}>Awards from this</div>
-                  {e.awards.map((a,i) => <span className="award" key={i}>🏆 {a}</span>)}
-                </div>
-              )}
-
-              {e.goal && (
-                <div style={{marginTop:10}}>
-                  <div className="eyebrow" style={{marginBottom:3}}>Where it's going</div>
-                  <div style={{fontSize:13.5,color:'var(--ink60)'}}>{e.goal}</div>
-                </div>
-              )}
+              {e.desc && <p className="ecdesc">{e.desc}</p>}
             </div>
             <div className="side">
-              <div className="eyebrow" style={{marginBottom:6}}>Notes</div>
-              {e.notes ? e.notes : <span style={{color:'var(--ink35)'}}>Nothing written down yet. Hours, responsibilities, and names go well here.</span>}
+              <div className="eyebrow" style={{marginBottom:6}}>Private notes</div>
+              {e.notes ? e.notes : <span style={{color:'var(--ink35)'}}>Only you see this. Hours, names, who to ask for a recommendation.</span>}
             </div>
           </div>
         ))}
@@ -2209,56 +2246,158 @@ function BragIt({sub, ecs, add, update, remove, toast}){
 }
 
 function EcEditor({ec, onClose, onSave}){
-  const [f, setF] = useState({...ec, awards:(ec.awards || []).join(', ')});
-  const set = (k,v) => setF(p => ({...p,[k]:v}));
+  const [f, setF] = useState({...ec, grades:ec.grades || [], levels:ec.levels || []});
   const [err, setErr] = useState('');
+  const set = (k,v) => setF(p => ({...p,[k]:v}));
+  const toggleIn = (k, v) => setF(p => ({...p,
+    [k]: (p[k] || []).includes(v) ? p[k].filter(x => x !== v) : [...(p[k] || []), v]}));
+
   const save = () => {
     if(!f.title.trim()) return setErr('Give it a name first.');
-    onSave({...f, title:f.title.trim(), awards:f.awards.split(',').map(s => s.trim()).filter(Boolean)});
+    onSave({...f, title:f.title.trim()});
   };
+  const isExp = f.category === 'experience';
+  const isHon = f.category === 'honor';
+
   return (
     <Modal title={ec.id ? 'Edit entry'
-      : ec.category === 'honor' ? 'New honor or award'
-      : ec.category === 'certification' ? 'New certification'
-      : 'New activity'} onClose={onClose}
-      footer={<><button className="btn ghost" onClick={onClose}>Cancel</button><button className="btn primary" onClick={save}>Save entry</button></>}>
-      <Field label="Name"><input autoFocus value={f.title}
-        onChange={e => { set('title', e.target.value); setErr(''); }} placeholder="Enter the name here" /></Field>
-      {err && <div className="formerr">{err}</div>}
-      <div className="grid2">
-        <Field label="Organization"><input value={f.org} onChange={e => set('org', e.target.value)} placeholder="Enter the organization here" /></Field>
-        <Field label="Your position"><input value={f.role} onChange={e => set('role', e.target.value)} placeholder="Enter your position here" /></Field>
-      </div>
-      <div className="grid2">
-        <Field label={f.category === 'certification' ? 'Earned' : 'Started'}>
-          <input type="month" value={f.start} onChange={e => set('start', e.target.value)} />
-        </Field>
-        <Field label={f.category === 'certification' ? 'Expires' : 'Ended'}>
-          <input type="month" value={f.end} disabled={f.ongoing} onChange={e => set('end', e.target.value)} />
-        </Field>
-      </div>
-      <label className="row" style={{gap:8,marginBottom:14,fontSize:13.5,fontWeight:500}}>
-        <input type="checkbox" checked={f.ongoing} onChange={e => set('ongoing', e.target.checked)} style={{width:16,height:16}} />
-        {f.category === 'certification' ? "Doesn't expire" : 'Still doing this'}
-      </label>
+      : isHon ? 'New honor' : f.category === 'certification' ? 'New certification' : 'New activity'}
+      onClose={onClose}
+      footer={<>
+        <button className="btn ghost" onClick={onClose}>Cancel</button>
+        <button className="btn primary" onClick={save}>Save entry</button>
+      </>}>
+
       <Field label="Category">
         <select value={f.category} onChange={e => set('category', e.target.value)}>
-          <option value="experience">Experience</option>
-          <option value="honor">Honor or award</option>
+          <option value="experience">Activity or experience</option>
+          <option value="honor">Honor</option>
           <option value="certification">Certification</option>
         </select>
       </Field>
+
+      <label className="field">
+        <span className="spread">{isHon ? 'Honor title' : 'Name'}<Counter value={f.title} max={LIMITS.title} /></span>
+        <input autoFocus value={f.title} maxLength={LIMITS.title}
+          onChange={e => { set('title', e.target.value); setErr(''); }}
+          placeholder={isHon ? 'National Merit Semifinalist' : 'Varsity Cross Country'} />
+      </label>
+      {err && <div className="formerr">{err}</div>}
+
+      {isExp && (
+        <>
+          <Field label="Activity or experience type">
+            <select value={f.actType} onChange={e => set('actType', e.target.value)}>
+              <option value="">Choose an option</option>
+              {ACT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </Field>
+
+          <label className="field">
+            <span className="spread">
+              Describe it, including what you accomplished and any recognition
+              <Counter value={f.desc} max={LIMITS.desc} />
+            </span>
+            <textarea value={f.desc} maxLength={LIMITS.desc} onChange={e => set('desc', e.target.value)}
+              placeholder="Led 40 runners, organised the freshman mentor pairings, All-County 2025." />
+          </label>
+
+          <label className="field">
+            <span className="spread">Organization or group<Counter value={f.org} max={LIMITS.org} /></span>
+            <input value={f.org} maxLength={LIMITS.org} onChange={e => set('org', e.target.value)}
+              placeholder="Northview High School" />
+          </label>
+
+          <div className="field">
+            <span>Did you have a specific position or leadership role?</span>
+            <div className="row" style={{gap:7}}>
+              <button className={'chip' + (f.hasPosition ? ' on' : '')} onClick={() => set('hasPosition', true)}>Yes</button>
+              <button className={'chip' + (!f.hasPosition ? ' on' : '')}
+                onClick={() => { set('hasPosition', false); set('position', ''); }}>No</button>
+            </div>
+          </div>
+          {f.hasPosition && (
+            <label className="field">
+              <span className="spread">Position or leadership description<Counter value={f.position} max={LIMITS.position} /></span>
+              <input value={f.position} maxLength={LIMITS.position} onChange={e => set('position', e.target.value)}
+                placeholder="Team captain" />
+            </label>
+          )}
+        </>
+      )}
+
+      {(isExp || isHon) && (
+        <div className="field">
+          <span>{isExp ? 'When did you participate?' : 'Grade level'}</span>
+          <div className="row" style={{gap:7, flexWrap:'wrap'}}>
+            {GRADES.map(([k,l]) => (
+              <button key={k} className={'chip' + ((f.grades || []).includes(k) ? ' on' : '')}
+                onClick={() => toggleIn('grades', k)}>{l}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isHon && (
+        <div className="field">
+          <span>Level of recognition</span>
+          <div className="row" style={{gap:7, flexWrap:'wrap'}}>
+            {RECOGNITION.map(r => (
+              <button key={r} className={'chip' + ((f.levels || []).includes(r) ? ' on' : '')}
+                onClick={() => toggleIn('levels', r)}>{r}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isExp && (
+        <>
+          <div className="grid2">
+            <Field label="Hours spent per week">
+              <input type="number" min="0" max="168" value={f.hoursPerWeek}
+                onChange={e => set('hoursPerWeek', e.target.value)} placeholder="12" />
+            </Field>
+            <Field label="Weeks spent per year">
+              <input type="number" min="0" max="52" value={f.weeksPerYear}
+                onChange={e => set('weeksPerYear', e.target.value)} placeholder="30" />
+            </Field>
+          </div>
+          <div className="field">
+            <span>Do you plan on participating in this activity in college?</span>
+            <div className="row" style={{gap:7}}>
+              <button className={'chip' + (f.college === 'yes' ? ' on' : '')} onClick={() => set('college','yes')}>Yes</button>
+              <button className={'chip' + (f.college === 'no' ? ' on' : '')} onClick={() => set('college','no')}>No</button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {f.category === 'certification' && (
+        <>
+          <Field label="Issued by"><input value={f.org} onChange={e => set('org', e.target.value)}
+            placeholder="American Red Cross" /></Field>
+          <div className="grid2">
+            <Field label="Earned"><input type="month" value={f.start} onChange={e => set('start', e.target.value)} /></Field>
+            <Field label="Expires">
+              <input type="month" value={f.end} disabled={f.ongoing} onChange={e => set('end', e.target.value)} />
+            </Field>
+          </div>
+          <label className="row" style={{gap:8,marginBottom:14,fontSize:13.5,fontWeight:500}}>
+            <input type="checkbox" checked={f.ongoing} onChange={e => set('ongoing', e.target.checked)}
+              style={{width:16,height:16}} />
+            Doesn't expire
+          </label>
+        </>
+      )}
+
       <Field label={`How important is this to you? (${f.priority} of 5)`}>
-        <input type="range" min="1" max="5" value={f.priority} onChange={e => set('priority', +e.target.value)} style={{padding:0}} />
+        <input type="range" min="1" max="5" value={f.priority}
+          onChange={e => set('priority', +e.target.value)} style={{padding:0}} />
       </Field>
-      <Field label="Goal for the future">
-        <textarea value={f.goal} onChange={e => set('goal', e.target.value)} placeholder="Enter your goal here" />
-      </Field>
-      <Field label="Awards achieved through it (separate with commas)">
-        <input value={f.awards} onChange={e => set('awards', e.target.value)} placeholder="Enter awards here, separated by commas" />
-      </Field>
-      <Field label="Notes">
-        <textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="Enter your notes here" />
+
+      <Field label="Private notes — only you see these">
+        <textarea value={f.notes} onChange={e => set('notes', e.target.value)}
+          placeholder="Who to ask for a recommendation, what to mention in an essay…" />
       </Field>
     </Modal>
   );
@@ -2543,6 +2682,17 @@ async function recordReferral(newUid, refName){
   }catch(e){ /* never block a signup over this */ }
 }
 
+// One small row per signup so the answers can actually be counted. The user
+// doc holds the same value, but /users is private to each person, which makes
+// it impossible to tally.
+async function recordSignup(uid, source, refBy){
+  try{
+    await withTimeout(db().collection('signups').doc(uid).set({
+      uid, source: source || 'unsaid', refBy: (refBy || '').trim(), at: Date.now()
+    }), 8000);
+  }catch(e){}
+}
+
 const countReferrals = uid =>
   db().collection('referrals').where('referrerUid','==',uid).get().then(s0 => s0.size);
 
@@ -2723,6 +2873,7 @@ function Auth(){
       await reserveUsername(u, cred.user);
       if(source === 'friend') await recordReferral(cred.user.uid, refBy);
       saveProfile(cred.user.uid, {source}).catch(() => {});
+      recordSignup(cred.user.uid, source, refBy);
     }catch(e){
       // someone claimed it in the seconds between the check and the write
       try{ await cred.user.delete(); }catch(e2){}
@@ -2746,6 +2897,7 @@ function Auth(){
       await reserveUsername(u, auth.currentUser);
       if(source === 'friend') await recordReferral(auth.currentUser.uid, refBy);
       saveProfile(auth.currentUser.uid, {source}).catch(() => {});
+      recordSignup(auth.currentUser.uid, source, refBy);
       await auth.currentUser.updateProfile({displayName:u});
       window.location.reload();
     }catch(e){ setAvail('taken'); setErr(usernameWriteError(e)); setBusy(false); }
@@ -2810,7 +2962,7 @@ function Auth(){
     setBusy(false);
   };
 
-  const SourceFields = () => (
+  const sourceFields = (
     <>
       <label className="flabel">How did you hear about Plan It?</label>
       <select className="finput" value={source} onChange={e => setSource(e.target.value)}>
@@ -2923,7 +3075,7 @@ function Auth(){
                   <input className="finput" autoFocus value={username} onChange={e => setUsername(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && claimUsername()} placeholder="Enter your username here" autoComplete="username" />
                   <Avail />
-                  <SourceFields />
+                  {sourceFields}
                   <Err />
                   <button className="pillbtn" disabled={busy || avail === 'taken' || avail === 'invalid'} onClick={claimUsername}>
                     {busy ? 'Saving…' : 'Save username'} <IconArrow />
@@ -2957,7 +3109,7 @@ function Auth(){
                       <span>{strengthLabel}</span>
                     </div>
                   )}
-                  <SourceFields />
+                  {sourceFields}
                   <Err />
                   <button className="pillbtn" disabled={busy || avail === 'taken' || avail === 'invalid'} onClick={signUp}>
                     {busy ? 'Creating…' : 'Continue'} <IconArrow />
@@ -3509,7 +3661,7 @@ function Onboarding({user, onDone}){
 const Err = ({msg}) => msg ? <div className="formerr" role="alert">{msg}</div> : null;
 
 /* ============ WATCH IT ============ */
-function WatchIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
+function ViewIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
   const [links, setLinks] = useState(null);
   const [childName, setChildName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -3645,19 +3797,15 @@ function WatchIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
                   </div>
                 </div>
 
-                {(lock.history || []).length > 0 && (
-                  <>
-                    <div className="eyebrow" style={{marginBottom:8}}>Recent days</div>
-                    <div className="histrow">
-                      {(lock.history || []).slice(-7).map(h => (
-                        <div key={h.date} className="histbar" title={`${h.minutes} min on ${h.date}`}>
-                          <i style={{height:Math.max(4, Math.min(60, h.minutes)) + 'px'}} />
-                          <span className="mono">{DOW[parseISO(h.date).getDay()].slice(0,1)}</span>
-                        </div>
-                      ))}
+                <div className="eyebrow" style={{marginBottom:8}}>This week</div>
+                <div className="histrow">
+                  {buildReport(lock).days.map(h => (
+                    <div key={h.date} className="histbar" title={`${h.minutes} min on ${fmtDay(parseISO(h.date))}`}>
+                      <i style={{height:Math.max(3, Math.min(60, h.minutes)) + 'px'}} />
+                      <span className="mono">{DOW[parseISO(h.date).getDay()].slice(0,1)}</span>
                     </div>
-                  </>
-                )}
+                  ))}
+                </div>
 
                 <div className="eyebrow" style={{marginBottom:8}}>Coming up in the next two weeks</div>
                 {soon.length === 0
@@ -3695,6 +3843,58 @@ function WatchIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
 }
 
 /* ============ SETTINGS ============ */
+const SOURCE_LABELS = {friend:'A friend', social:'Social media', search:'A search',
+  school:'School or a teacher', other:'Somewhere else', unsaid:'Did not say'};
+
+function SignupSources({user}){
+  const [rows, setRows] = useState(null);
+  useEffect(() => {
+    db().collection('signups').get()
+      .then(sn => setRows(sn.docs.map(d => d.data())))
+      .catch(() => setRows([]));
+  }, []);
+  if(user.id !== CONFIG.ADMIN_UID) return null;
+
+  const tally = {};
+  (rows || []).forEach(r => { tally[r.source || 'unsaid'] = (tally[r.source || 'unsaid'] || 0) + 1; });
+  const total = (rows || []).length;
+  const ranked = Object.entries(tally).sort((a,b) => b[1] - a[1]);
+  const named = (rows || []).filter(r => r.refBy).reduce((m,r) => {
+    const k = r.refBy.toLowerCase(); m[k] = (m[k] || 0) + 1; return m;
+  }, {});
+
+  return (
+    <Section title="Where signups come from" hint="Only you see this.">
+      <div className="card">
+        {rows === null ? <span style={{color:'var(--ink35)'}}>Loading…</span>
+          : total === 0 ? <span style={{color:'var(--ink35)'}}>No signups recorded yet.</span>
+          : <>
+              <div className="eyebrow" style={{marginBottom:10}}>{total} accounts</div>
+              {ranked.map(([k,n]) => (
+                <div key={k} style={{marginBottom:10}}>
+                  <div className="row" style={{justifyContent:'space-between',fontSize:13,marginBottom:4}}>
+                    <span>{SOURCE_LABELS[k] || k}</span>
+                    <span className="mono" style={{color:'var(--ink35)'}}>{n} · {Math.round(n/total*100)}%</span>
+                  </div>
+                  <div className="bar"><i style={{width:(n/total*100) + '%'}} /></div>
+                </div>
+              ))}
+              {Object.keys(named).length > 0 && (
+                <>
+                  <div className="eyebrow" style={{margin:'16px 0 8px'}}>Named as the referrer</div>
+                  {Object.entries(named).sort((a,b) => b[1]-a[1]).map(([n,c]) => (
+                    <div key={n} className="row" style={{justifyContent:'space-between',fontSize:13,padding:'4px 0'}}>
+                      <span>{n}</span><span className="mono" style={{color:'var(--ink35)'}}>{c}</span>
+                    </div>
+                  ))}
+                </>
+              )}
+            </>}
+      </div>
+    </Section>
+  );
+}
+
 function Referrals({user, toast}){
   const [count, setCount] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -3736,7 +3936,7 @@ function Referrals({user, toast}){
 
 const BUG_AREAS = [
   ['brag','Brag It'], ['list','List It'], ['organize','Organize It — calendars'],
-  ['lock','Lock It — timer or study rooms'], ['watch','Watch It — parent view'],
+  ['lock','Lock It — timer or study rooms'], ['watch','View It — parent view'],
   ['account','Signing in or my account'], ['other','Somewhere else'],
 ];
 
@@ -4049,6 +4249,7 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
         </>
       )}
 
+      {sub === 'account' && <SignupSources user={user} />}
       {sub === 'account' && user.role !== 'parent' && <Referrals user={user} toast={toast} />}
 
       {sub === 'account' && user.role !== 'parent' && (
@@ -4071,9 +4272,9 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
 
       {sub === 'account' && user.role !== 'parent' && <ParentAccess user={user} toast={toast} onChange={onLinksChange} />}
       {sub === 'account' && user.role === 'parent' && (
-        <Section title="Your children" hint="Add another child from the Watch It tab.">
+        <Section title="Your children" hint="Add another child from the View It tab.">
           <div className="card soft" style={{fontSize:13.5, color:'var(--ink60)'}}>
-            Connections live in <b style={{color:'var(--ink)'}}>Watch It</b>, where you can send a new request
+            Connections live in <b style={{color:'var(--ink)'}}>View It</b>, where you can send a new request
             or remove one.
           </div>
         </Section>
@@ -4296,19 +4497,30 @@ function LegalModal({kind, onClose}){
 /* ============ STUDY REPORT ============ */
 function buildReport(lock){
   const lk = lock || {};
-  const hist = lk.history || [];
-  const days = [...hist.slice(-6), {date:lk.day || iso(new Date()), minutes:lk.minutes || 0, sessions:lk.sessions || 0}];
-  const minutes = days.reduce((a,d) => a + (d.minutes || 0), 0);
-  const sessions = days.reduce((a,d) => a + (d.sessions || 0), 0);
+  const byDate = {};
+  (lk.history || []).forEach(h => { byDate[h.date] = h; });
+  if(lk.day) byDate[lk.day] = {date:lk.day, minutes:lk.minutes || 0, sessions:lk.sessions || 0};
+
+  // Always seven days, Sunday through Saturday, so quiet days keep their place
+  // instead of the chart collapsing to whatever happened to have activity.
+  const start = startOfWeek(new Date());
+  const days = Array.from({length:7}, (_,i) => {
+    const k = iso(addDays(start, i));
+    const h = byDate[k] || {};
+    return {date:k, minutes:h.minutes || 0, sessions:h.sessions || 0};
+  });
+
+  const minutes = days.reduce((a,d) => a + d.minutes, 0);
+  const sessions = days.reduce((a,d) => a + d.sessions, 0);
   const partners = Object.values(lk.partners || {}).sort((a,b) => b.mins - a.mins);
-  const best = days.reduce((a,d) => (d.minutes || 0) > (a.minutes || 0) ? d : a, days[0] || {});
+  const best = days.reduce((a,d) => d.minutes > a.minutes ? d : a, days[0]);
   return {days, minutes, sessions, partners, best,
           today: lk.minutes || 0, todaySessions: lk.sessions || 0};
 }
 
 function Reports({lock}){
   const r = buildReport(lock);
-  const peak = Math.max(10, ...r.days.map(d => d.minutes || 0));
+  const peak = Math.max(10, ...r.days.map(d => d.minutes));
   const hrs = Math.floor(r.minutes/60), mins = r.minutes % 60;
 
   return (
@@ -4334,10 +4546,11 @@ function Reports({lock}){
         <div className="card">
           <div className="chartrow">
             {r.days.map((d,i) => (
-              <div key={d.date || i} className="chartbar" title={`${d.minutes || 0} min`}>
-                <b className="mono">{d.minutes || 0}</b>
-                <i style={{height:Math.round((d.minutes || 0)/peak*90) + 4 + 'px'}} />
-                <span className="mono">{d.date ? DOW[parseISO(d.date).getDay()].slice(0,1) : '·'}</span>
+              <div key={d.date} className={'chartbar' + (d.date === iso(new Date()) ? ' today' : '')}
+                title={`${d.minutes} min on ${fmtDay(parseISO(d.date))}`}>
+                <b className="mono">{d.minutes || ''}</b>
+                <i style={{height:Math.round(d.minutes/peak*86) + 3 + 'px'}} />
+                <span className="mono">{DOW[parseISO(d.date).getDay()].slice(0,1)}</span>
               </div>
             ))}
           </div>
@@ -4482,8 +4695,8 @@ const TABS = [
   {id:'lock',     emoji:'🔒', label:'Lock It',    sub:'Study mode', color:'var(--lock)',
    title:'Lock It', tagline:'Set a timer, close everything else, bring your friends.',
    subs:[['focus','Focus timer'],['reports','Reports']]},
-  {id:'watch',    emoji:'👀', label:'Watch It',   sub:'Parents', color:'var(--watch)', parentOnly:true,
-   title:'Watch It', tagline:"Follow along with your child's planner.",
+  {id:'watch',    emoji:'👀', label:'View It',   sub:'Parents', color:'var(--watch)', parentOnly:true,
+   title:'View It', tagline:"Follow along with your child's planner.",
    subs:[['children','Children']]},
   {id:'settings', emoji:'⚙️', label:'Settings',   sub:'Account', color:'var(--set)',
    title:'Settings', tagline:'Your account, how Plan It looks, and what it can do.',
@@ -4643,6 +4856,19 @@ function App({user, onSignOut}){
   }, []);
 
   // A pomodoro phase. Break time deliberately isn't credited as focus minutes.
+  // Browsers only grant full screen from inside a click, which is why this
+  // lives on the start path rather than in an effect.
+  const goFullscreen = () => {
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if(req) { try{ req.call(el); }catch(e){} }
+  };
+  const leaveFullscreen = () => {
+    if(!document.fullscreenElement && !document.webkitFullscreenElement) return;
+    const ex = document.exitFullscreen || document.webkitExitFullscreen;
+    if(ex) { try{ ex.call(document); }catch(e){} }
+  };
+
   const beginPhase = useCallback((kind, c) => {
     const mins = kind === 'work' ? pomo.work : pomo.brk;
     endsAt.current = Date.now() + mins*60*1000;
@@ -4654,6 +4880,7 @@ function App({user, onSignOut}){
   }, [pomo.work, pomo.brk]);
 
   const startTimer = useCallback(() => {
+    goFullscreen();
     if(mode === 'pomo'){
       if(phase && left > 0){                        // resume a paused phase
         endsAt.current = Date.now() + left*1000;
@@ -4670,6 +4897,7 @@ function App({user, onSignOut}){
   }, [left, minutes, mode, phase, beginPhase]);
 
   const pauseTimer = useCallback(() => {
+    leaveFullscreen();
     if(endsAt.current) setLeft(Math.max(0, Math.round((endsAt.current - Date.now())/1000)));
     const secs = creditElapsed();
     endsAt.current = null;
@@ -4678,6 +4906,7 @@ function App({user, onSignOut}){
   }, [creditElapsed, toast]);
 
   const resetTimer = useCallback(m => {
+    leaveFullscreen();
     creditElapsed();
     endsAt.current = null;
     runFrom.current = null;
@@ -4713,6 +4942,7 @@ function App({user, onSignOut}){
               toast(`Cycle ${cycle} of ${pomo.cycles} done — break time.`);
               beginPhase('break', cycle);
             } else {
+              leaveFullscreen();
               setRunning(false); setPhase(null); setCycle(1); setLeft(pomo.work*60);
               toast(`All ${pomo.cycles} cycles finished. Nice work.`);
             }
@@ -4723,6 +4953,7 @@ function App({user, onSignOut}){
           return;
         }
         creditElapsed();
+        leaveFullscreen();
         setRunning(false);
         setLeft(minutes*60);
         setStore(s => ({...s, lock:{...s.lock, sessions:s.lock.sessions+1}}));
@@ -5007,7 +5238,7 @@ function App({user, onSignOut}){
             !viewChildId
               ? <div className="viewonly">
                   No child connected yet.
-                  <button className="btn sm" style={{marginLeft:10}} onClick={() => setTab('watch')}>Go to Watch It</button>
+                  <button className="btn sm" style={{marginLeft:10}} onClick={() => setTab('watch')}>Go to View It</button>
                 </div>
               : childStore === null
               ? <div className="viewonly">Loading {viewChildName}'s planner…</div>
@@ -5047,7 +5278,7 @@ function App({user, onSignOut}){
           {tab === 'brag' &&
             <BragIt sub={sub.brag} ecs={view.ecs} add={addEc} update={updateEc} remove={removeEc} toast={toast} />}
 
-          {tab === 'watch' && <WatchIt user={user} toast={toast} viewChildId={viewChildId}
+          {tab === 'watch' && <ViewIt user={user} toast={toast} viewChildId={viewChildId}
             childStore={childStore} goTab={t => setTab(t)}
             setViewChild={(id, name) => { setViewChildId(id); setViewChildName(name); }} />}
 
