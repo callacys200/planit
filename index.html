@@ -198,7 +198,10 @@
   .asleep{position:absolute;left:var(--gut);right:0;background:repeating-linear-gradient(135deg,#F4F5FA,#F4F5FA 6px,#EDEFF6 6px,#EDEFF6 12px);pointer-events:none;z-index:1}
   .nowline{position:absolute;left:var(--gut);right:0;height:2px;background:#E03F7C;z-index:6;pointer-events:none}
   .nowline::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:99px;background:#E03F7C}
-  .tray{position:sticky;top:0}
+  .tray{position:sticky;top:0;border-radius:var(--r);transition:.14s}
+  .tray.over{outline:2px dashed var(--accent);outline-offset:6px;background:var(--accent-soft)}
+  .traydrop{margin-bottom:8px;padding:9px 11px;border-radius:10px;background:var(--accent);
+    color:var(--accent-ink,#fff);font-size:12.5px;font-weight:600;text-align:center}
   .tray-item{display:flex;gap:8px;align-items:flex-start;padding:9px 10px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px;background:#FBFBFE;cursor:grab;touch-action:pan-y}
   .tray-item:hover{border-color:#C6CBDC;background:#fff}
   .ghost{position:fixed;z-index:90;pointer-events:none;background:var(--accent);color:var(--accent-ink,#fff);padding:7px 11px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 26px -8px rgba(20,23,42,.5);opacity:.95}
@@ -226,7 +229,12 @@
   .daycol h4 small{display:block;font-weight:500;color:var(--ink35);font-family:"IBM Plex Mono",monospace;font-size:10px}
   .daycol.is-today h4{background:var(--accent-soft)}
   .daycol.dropping{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-  .weektray{margin-top:16px;padding:12px;border:1.5px dashed var(--line);border-radius:var(--r);background:var(--soft)}
+  .weektray{margin-top:16px;padding:12px;border:1.5px dashed var(--line);border-radius:var(--r);
+    background:var(--soft);transition:.14s}
+  .weektray.over{border-color:var(--accent);border-style:solid;background:var(--accent-soft)}
+  .pill.draggable,.ev.draggable{cursor:grab;touch-action:pan-y}
+  .pill.draggable:active,.ev.draggable:active{cursor:grabbing}
+  .cell.dropping{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
   .weektray-items{display:flex;gap:8px;flex-wrap:wrap}
   .weekchip{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--line);
     background:var(--card);border-radius:99px;font-size:13px;font-weight:600;cursor:grab;touch-action:pan-y;
@@ -328,6 +336,11 @@
   .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:11px;font-size:13.5px;z-index:95;box-shadow:0 14px 30px -10px rgba(20,23,42,.6);animation:pop .2s}
 
   /* ---------- auth ---------- */
+  .crash{max-width:520px;margin:12vh auto;padding:28px 24px;text-align:center}
+  .crash h2{font-size:22px;font-weight:800;margin-bottom:6px}
+  .crash p{color:var(--ink60);font-size:14px;margin:0 0 16px}
+  .crash pre{text-align:left;white-space:pre-wrap;background:#FFF3F6;border:1px solid #F3CEDA;color:#B92A61;
+    border-radius:11px;padding:12px 14px;font-size:12px;margin:0 0 18px;overflow:auto;max-height:200px}
   .booting{display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;height:100%;color:var(--ink35);padding:24px;text-align:center}
   .bootslow{max-width:380px;font-size:13px;line-height:1.55;color:var(--ink60);background:#FFF9E9;border:1px solid #F0DEB0;border-radius:12px;padding:12px 14px}
   .dbwarn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:96;background:#FFF9E9;border:1px solid #F0DEB0;color:#7A5A10;font-size:12.5px;padding:8px 14px;border-radius:99px;box-shadow:var(--shadow)}
@@ -1000,6 +1013,7 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
   const [ghost, setGhost] = useState(null);
   const [editing, setEditing] = useState(null);
   const [dayEdit, setDayEdit] = useState(false);
+  const [overTray, setOverTray] = useState(false);
   const gridRef = useRef(null);
   const [nowTop, setNowTop] = useState(null);
 
@@ -1090,8 +1104,13 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
 
   useEffect(() => {
     if(!drag) return;
+    const overTrayNow = (x, y) => {
+      const el = document.elementFromPoint(x, y);
+      return !!(el && el.closest && el.closest('[data-tray]'));
+    };
     const move = e => {
       if(drag.mode === 'place'){ setGhost(g => g && {...g, x:e.clientX, y:e.clientY}); return; }
+      if(drag.mode === 'move') setOverTray(overTrayNow(e.clientX, e.clientY));
       const m = yToMin(e.clientY);
       if(drag.mode === 'move'){
         const s0 = norm(toMin(drag.task.start));
@@ -1104,6 +1123,16 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
       }
     };
     const up = e => {
+      // dropped back on the tray: it keeps its name and colour, loses its time
+      if(drag.mode === 'move' && overTrayNow(e.clientX, e.clientY)){
+        update(drag.id, {start:null, end:null});
+        toast('Moved to unscheduled');
+        setOverTray(false);
+        document.body.classList.remove('dragging');
+        setDrag(null);
+        return;
+      }
+      setOverTray(false);
       if(drag.mode === 'place'){
         const r = gridRef.current.getBoundingClientRect();
         const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
@@ -1247,8 +1276,9 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
           </div>
         </div>
 
-        <div className="tray">
+        <div className={'tray' + (overTray ? ' over' : '')} data-tray>
           <div className="eyebrow" style={{marginBottom:8}}>Unscheduled — from List It</div>
+          {overTray && <div className="traydrop">Drop to unschedule</div>}
           {tray.length === 0
             ? <div className="empty" style={{padding:'18px 14px',fontSize:13}}><b>Nothing waiting</b>Everything on today's list has a time.</div>
             : tray.map(t => (
@@ -1283,7 +1313,8 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
 
           <div className="card soft" style={{marginTop:14,fontSize:12.5,color:'var(--ink60)'}}>
             New blocks land in the first free slot after your first commitment. Drag a block to move it,
-            pull the bottom edge to change its length, double-click empty space to add one at that time. On a phone, press and hold a block first, then drag — a normal swipe scrolls the day.
+            pull the bottom edge to change its length, double-click empty space to add one at that time.
+            Drag a block back onto this panel to take its time off again. On a phone, press and hold a block first, then drag — a normal swipe scrolls the day.
           </div>
         </div>
       </div>
@@ -1403,7 +1434,7 @@ function BlockEditor({block, day, onClose, onSave, onDelete}){
 }
 
 /* ============ ORGANIZE IT — weekly ============ */
-function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily, update, toast}){
+function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEvent, setDaily, update, remove, day, toast}){
   const s = startOfWeek(date);
   const days = Array.from({length:7}, (_,i) => addDays(s,i));
   const wk = weekKey(date);
@@ -1414,6 +1445,8 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily, 
   });
   const weekTodos = tasks.filter(t => t.scope === 'weekly' && t.anchor === wk);
   const [newEv, setNewEv] = useState(null);
+  const [editTask, setEditTask] = useState(null);
+  const [editEv, setEditEv] = useState(null);
 
   // Things from List It that aren't on the week yet: unscheduled items from
   // these seven days, plus this week's goals.
@@ -1427,12 +1460,12 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily, 
   const [overDay, setOverDay] = useState(null);
   const hold = useRef(null);
 
-  const beginDrag = (pt, task) => {
-    setDrag(task);
+  const beginDrag = (pt, task, from) => {
+    setDrag({task, from});
     setGhost({x:pt.clientX, y:pt.clientY, label:task.title});
   };
 
-  const onGrab = (e, task) => {
+  const onGrab = (e, task, from = 'tray') => {
     if(e.pointerType === 'touch'){
       const sx = e.clientX, sy = e.clientY;
       const stop = () => {
@@ -1448,12 +1481,12 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily, 
       hold.current = setTimeout(() => {
         stop();
         if(navigator.vibrate) navigator.vibrate(8);
-        beginDrag({clientX:sx, clientY:sy}, task);
+        beginDrag({clientX:sx, clientY:sy}, task, from);
       }, 260);
       return;
     }
     e.preventDefault();
-    beginDrag(e, task);
+    beginDrag(e, task, from);
   };
 
   useEffect(() => {
@@ -1463,14 +1496,23 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily, 
       const col = el && el.closest ? el.closest('[data-day]') : null;
       return col ? col.getAttribute('data-day') : null;
     };
+    const overTray = (x, y) => {
+      const el = document.elementFromPoint(x, y);
+      return !!(el && el.closest && el.closest('[data-tray]'));
+    };
     const move = e => {
       setGhost(g => g && {...g, x:e.clientX, y:e.clientY});
-      setOverDay(dayUnder(e.clientX, e.clientY));
+      setOverDay(overTray(e.clientX, e.clientY) ? 'tray' : dayUnder(e.clientX, e.clientY));
     };
     const up = e => {
       const dk2 = dayUnder(e.clientX, e.clientY);
-      if(dk2){
-        update(drag.id, {scope:'daily', date:dk2, onWeek:true, anchor:null});
+      if(overTray(e.clientX, e.clientY)){
+        if(drag.from === 'day'){
+          update(drag.task.id, {onWeek:false});
+          toast('Taken off the week');
+        }
+      } else if(dk2){
+        update(drag.task.id, {scope:'daily', date:dk2, onWeek:true, anchor:null});
         toast(`Moved to ${DOW[parseISO(dk2).getDay()]}`);
       }
       setDrag(null); setGhost(null); setOverDay(null);
@@ -1513,13 +1555,17 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily, 
               <div className="inner">
                 <div className="daypills">
                 {evs.map(e => (
-                  <div key={e.id} className="pill" style={{borderLeftColor:evColor(e.type), background:'var(--soft)'}}>
+                  <div key={e.id} className="pill draggable" onDoubleClick={() => setEditEv(e)}
+                    title="Double-click to edit"
+                    style={{borderLeftColor:evColor(e.type), background:'var(--soft)'}}>
                     <b style={{fontWeight:600}}>{e.title}</b>
                     <div style={{color:'var(--ink35)',fontSize:10.5}}>{evLabel(e.type)}</div>
                   </div>
                 ))}
                 {blocks.slice(0,4).map(t => (
-                  <div key={t.id} className="pill"
+                  <div key={t.id} className="pill draggable"
+                    onPointerDown={e => onGrab(e, t, 'day')} onDoubleClick={() => setEditTask(t)}
+                    title="Double-click to edit · drag to another day"
                     style={{borderLeftColor: blockHex(t.color) || 'var(--line)', background:'var(--soft)', color:'var(--ink60)'}}>
                     {t.start && <span className="mono" style={{fontSize:10}}>{pretty(t.start)} </span>}{t.title}
                   </div>
@@ -1532,12 +1578,13 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily, 
         })}
       </div>
 
-      {spare.length > 0 && (
-        <div className="weektray">
+      {(spare.length > 0 || drag) && (
+        <div className={'weektray' + (overDay === 'tray' ? ' over' : '')} data-tray>
           <div className="eyebrow" style={{marginBottom:8}}>
-            From List It — drag onto a day to put it on the week
+            From List It — drag onto a day, or drag one back here to take it off the week
           </div>
           <div className="weektray-items">
+            {spare.length === 0 && <span style={{fontSize:12.5,color:'var(--ink35)'}}>Drop here to take it off the week</span>}
             {spare.map(t => (
               <button key={t.id} className="weekchip" onPointerDown={e => onGrab(e, t)}
                 title="Drag onto a day">
@@ -1559,7 +1606,9 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily, 
           {weekEvents.length === 0
             ? <Empty title="Nothing on the calendar yet" hint="Add a due date, test, or meeting to see it here." />
             : weekEvents.map(e => (
-              <div key={e.id + e.on} className="todo" style={{alignItems:'center'}}>
+              <div key={e.id + e.on} className="todo" style={{alignItems:'center'}}
+                onDoubleClick={ev2 => { if(!ev2.target.closest('button')) setEditEv(e); }}
+                title="Double-click to edit">
                 <span style={{width:9,height:9,borderRadius:99,background:evColor(e.type),flex:'none'}} />
                 <div className="txt">
                   <b>{e.title}</b>
@@ -1578,6 +1627,7 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily, 
             ? <Empty title="No weekly goals set" hint="Head to List It → Weekly to add them." />
             : weekTodos.map(t => (
               <div key={t.id} className={'todo' + (t.done ? ' done' : '')} style={{alignItems:'center'}}>
+                <Check on={t.done} onClick={() => update(t.id, {done:!t.done})} />
                 <div className="txt"><b>{t.title}</b></div>
                 <span className="status">{t.done ? 'Done' : 'Open'}</span>
               </div>
@@ -1587,17 +1637,92 @@ function Weekly({date, setDate, tasks, events, addEvent, removeEvent, setDaily, 
 
       {newEv && <EventEditor ev={newEv} onClose={() => setNewEv(null)}
         onSave={e => { addEvent(e); setNewEv(null); }} />}
+
+      {editEv && <EventEditor ev={editEv} onClose={() => setEditEv(null)}
+        onSave={e => { updateEvent(e.id, e); setEditEv(null); }}
+        onDelete={() => { removeEvent(editEv.id); setEditEv(null); }} />}
+
+      {editTask && <BlockEditor block={editTask} day={day || DEFAULT_DAY} onClose={() => setEditTask(null)}
+        onSave={b => { update(b.id, b); setEditTask(null); }}
+        onDelete={id => { remove(id); setEditTask(null); }} />}
     </div>
   );
 }
 
 /* ============ ORGANIZE IT — monthly ============ */
-function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, setDaily}){
+function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, setDaily, toast}){
   const first = new Date(date.getFullYear(), date.getMonth(), 1);
   const gridStart = startOfWeek(first);
   const cells = Array.from({length:42}, (_,i) => addDays(gridStart,i));
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(null);
+  const [drag, setDrag] = useState(null);
+  const [ghost, setGhost] = useState(null);
+  const [overDay, setOverDay] = useState(null);
+  const moved = useRef(false);
+  const hold = useRef(null);
+
+  const grabEvent = (e, ev) => {
+    e.stopPropagation();
+    const start = pt => { moved.current = false; setDrag(ev); setGhost({x:pt.clientX, y:pt.clientY, label:ev.title}); };
+    if(e.pointerType === 'touch'){
+      const sx = e.clientX, sy = e.clientY;
+      const stop = () => {
+        clearTimeout(hold.current);
+        window.removeEventListener('pointermove', watch);
+        window.removeEventListener('pointerup', stop);
+      };
+      const watch = m => { if(Math.abs(m.clientY-sy) > 10 || Math.abs(m.clientX-sx) > 10) stop(); };
+      window.addEventListener('pointermove', watch);
+      window.addEventListener('pointerup', stop);
+      hold.current = setTimeout(() => {
+        stop();
+        if(navigator.vibrate) navigator.vibrate(8);
+        start({clientX:sx, clientY:sy});
+      }, 260);
+      return;
+    }
+    e.preventDefault();
+    start(e);
+  };
+
+  useEffect(() => {
+    if(!drag) return;
+    const dayUnder = (x,y) => {
+      const el = document.elementFromPoint(x, y);
+      const c = el && el.closest ? el.closest('[data-day]') : null;
+      return c ? c.getAttribute('data-day') : null;
+    };
+    const move = e => {
+      moved.current = true;
+      setGhost(g => g && {...g, x:e.clientX, y:e.clientY});
+      setOverDay(dayUnder(e.clientX, e.clientY));
+    };
+    const up = e => {
+      const dk2 = dayUnder(e.clientX, e.clientY);
+      if(dk2 && dk2 !== drag.date){
+        updateEvent(drag.id, {date:dk2});
+        toast(`Moved to ${fmtDay(parseISO(dk2))}`);
+      }
+      setDrag(null); setGhost(null); setOverDay(null);
+      document.body.classList.remove('dragging');
+      // stop the cell's click from opening the day popup right after a drag
+      setTimeout(() => { moved.current = false; }, 0);
+    };
+    const block = ev2 => ev2.preventDefault();
+    document.body.classList.add('dragging');
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+    document.addEventListener('touchmove', block, {passive:false});
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      document.removeEventListener('touchmove', block);
+      document.body.classList.remove('dragging');
+    };
+  }, [drag, updateEvent, toast]);
   const byDay = useMemo(() => {
     const m = {};
     cells.forEach(d => {
@@ -1621,11 +1746,14 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
           const dk = iso(d);
           const list = byDay[dk] || [];
           return (
-            <button key={dk} className={'cell' + (d.getMonth() !== date.getMonth() ? ' out' : '') + (sameDay(d,new Date()) ? ' today' : '')}
-              onClick={() => setOpen(dk)}>
+            <button key={dk} data-day={dk}
+              className={'cell' + (d.getMonth() !== date.getMonth() ? ' out' : '')
+                + (sameDay(d,new Date()) ? ' today' : '') + (overDay === dk ? ' dropping' : '')}
+              onClick={() => { if(!moved.current) setOpen(dk); }}>
               <div className="dnum">{d.getDate()}</div>
               {list.slice(0,3).map(e => (
-                <div className="ev" key={e.id}>
+                <div className="ev draggable" key={e.id} onPointerDown={ev2 => grabEvent(ev2, e)}
+                  title="Drag to another day">
                   <span className="dot" style={{background:evColor(e.type)}} />
                   <span className="evt">{e.title}</span>
                 </div>
@@ -1636,6 +1764,8 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
         })}
       </div>
 
+      {ghost && <div className="ghost" style={{left:ghost.x+12, top:ghost.y-14}}>{ghost.label}</div>}
+
       <div className="legend" style={{marginTop:14}}>
         {EV_TYPES.map(t => <span key={t.id}><i style={{background:t.color}} />{t.label}</span>)}
       </div>
@@ -1643,9 +1773,13 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
       {open && (
         <Modal title={fmtDay(parseISO(open))} onClose={() => setOpen(null)}
           footer={<>
-            <button className="btn ghost" onClick={() => { setDaily(parseISO(open)); setOpen(null); }}>Open in Daily</button>
+            <button className="btn ghost" onClick={() => setOpen(null)}>Close</button>
             <button className="btn primary" onClick={() => { setEditing({title:'', date:open, type:'test', note:''}); setOpen(null); }}>+ Add a date</button>
           </>}>
+          <button className="btn" style={{width:'100%', justifyContent:'center', marginBottom:14}}
+            onClick={() => { const d0 = parseISO(open); setOpen(null); setDaily(d0); }}>
+            Open this day in Daily <IconArrow />
+          </button>
           {(byDay[open] || []).length === 0
             ? <Empty title="Nothing marked on this day" hint="Add a test, deadline, birthday, or meeting." />
             : (byDay[open] || []).map(e => (
@@ -4897,9 +5031,11 @@ function App({user, onSignOut}){
               day={view.day || user.day || DEFAULT_DAY} setDay={d => setStore(s => ({...s, day:d}))} />}
           {tab === 'organize' && sub.organize === 'weekly' &&
             <Weekly date={date} setDate={setDate} tasks={view.tasks} events={view.events} addEvent={addEvent}
-              removeEvent={removeEvent} setDaily={goDaily} update={updateTask} toast={toast} />}
+              updateEvent={updateEvent} removeEvent={removeEvent} setDaily={goDaily} update={updateTask}
+              remove={removeTask} day={view.day || user.day || DEFAULT_DAY} toast={toast} />}
           {tab === 'organize' && sub.organize === 'monthly' &&
-            <Monthly date={date} setDate={setDate} events={view.events} addEvent={addEvent} updateEvent={updateEvent} removeEvent={removeEvent} setDaily={goDaily} />}
+            <Monthly date={date} setDate={setDate} events={view.events} addEvent={addEvent} updateEvent={updateEvent}
+              removeEvent={removeEvent} setDaily={goDaily} toast={toast} />}
 
           {tab === 'list' &&
             <ListIt sub={sub.list} date={date} setDate={setDate} tasks={view.tasks} add={addTask} update={updateTask} remove={removeTask}
@@ -5002,6 +5138,30 @@ function App({user, onSignOut}){
 }
 
 /* ============ ROOT ============ */
+// A crash anywhere below this used to leave a white page with nothing to go on.
+class Boundary extends React.Component {
+  constructor(p){ super(p); this.state = {err:null}; }
+  static getDerivedStateFromError(err){ return {err}; }
+  componentDidCatch(err, info){ console.error('[planit] crash', err, info); }
+  render(){
+    if(!this.state.err) return this.props.children;
+    const msg = this.state.err.message || String(this.state.err);
+    return (
+      <div className="crash">
+        <h2>Plan It hit a problem</h2>
+        <p>Your planner is safe — this is a display error, not lost data.</p>
+        <pre>{msg}</pre>
+        <div className="row" style={{gap:9, justifyContent:'center'}}>
+          <button className="btn primary" onClick={() => window.location.reload()}>Reload</button>
+          <button className="btn" onClick={() => {
+            navigator.clipboard.writeText(msg + '\n' + (this.state.err.stack || '')).catch(() => {});
+          }}>Copy the error</button>
+        </div>
+      </div>
+    );
+  }
+}
+
 function Booting(){
   const [slow, setSlow] = useState(false);
   useEffect(() => { const t = setTimeout(() => setSlow(true), 7000); return () => clearTimeout(t); }, []);
@@ -5060,7 +5220,7 @@ function Root(){
   </>;
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+ReactDOM.createRoot(document.getElementById('root')).render(<Boundary><Root /></Boundary>);
 </script>
 </body>
 </html>
