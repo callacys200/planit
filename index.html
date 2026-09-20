@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Plan It</title>
+<title>PlanIt</title>
 <link rel="icon" type="image/png" sizes="512x512" href="favicon.png?v=3">
 <link rel="shortcut icon" type="image/png" href="favicon.png?v=3">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3">
@@ -315,6 +315,9 @@
   .dial{display:grid;place-items:center;padding:14px 0 4px}
   .dial-num{font-family:"IBM Plex Mono",monospace;font-size:52px;font-weight:500;letter-spacing:-.03em}
   .presets{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .soundtoggle{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:5px 12px;
+    font-size:12px;font-weight:600;color:var(--ink60);margin-top:14px}
+  .soundtoggle:hover{border-color:#C6CBDC;color:var(--ink)}
   .modeswitch{display:inline-flex;gap:3px;padding:3px;background:var(--soft);border:1px solid var(--line);border-radius:11px}
   .modeswitch button{border:0;background:transparent;padding:7px 18px;border-radius:8px;font-weight:600;font-size:13px;color:var(--ink60)}
   .modeswitch button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(20,23,42,.14)}
@@ -918,7 +921,7 @@ const dataKey = uid2 => `planit:data:v1:${uid2}`;
 async function loadStore(userId){
   const raw = await DB.get(dataKey(userId));
   if(raw){ try { return JSON.parse(raw); } catch(e){ return null; } }
-  // first sign-in on a browser that used Plan It before accounts existed
+  // first sign-in on a browser that used PlanIt before accounts existed
   const legacy = await DB.get('planit:data:v1');
   if(legacy){ try { return JSON.parse(legacy); } catch(e){} }
   return null;
@@ -1945,8 +1948,17 @@ function EventEditor({ev, onClose, onSave, onDelete}){
 function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day}){
   const [text, setText] = useState('');
   const anchor = sub === 'daily' ? iso(date) : sub === 'weekly' ? weekKey(date) : monthKey(date);
+  // Scheduled things read in the order the day happens; anything without a
+  // time yet sits at the end, still in the order it was written.
   const items = tasks.filter(t => t.scope === sub
-    && (sub === 'daily' ? occursOn(t, anchor) : t.anchor === anchor));
+    && (sub === 'daily' ? occursOn(t, anchor) : t.anchor === anchor))
+    .sort((a,b) => {
+      if(sub !== 'daily') return 0;
+      if(a.start && b.start) return toMin(a.start) - toMin(b.start);
+      if(a.start) return -1;
+      if(b.start) return 1;
+      return 0;
+    });
   const doneCount = items.filter(t => sub === 'daily' ? isDone(t, anchor) : t.done).length;
   const [editing, setEditing] = useState(null);
   const pct = items.length ? Math.round(doneCount/items.length*100) : 0;
@@ -2518,7 +2530,7 @@ function EcEditor({ec, onClose, onSave, stage}){
 
 /* ============ LOCK IT ============ */
 
-function LockIt({sub, lock, running, left, minutes, start, pause, reset, toast,
+function LockIt({sub, lock, running, left, minutes, start, pause, reset, toast, sound, setSound,
                  mode, setMode, pomo, setPomo, phase, cycle, addCycle,
                  camOn, setCamOn, camFull, camCount, remoteStreams, camTick,
                  room, setRoom, members, myId, name, setName}){
@@ -2634,6 +2646,11 @@ function LockIt({sub, lock, running, left, minutes, start, pause, reset, toast,
             </div>
           )}
 
+          <button className="soundtoggle" onClick={() => setSound(!sound)}
+            title={sound ? 'Sounds on' : 'Sounds off'}>
+            {sound ? '🔊' : '🔇'} {sound ? 'Sound on' : 'Sound off'}
+          </button>
+
           <div className="timerbtns">
             {!running
               ? <button className="btn primary" onClick={start}>
@@ -2664,7 +2681,7 @@ function LockIt({sub, lock, running, left, minutes, start, pause, reset, toast,
           {mode === 'pomo'
             ? 'Each work stretch counts as a finished session. Breaks are not counted as focus minutes, and the next stretch starts on its own.'
             : 'The countdown runs off the clock, so it keeps time even if you switch tabs or close the laptop.'}
-          While a session runs, Plan It covers the screen and the other tabs stay shut until the timer ends or you end it early.
+          While a session runs, PlanIt covers the screen and the other tabs stay shut until the timer ends or you end it early.
           A website can't lock the apps outside your browser — that takes a phone app with Screen Time or Digital Wellbeing permissions.
         </div>
       </div>
@@ -2893,13 +2910,13 @@ function SetupNeeded(){
   return (
     <div className="authpage">
       <header className="topnav">
-        <div className="tn-brand"><Mark /><b>Plan It</b><span className="beta">SETUP</span></div>
+        <div className="tn-brand"><Mark /><b>PlanIt</b><span className="beta">SETUP</span></div>
       </header>
       <div className="authsplit">
         <section className="authleft">
           <div className="authcard"><div className="cardbody">
             <h2>Almost there</h2>
-            <p className="csub">Plan It needs your Firebase project before anyone can sign in.</p>
+            <p className="csub">PlanIt needs your Firebase project before anyone can sign in.</p>
             <div className="gnote">
               <b>Add your config</b>
               Open <code>index.html</code>, find <code>CONFIG.FIREBASE</code> near the top, and paste in the
@@ -3096,7 +3113,7 @@ function Auth(){
 
   const sourceFields = (
     <>
-      <label className="flabel">How did you hear about Plan It?</label>
+      <label className="flabel">How did you hear about PlanIt?</label>
       <select className="finput" value={source} onChange={e => setSource(e.target.value)}>
         <option value="">Choose one</option>
         <option value="friend">A friend told me</option>
@@ -3107,7 +3124,7 @@ function Auth(){
       </select>
       {source === 'friend' && (
         <>
-          <label className="flabel">Their Plan It username</label>
+          <label className="flabel">Their PlanIt username</label>
           <input className="finput" value={refBy} onChange={e => setRefBy(e.target.value)}
             placeholder="Enter their username here" autoComplete="off" />
           <div className="avail hint" style={{marginTop:-10}}>
@@ -3136,7 +3153,7 @@ function Auth(){
   return (
     <div className="authpage">
       <header className="topnav">
-        <div className="tn-brand"><Mark /><b>Plan It</b><span className="beta">BETA</span></div>
+        <div className="tn-brand"><Mark /><b>PlanIt</b><span className="beta">BETA</span></div>
         <nav className="tn-actions">
           <button className={'tn-link' + (mode === 'in' ? ' on' : '')} onClick={() => { setMode('in'); setStep('form'); }}>Log in</button>
           <button className={'tn-link' + (mode === 'up' ? ' on' : '')} onClick={() => { setMode('up'); setStep('form'); }}>Sign up</button>
@@ -3146,7 +3163,7 @@ function Auth(){
       <div className="authsplit">
         <section className="authleft">
           <div className="lead">
-            <div className="leadmark"><Mark size={30} /><b>Plan It</b></div>
+            <div className="leadmark"><Mark size={30} /><b>PlanIt</b></div>
             <p className="script">{script}</p>
             <p className="leadsub">Your schedule, your lists, and everything you've done stay together in one place.</p>
           </div>
@@ -3156,7 +3173,7 @@ function Auth(){
 
               {mode === null && step === 'form' && (
                 <>
-                  <h2>Welcome to Plan It</h2>
+                  <h2>Welcome to PlanIt</h2>
                   <p className="csub">New here, or coming back?</p>
                   <button className="pillbtn" onClick={() => { setMode('up'); setStep('form'); }}>
                     Sign up <IconArrow />
@@ -3176,7 +3193,7 @@ function Auth(){
               {step === 'verify' && (
                 <>
                   <h2>Check your email</h2>
-                  <p className="csub">to finish setting up Plan It</p>
+                  <p className="csub">to finish setting up PlanIt</p>
                   <p className="cmail">{email}</p>
                   <div className="verifybox">
                     <div className="venvelope">✉️</div>
@@ -3251,7 +3268,7 @@ function Auth(){
 
               {step === 'form' && mode === 'in' && (
                 <>
-                  <h2>Log in to Plan It</h2>
+                  <h2>Log in to PlanIt</h2>
                   <p className="csub">Your planner is where you left it</p>
                   <button className="gbtn" disabled={busy} onClick={withGoogle}><GMark /> Continue with Google</button>
                   <div className="or"><span>OR</span></div>
@@ -3677,12 +3694,12 @@ function Onboarding({user, onDone}){
   return (
     <div className="authpage">
       <header className="topnav">
-        <div className="tn-brand"><Mark /><b>Plan It</b><span className="beta">SETUP</span></div>
+        <div className="tn-brand"><Mark /><b>PlanIt</b><span className="beta">SETUP</span></div>
       </header>
       <div className="authsplit">
         <section className="authleft">
           <div className="lead">
-            <div className="leadmark"><Mark size={30} /><b>Plan It</b></div>
+            <div className="leadmark"><Mark size={30} /><b>PlanIt</b></div>
             <p className="script">two questions, then you're in</p>
           </div>
 
@@ -3691,7 +3708,7 @@ function Onboarding({user, onDone}){
               {step === 'role' && (
                 <>
                   <h2>Who's using this?</h2>
-                  <p className="csub">This decides what Plan It shows you.</p>
+                  <p className="csub">This decides what PlanIt shows you.</p>
                   <button className={'rolecard' + (role === 'student' ? ' on' : '')} onClick={() => setRole('student')}>
                     <span className="roleicon">🎒</span>
                     <span><b>I'm a student</b><small>Plan your days, track activities, focus with friends</small></span>
@@ -3708,7 +3725,7 @@ function Onboarding({user, onDone}){
               {step === 'dob' && (
                 <>
                   <h2>When's your birthday?</h2>
-                  <p className="csub">Plan It works your age out from this, so it stays right every year.</p>
+                  <p className="csub">PlanIt works your age out from this, so it stays right every year.</p>
                   <label className="flabel">Date of birth</label>
                   <input className="finput" type="date" value={dob} max={iso(new Date())}
                     onChange={e => setDob(e.target.value)} autoFocus />
@@ -3740,7 +3757,7 @@ function Onboarding({user, onDone}){
                   <label className="flabel">Your email</label>
                   <input className="finput" type="email" value={email} onChange={e => setEmail(e.target.value)}
                     placeholder="Enter your email here" />
-                  <label className="flabel">Your child's Plan It username</label>
+                  <label className="flabel">Your child's PlanIt username</label>
                   <input className="finput" value={childName} onChange={e => setChildName(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && sendRequest()} placeholder="Enter their username here" />
                   {note && <div className="formnote">{note}</div>}
@@ -3904,7 +3921,7 @@ function ViewIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
             ? <div className="formerr">{childStore.error}</div>
             : childStore.empty
             ? <div className="card soft" style={{color:'var(--ink60)',fontSize:13.5,lineHeight:1.6}}>
-                Nothing uploaded yet. Ask them to open Plan It and change something — a task, a tick, anything.
+                Nothing uploaded yet. Ask them to open PlanIt and change something — a task, a tick, anything.
                 Their planner uploads a moment after any edit.
               </div>
             : <>
@@ -3914,7 +3931,7 @@ function ViewIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
                     <b>{!st ? 'No activity yet'
                       : live && st.room ? `In study room ${st.room}${st.focusing ? ' — focusing' : ''}`
                       : live && st.focusing ? 'Focusing right now'
-                      : live ? 'Plan It is open'
+                      : live ? 'PlanIt is open'
                       : `Last active ${lastSeen}`}</b>
                     {live && st && st.room && (
                       <div style={{fontSize:12.5, color:'var(--ink35)', marginTop:2}}>
@@ -3973,7 +3990,7 @@ function ViewIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
 
       <Section title="Add a child">
         <div className="card">
-          <Field label="Their Plan It username">
+          <Field label="Their PlanIt username">
             <input value={childName} onChange={e => setChildName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && add()} placeholder="Enter their username here" />
           </Field>
@@ -4337,7 +4354,7 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
     const perm = await Notification.requestPermission();
     if(perm !== 'granted') return setErr('Your browser blocked notifications. Allow them in the address bar, then try again.');
     setSettings({...settings, notify:{...settings.notify, on:true}});
-    new Notification('Plan It', {body:"Reminders are on. You'll get a nudge before scheduled blocks."});
+    new Notification('PlanIt', {body:"Reminders are on. You'll get a nudge before scheduled blocks."});
   };
 
   const Err = () => err ? <div className="formerr" role="alert">{err}</div> : null;
@@ -4459,7 +4476,7 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
           <Section title="Password" hint="You can change this once a week.">
             <div className="card">
               {user.provider === 'google'
-                ? <div className="lockednote">You sign in with Google, so there's no Plan It password to change. Manage it in your Google account.</div>
+                ? <div className="lockednote">You sign in with Google, so there's no PlanIt password to change. Manage it in your Google account.</div>
                 : profile && !freeToChange(profile.passwordChangedAt)
                 ? <div className="lockednote">Changed recently. You can change it again in {daysUntil(profile.passwordChangedAt)} days.</div>
                 : <>
@@ -4474,7 +4491,7 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
           </Section>
 
           <Section title="Session">
-            <button className="btn" onClick={onSignOut}>Log out of Plan It</button>
+            <button className="btn" onClick={onSignOut}>Log out of PlanIt</button>
           </Section>
         </>
       )}
@@ -4506,7 +4523,7 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
           </Section>
           <Section title="Worth knowing">
             <div className="card" style={{color:'var(--ink60)', fontSize:13.5, lineHeight:1.6}}>
-              Reminders only fire while Plan It is open in a tab. Notifications that reach you with the site
+              Reminders only fire while PlanIt is open in a tab. Notifications that reach you with the site
               closed need a service worker and a push service, which a static site can't do on its own.
             </div>
           </Section>
@@ -4515,12 +4532,12 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
 
       {sub === 'pro' && (
         <>
-          <Section title="Plan It Pro">
+          <Section title="PlanIt Pro">
             <div className="procard">
               <div className="prohead">
                 <div>
                   <div className="eyebrow" style={{color:'var(--accent)'}}>Coming soon</div>
-                  <h3>Plan It Pro</h3>
+                  <h3>PlanIt Pro</h3>
                 </div>
                 <div className="proprice">{CONFIG.PRO_PRICE || '$3'}<small>/mo</small></div>
               </div>
@@ -4553,11 +4570,11 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
           <Section title="Policies">
             <div className="card">
               <div className="legalrow">
-                <div><b>Privacy policy</b><small>What Plan It stores and where it lives</small></div>
+                <div><b>Privacy policy</b><small>What PlanIt stores and where it lives</small></div>
                 <button className="btn sm" onClick={() => setLegal('privacy')}>View</button>
               </div>
               <div className="legalrow">
-                <div><b>Terms and conditions</b><small>The rules for using Plan It</small></div>
+                <div><b>Terms and conditions</b><small>The rules for using PlanIt</small></div>
                 <button className="btn sm" onClick={() => setLegal('terms')}>View</button>
               </div>
             </div>
@@ -4584,7 +4601,7 @@ function LegalModal({kind, onClose}){
       footer={<button className="btn primary" onClick={onClose}>Close</button>}>
       <div className="demo" style={{textAlign:'left', marginBottom:16}}>
         <b>Template — read before you publish</b>
-        This is a starting point written to match how Plan It actually works, not legal advice.
+        This is a starting point written to match how PlanIt actually works, not legal advice.
         Check it against your situation, and get an adult or a lawyer to look it over if real users sign up.
       </div>
       <div className="legaldoc">
@@ -4609,33 +4626,33 @@ function LegalModal({kind, onClose}){
             <p>You can change your username, edit or clear your profile details, and delete your planner data at any
             time from Settings. To have your account removed entirely, contact us at the address below.</p>
             <h4>Children</h4>
-            <p>Plan It is built for students. If you are under 13, ask a parent or guardian before making an account.</p>
+            <p>PlanIt is built for students. If you are under 13, ask a parent or guardian before making an account.</p>
             <h4>Contact</h4>
             <p>{CONFIG.CONTACT_EMAIL || 'Add your contact email to CONFIG.CONTACT_EMAIL.'}</p>
           </>
         ) : (
           <>
             <p><em>Last updated: {MON[new Date().getMonth()]} {new Date().getFullYear()}</em></p>
-            <h4>Using Plan It</h4>
-            <p>Plan It is a free planner for students. You need an account to use it, and you agree to give accurate
+            <h4>Using PlanIt</h4>
+            <p>PlanIt is a free planner for students. You need an account to use it, and you agree to give accurate
             information when you sign up.</p>
             <h4>Your account</h4>
             <p>Keep your password to yourself. You are responsible for what happens under your account. Usernames
             can be changed once a week; pick something that is not offensive or impersonating someone else.</p>
             <h4>Your content</h4>
-            <p>Anything you write in Plan It stays yours. We claim no ownership of your tasks, notes, or activity
+            <p>Anything you write in PlanIt stays yours. We claim no ownership of your tasks, notes, or activity
             entries.</p>
             <h4>Study rooms</h4>
             <p>Room codes are shared by you. Do not use rooms to harass anyone. We may remove access for behaviour
             that harms other people.</p>
             <h4>No guarantees</h4>
-            <p>Plan It is provided as is. It may go down, lose data, or change without notice. Keep your own copy of
+            <p>PlanIt is provided as is. It may go down, lose data, or change without notice. Keep your own copy of
             anything you cannot afford to lose. We are not liable for missed deadlines, lost work, or any damages
             arising from using it.</p>
             <h4>Ending things</h4>
-            <p>You can stop using Plan It whenever you like. We can suspend accounts that break these terms.</p>
+            <p>You can stop using PlanIt whenever you like. We can suspend accounts that break these terms.</p>
             <h4>Changes</h4>
-            <p>These terms may be updated. Continuing to use Plan It after a change means you accept the new version.</p>
+            <p>These terms may be updated. Continuing to use PlanIt after a change means you accept the new version.</p>
             <h4>Contact</h4>
             <p>{CONFIG.CONTACT_EMAIL || 'Add your contact email to CONFIG.CONTACT_EMAIL.'}</p>
           </>
@@ -4825,7 +4842,7 @@ function Reports({lock}){
 // as active but can't be claimed is worse than one that says "coming".
 const NEWS = [
   {id:'founding30', emoji:'🎁', tag:'Planned', title:'Founding 30 — Pro free for life',
-   body:"The first 30 people to make a Plan It account keep Pro forever, at no cost. We're still counting, and we'll get in touch once Pro exists."},
+   body:"The first 30 people to make a PlanIt account keep Pro forever, at no cost. We're still counting, and we'll get in touch once Pro exists."},
   {id:'refer5', emoji:'👥', tag:'Planned', title:'Bring five friends, get Pro free',
    body:'Your username is your referral code. Five people type it in when they sign up and Pro is on us for three months — see your count in Settings.'},
   {id:'prosoon', emoji:'✨', tag:'Coming soon', title:"What Pro will include",
@@ -4906,7 +4923,7 @@ function NewsPanel({onClose, readIds, markRead, requests = [], onDecide, report,
       )}
 
       <p style={{margin:'0 0 16px', color:'var(--ink60)', fontSize:13.5}}>
-        Plan It is early. Nothing below is live yet — this is what's being built.
+        PlanIt is early. Nothing below is live yet — this is what's being built.
       </p>
       {NEWS.map(n => (
         <div key={n.id} className={'newsitem' + (readIds.includes(n.id) ? '' : ' fresh')}>
@@ -4942,9 +4959,9 @@ const TABS = [
    title:'View It', tagline:"Follow along with your child's planner.",
    subs:[['children','Children']]},
   {id:'settings', emoji:'⚙️', label:'Settings',   sub:'Account', color:'var(--set)',
-   title:'Settings', tagline:'Your account, how Plan It looks, and what it can do.',
+   title:'Settings', tagline:'Your account, how PlanIt looks, and what it can do.',
    subs:[['account','My account'],['security','Username & password'],
-         ['notifications','Notifications'],['pro','Plan It Pro'],['feedback','Report a bug'],['legal','Legal']]},
+         ['notifications','Notifications'],['pro','PlanIt Pro'],['feedback','Report a bug'],['legal','Legal']]},
 ];
 const BASE_ACCENTS = {brag:'#E09A12', list:'#0F9E68', organize:'#5350E8', lock:'#E03F7C', settings:'#5A6178', watch:'#0E8F86'};
 
@@ -4965,6 +4982,42 @@ function App({user, onSignOut}){
   const [running, setRunning] = useState(false);
   const endsAt = useRef(null);   // wall-clock target, not a tick count
   const runFrom = useRef(null);  // when the current run began, for crediting time
+  const actx = useRef(null);
+  const lastBeep = useRef(null);
+
+  // Audio has to be created inside a click, which is why this is called from
+  // the start button rather than set up on load.
+  const ensureAudio = () => {
+    if(!actx.current){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) { try{ actx.current = new AC(); }catch(e){} }
+    }
+    if(actx.current && actx.current.state === 'suspended') actx.current.resume().catch(() => {});
+    return actx.current;
+  };
+  const tone = (freq, at, dur, vol = 0.18) => {
+    const ctx = actx.current;
+    if(!ctx) return;
+    try{
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      const t0 = ctx.currentTime + at;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(vol, t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t0); o.stop(t0 + dur + 0.03);
+    }catch(e){}
+  };
+  const soundOn = () => (store.settings || DEFAULT_SETTINGS).sound !== false;
+  const play = kind => {
+    if(!soundOn() || !actx.current) return;
+    if(kind === 'count')    tone(880, 0, 0.09, 0.13);            // one of the last five seconds
+    if(kind === 'start')    { tone(620, 0, 0.11); tone(880, 0.12, 0.18); }
+    if(kind === 'workEnd')  { tone(880, 0, 0.14); tone(660, 0.15, 0.14); tone(440, 0.30, 0.34); }
+    if(kind === 'breakEnd') { tone(520, 0, 0.11); tone(700, 0.12, 0.11); tone(920, 0.24, 0.28); }
+  };
   const [mode, setMode] = useState('timer');            // 'timer' | 'pomo'
   const [pomo, setPomo] = useState({work:25, brk:5, cycles:4});
   const [phase, setPhase] = useState(null);             // 'work' | 'break' | null
@@ -5133,6 +5186,9 @@ function App({user, onSignOut}){
 
   const startTimer = useCallback(() => {
     goFullscreen();
+    ensureAudio();
+    lastBeep.current = null;
+    play('start');
     if(mode === 'pomo'){
       if(phase && left > 0){                        // resume a paused phase
         endsAt.current = Date.now() + left*1000;
@@ -5184,10 +5240,13 @@ function App({user, onSignOut}){
       if(!endsAt.current) return;
       const rem = Math.max(0, Math.round((endsAt.current - Date.now())/1000));
       setLeft(rem);
+      if(rem > 0 && rem <= 5 && lastBeep.current !== rem){ lastBeep.current = rem; play('count'); }
       if(rem <= 0){
         endsAt.current = null;
         if(mode === 'pomo'){
           if(phase === 'work'){
+            play('workEnd');
+            lastBeep.current = null;
             creditElapsed();
             setStore(s => ({...s, lock:{...s.lock, sessions:s.lock.sessions+1}}));
             if(cycle < pomo.cycles){
@@ -5199,11 +5258,15 @@ function App({user, onSignOut}){
               toast(`All ${pomo.cycles} cycles finished. Nice work.`);
             }
           } else {
+            play('breakEnd');
+            lastBeep.current = null;
             toast('Break over — back to it.');
             beginPhase('work', cycle + 1);
           }
           return;
         }
+        play('workEnd');
+        lastBeep.current = null;
         creditElapsed();
         leaveFullscreen();
         setRunning(false);
@@ -5440,7 +5503,7 @@ function App({user, onSignOut}){
     return () => clearInterval(hb);
   }, [isParent, ready, room, running, user.id]);
 
-  // reminders for scheduled blocks, while Plan It is open
+  // reminders for scheduled blocks, while PlanIt is open
   const fired = useRef({});
   useEffect(() => {
     if(!settings.notify.on || !('Notification' in window) || Notification.permission !== 'granted') return;
@@ -5498,7 +5561,7 @@ function App({user, onSignOut}){
   return (
     <div className="app" style={{'--accent':accentHex, '--accent-soft':hexRgba(accentHex, .16), '--accent-ink':inkOn(accentHex)}}>
       <nav className="rail" aria-label="Sections">
-        <div className="brand"><Mark size={46} /><b>Plan It</b></div>
+        <div className="brand"><Mark size={46} /><b>PlanIt</b></div>
         {TABS.filter(t => t.id !== 'settings' && (!t.parentOnly || isParent)).map(t => (
           <button key={t.id} className={'tab' + (tab === t.id ? ' on' : '')} style={{'--tabcolor':t.color}}
             disabled={running && t.id !== 'lock'}
@@ -5575,7 +5638,7 @@ function App({user, onSignOut}){
                 </div>
               : childStore.empty
               ? <div className="viewonly" style={{background:'#FFF9E9',borderColor:'#F0DEB0',color:'#7A5A10'}}>
-                  {viewChildName} hasn't uploaded anything yet — ask them to open Plan It and change something.
+                  {viewChildName} hasn't uploaded anything yet — ask them to open PlanIt and change something.
                 </div>
               : <div className="viewonly">
                   Viewing <b>{viewChildName}</b>'s planner — read only.
@@ -5624,6 +5687,8 @@ function App({user, onSignOut}){
           {tab === 'lock' &&
             <LockIt sub={sub.lock} lock={view.lock || {}} running={running} left={left} minutes={minutes}
               start={startTimer} pause={pauseTimer} reset={resetTimer} toast={toast}
+              sound={(store.settings || DEFAULT_SETTINGS).sound !== false}
+              setSound={v => setSettings({...(store.settings || DEFAULT_SETTINGS), sound:v})}
               mode={mode} setMode={setMode} pomo={pomo} setPomo={setPomo}
               phase={phase} cycle={cycle} addCycle={addCycle}
               camOn={camOn} setCamOn={toggleCam} camFull={camFull}
@@ -5644,7 +5709,7 @@ function App({user, onSignOut}){
           <div className="big">{pad(Math.floor(left/60))}:{pad(left%60)}</div>
           <div className="sub">{mode === 'pomo' && phase === 'break'
             ? 'Stretch, get water, look out a window. Work starts again on its own.'
-            : 'Plan It is closed until the timer ends. Put the phone face down.'}</div>
+            : 'PlanIt is closed until the timer ends. Put the phone face down.'}</div>
           {room && (
             <div className="seats">
               <Seat me name={roomName || 'You'} focusing
@@ -5710,7 +5775,7 @@ class Boundary extends React.Component {
     const msg = this.state.err.message || String(this.state.err);
     return (
       <div className="crash">
-        <h2>Plan It hit a problem</h2>
+        <h2>PlanIt hit a problem</h2>
         <p>Your planner is safe — this is a display error, not lost data.</p>
         <pre>{msg}</pre>
         <div className="row" style={{gap:9, justifyContent:'center'}}>
@@ -5758,7 +5823,7 @@ function Root(){
         }catch(e){
           // Firestore unreachable: let them into their planner rather than
           // stranding them on a loading screen, but say so.
-          console.warn('Plan It: could not read your profile from Firestore.', e);
+          console.warn('PlanIt: could not read your profile from Firestore.', e);
           setDbWarn(true);
           setUser(toUser(u));
         }
