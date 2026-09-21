@@ -268,6 +268,11 @@
   .todo .txt b{font-weight:600;font-size:14px;display:block;word-break:break-word}
   .todo.done .txt b{text-decoration:line-through;color:var(--ink35)}
   .todo .meta{font-size:11.5px;color:var(--ink35);margin-top:2px}
+  .carrytoggle{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;margin-bottom:12px;
+    border:1px solid var(--line);border-radius:12px;background:var(--soft);cursor:pointer}
+  .carrytoggle input{width:16px;height:16px;margin-top:2px;flex:none}
+  .carrytoggle b{font-size:13.5px;display:block}
+  .carrytoggle small{display:block;color:var(--ink35);font-size:12px;margin-top:1px;line-height:1.45}
   .addbar{display:flex;gap:8px;margin-bottom:14px}
   .addwrap{flex:1;position:relative;display:flex;align-items:center}
   .addplus{position:absolute;left:13px;font-size:19px;line-height:1;font-weight:600;
@@ -290,6 +295,16 @@
   .ec .main{padding:16px 18px;min-width:0}
   .ec .side{user-select:text;background:#FBFAF6;border-left:1px solid var(--line);padding:14px 16px;font-size:12.5px;color:var(--ink60);line-height:1.5}
   .ec h3{font-size:17px;font-weight:700;overflow-wrap:anywhere}
+  .energy{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:99px;
+    font-size:12.5px;font-weight:700;border:1px solid transparent}
+  .energy i{font-style:normal;font-weight:500;opacity:.65}
+  .energy.sm{padding:2px 6px;font-size:11px;gap:3px}
+  .energy.low{background:#EAF7F0;color:#0B7A50;border-color:#C6E6D6}
+  .energy.near{background:#FDF3E6;color:#9A6212;border-color:#F0DEB0}
+  .energy.over{background:#FFF1F5;color:#B92A61;border-color:#F3CEDA}
+  .batt{flex:none}
+  .cellbatt.low{color:#0F9E68} .cellbatt.near{color:#D98A16} .cellbatt.over{color:#E03F7C}
+  .daycol h4 .spread{align-items:center;gap:6px}
   .metatag{font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:99px;
     background:var(--soft);border:1px solid var(--line);color:var(--ink60)}
   .metatag.strong{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
@@ -354,6 +369,22 @@
   .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:11px;font-size:13.5px;z-index:95;box-shadow:0 14px 30px -10px rgba(20,23,42,.6);animation:pop .2s}
 
   /* ---------- auth ---------- */
+  .tutwrap{position:fixed;inset:0;z-index:8000;background:rgba(20,23,42,.55);display:grid;
+    place-items:center;padding:20px;animation:fade .2s ease}
+  .tutcard{background:var(--card);border-radius:20px;width:min(480px,100%);max-height:88vh;overflow:auto;
+    padding:28px 26px 22px;text-align:center;box-shadow:0 30px 70px -20px rgba(20,23,42,.5)}
+  .tutdots{display:flex;gap:5px;justify-content:center;margin-bottom:20px}
+  .tutdots i{width:7px;height:7px;border-radius:99px;background:var(--line);display:block;transition:.2s}
+  .tutdots i.done{background:var(--step);opacity:.4}
+  .tutdots i.on{width:22px;background:var(--step)}
+  .tutemoji{font-size:42px;line-height:1;margin-bottom:12px}
+  .tutcard h2{font-size:22px;font-weight:800;margin-bottom:8px}
+  .tutcard p{color:var(--ink60);font-size:14.5px;line-height:1.6;margin:0 0 18px}
+  .tutbtns{display:flex;gap:9px;justify-content:center;margin-top:18px}
+  .tutskip{display:block;margin:14px auto 0;border:0;background:transparent;color:var(--ink35);font-size:12.5px}
+  .tutskip:hover{color:var(--ink60);text-decoration:underline}
+  .streak{color:#D9621A !important;font-weight:600}
+  .streakbig{font-size:32px;line-height:1}
   .crash{max-width:520px;margin:12vh auto;padding:28px 24px;text-align:center}
   .crash h2{font-size:22px;font-weight:800;margin-bottom:6px}
   .crash p{color:var(--ink60);font-size:14px;margin:0 0 16px}
@@ -852,6 +883,43 @@ const BLOCK_COLORS = [
 ];
 const blockHex = id => (BLOCK_COLORS.find(c => c.id === id) || {}).hex;
 
+// Energy costs. 0 is the default so a task you never think about costs nothing.
+const ENERGY = [
+  [-1,'Relax','🛋️'], [0,'None','–'], [1,'Low','▁'], [2,'Medium','▄'], [3,'High','█'],
+];
+const energyLabel = v => (ENERGY.find(e => e[0] === (v || 0)) || ENERGY[1])[1];
+const DEFAULT_BASE = 10;
+
+// Under budget reads green, near it orange, well over it red.
+const energyState = (total, base) =>
+  total < base - 5 ? 'low' : total <= base + 5 ? 'near' : 'over';
+
+const dayEnergy = (tasks, dk) => tasks
+  .filter(t => t.scope === 'daily' && occursOn(t, dk) && !isDone(t, dk))
+  .reduce((a,t) => a + (t.energy || 0), 0);
+
+function EnergyPill({total, base, small}){
+  const st = energyState(total, base);
+  return (
+    <span className={'energy ' + st + (small ? ' sm' : '')}
+      title={`${total} of ${base} energy used today`}>
+      <Battery fill={base ? Math.max(0, Math.min(1, total/base)) : 0} />
+      {total}<i>/{base}</i>
+    </span>
+  );
+}
+
+function Battery({fill = 0, size = 14}){
+  const w = Math.round(11 * Math.max(0, Math.min(1, fill)));
+  return (
+    <svg width={size + 4} height={size} viewBox="0 0 18 14" aria-hidden="true" className="batt">
+      <rect x="0.6" y="0.6" width="14.8" height="12.8" rx="3" fill="none" stroke="currentColor" strokeWidth="1.2"/>
+      <rect x="16" y="4.5" width="2" height="5" rx="1" fill="currentColor"/>
+      {w > 0 && <rect x="2" y="2" width={w} height="10" rx="1.5" fill="currentColor"/>}
+    </svg>
+  );
+}
+
 const REPEATS = [
   ['none','Does not repeat'], ['daily','Every day'], ['weekdays','Every weekday'],
   ['weekly','Every week'], ['monthly','Every month'],
@@ -1041,7 +1109,7 @@ const Check = ({on, onClick}) => (
 );
 
 /* ============ ORGANIZE IT — daily ============ */
-function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
+function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, energyBase}){
   const dk = iso(date);
   const dayTasks = tasks.filter(t => t.scope === 'daily' && occursOn(t, dk));
   const tray = dayTasks.filter(t => !t.start);
@@ -1230,11 +1298,18 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
       clusterEnd = Math.max(clusterEnd, it.e);
     });
     flush();
-    return out;
-  }, [scheduled, startM]);
 
-  const hours = [];
-  for(let m = startM; m < endM; m += 60) hours.push(m);
+    // A one-minute block would be a single pixel, so short blocks are drawn
+    // taller — but never so tall that they cover the next block in their lane.
+    return out.map(it => {
+      const nextInLane = out
+        .filter(o => o.lane === it.lane && o.s >= it.e)
+        .reduce((best, o) => (best === null || o.s < best) ? o.s : best, null);
+      const room = nextInLane === null ? Infinity : (nextInLane - it.s)/60*ROW - 2;
+      const natural = (it.e - it.s)/60*ROW - 2;
+      return {...it, h: Math.max(6, Math.min(Math.max(natural, 20), room))};
+    });
+  }, [scheduled, startM]);
 
   // The earliest slot that doesn't collide with anything, looking from the end
   // of the first thing on the day. School 8–4 means the next block lands at 4.
@@ -1259,6 +1334,9 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
     setEditing({id:null, title:'', start:wire(s0), end:wire(Math.min(endM, s0 + 60)), date:dk});
   };
 
+  const hours = [];
+  for(let m = startM; m < endM; m += 60) hours.push(m);
+
   // shaded strips for the minutes before waking and after sleeping
   const preTop = (wakeM - startM)/60*ROW;
   const postTop = (sleepM - startM)/60*ROW;
@@ -1268,6 +1346,7 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
       <div className="spread dayhead">
         <DateNav label={fmtDay(date)} onPrev={() => setDate(addDays(date,-1))} onNext={() => setDate(addDays(date,1))} onToday={() => setDate(new Date())} />
         <div className="row" style={{gap:8}}>
+          <EnergyPill total={dayEnergy(tasks, dk)} base={energyBase} />
           <button className="btn" onClick={() => setDayEdit(true)} title="Change your wake and sleep times">
             ☀️ {pretty(day.wake)} → 🌙 {pretty(day.sleep)}
           </button>
@@ -1287,8 +1366,12 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
                 <div className="hourrow" key={m}>
                   <div className="h mono">{pretty(wire(m))}</div>
                   <div className="slot" onDoubleClick={e => {
-                    const s = yToMin(e.clientY);
-                    setEditing({id:null, title:'', start:wire(s), end:wire(Math.min(endM, s+60)), date:dk});
+                    const clicked = yToMin(e.clientY);
+                    // If something is already scheduled earlier in the day, start
+                    // at the first gap instead of leaving an accidental hole.
+                    const hasEarlier = scheduled.some(t => norm(toMin(t.start)) < clicked);
+                    const s0 = hasEarlier ? firstFree(60) : clicked;
+                    setEditing({id:null, title:'', start:wire(s0), end:wire(Math.min(endM, s0+60)), date:dk});
                   }} />
                 </div>
               ))}
@@ -1301,7 +1384,7 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
                   return (
                     <div key={t.id}
                       className={'block' + (drag && drag.id === t.id ? ' dragging' : '') + (isDone(t, dk) ? ' done' : '')}
-                      style={{top:(t.s - startM)/60*ROW + 1, height:Math.max(20, (t.e - t.s)/60*ROW - 2),
+                      style={{top:(t.s - startM)/60*ROW + 1, height:t.h,
                               left:`calc(${t.lane*w}% + 6px)`, width:`calc(${w}% - 12px)`,
                               ...(blockHex(t.color) ? {
                                 background: hexRgba(blockHex(t.color), .17),
@@ -1314,6 +1397,8 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay}){
                         {pretty(t.start)} – {pretty(t.end)}
                         {t.onWeek && <span className="onweek" title="Shown on the weekly calendar">W</span>}
                         {isRepeat(t) && <span className="onweek" title={repeatLabel(t.repeat)}>↻</span>}
+                        {t.energy ? <span className="onweek" title={`${energyLabel(t.energy)} energy`}>
+                          {t.energy < 0 ? '🛋️' : '⚡'.repeat(t.energy)}</span> : null}
                       </div>
                     </div>
                   );
@@ -1422,7 +1507,7 @@ function DayEditor({day, onClose, onSave, first}){
 function BlockEditor({block, day, onClose, onSave, onDelete}){
   const [f, setF] = useState({title:block.title||'', start:block.start||day.wake,
     end:block.end||day.sleep, date:block.date, color:block.color || null,
-    onWeek: !!block.onWeek, repeat: block.repeat || 'none'});
+    onWeek: !!block.onWeek, repeat: block.repeat || 'none', energy: block.energy || 0});
   const [err, setErr] = useState('');
   const set = (k,v) => setF(p => ({...p,[k]:v}));
   const durOf = p => (((toMin(p.end) - toMin(p.start)) % 1440) + 1440) % 1440 || 60;
@@ -1450,6 +1535,16 @@ function BlockEditor({block, day, onClose, onSave, onDelete}){
         <Field label="Starts"><input type="time" value={f.start} onChange={e => setStart(e.target.value)} /></Field>
         <Field label="Ends"><input type="time" value={f.end} onChange={e => set('end', e.target.value)} /></Field>
       </div>
+      <div className="field">
+        <span>How much energy will it take?</span>
+        <div className="row" style={{gap:7, flexWrap:'wrap'}}>
+          {ENERGY.map(([v,l,g]) => (
+            <button key={v} className={'chip' + ((f.energy || 0) === v ? ' on' : '')}
+              onClick={() => set('energy', v)}>{g} {l}</button>
+          ))}
+        </div>
+      </div>
+
       <div className="field">
         <span className="spread">How long<span className="counter">{durOf(f)} min</span></span>
         <div className="row" style={{gap:7, flexWrap:'wrap'}}>
@@ -1500,7 +1595,7 @@ function BlockEditor({block, day, onClose, onSave, onDelete}){
 }
 
 /* ============ ORGANIZE IT — weekly ============ */
-function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEvent, setDaily, update, remove, day, toast}){
+function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEvent, setDaily, update, remove, day, toast, energyBase}){
   const s = startOfWeek(date);
   const days = Array.from({length:7}, (_,i) => addDays(s,i));
   const wk = weekKey(date);
@@ -1618,7 +1713,12 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
           return (
             <div key={dk} data-day={dk}
               className={'daycol' + (sameDay(d, new Date()) ? ' is-today' : '') + (overDay === dk ? ' dropping' : '')}>
-              <h4>{DOW[d.getDay()]}<small>{MON[d.getMonth()].slice(0,3)} {d.getDate()}</small></h4>
+              <h4>
+                <span className="spread">
+                  <span>{DOW[d.getDay()]}<small>{MON[d.getMonth()].slice(0,3)} {d.getDate()}</small></span>
+                  <EnergyPill small total={dayEnergy(tasks, dk)} base={energyBase} />
+                </span>
+              </h4>
               <div className="inner">
                 <div className="daypills">
                 {evs.map(e => (
@@ -1731,7 +1831,7 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
 }
 
 /* ============ ORGANIZE IT — monthly ============ */
-function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, setDaily, toast, tasks, update, remove}){
+function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, setDaily, toast, tasks, update, remove, energyBase}){
   const first = new Date(date.getFullYear(), date.getMonth(), 1);
   const gridStart = startOfWeek(first);
   const cells = Array.from({length:42}, (_,i) => addDays(gridStart,i));
@@ -1832,7 +1932,15 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
               className={'cell' + (d.getMonth() !== date.getMonth() ? ' out' : '')
                 + (sameDay(d,new Date()) ? ' today' : '') + (overDay === dk ? ' dropping' : '')}
               onClick={() => { if(!moved.current) setOpen(dk); }}>
-              <div className="dnum">{d.getDate()}</div>
+              <div className="spread">
+                <span className="dnum">{d.getDate()}</span>
+                {(() => {
+                  const e = dayEnergy(tasks || [], dk);
+                  return e ? <span className={'cellbatt ' + energyState(e, energyBase)} title={`${e} of ${energyBase} energy`}>
+                    <Battery fill={energyBase ? e/energyBase : 0} size={12} />
+                  </span> : null;
+                })()}
+              </div>
               {list.slice(0,3).map(e => (
                 <div className="ev draggable" key={e.id} onPointerDown={ev2 => grabEvent(ev2, e)}
                   title="Drag to another day">
@@ -1945,7 +2053,7 @@ function EventEditor({ev, onClose, onSave, onDelete}){
 }
 
 /* ============ LIST IT ============ */
-function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day}){
+function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, carryOver, setCarryOver}){
   const [text, setText] = useState('');
   const anchor = sub === 'daily' ? iso(date) : sub === 'weekly' ? weekKey(date) : monthKey(date);
   // Scheduled things read in the order the day happens; anything without a
@@ -4417,6 +4525,38 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
         </>
       )}
 
+      {sub === 'account' && (
+        <Section title="Streak" hint="Days in a row you've opened PlanIt.">
+          <div className="card row" style={{gap:16}}>
+            <div className="streakbig">🔥</div>
+            <div style={{flex:1, minWidth:0}}>
+              <b className="mono" style={{fontSize:26}}>{user.streak || 0}</b>
+              <div style={{fontSize:12.5, color:'var(--ink35)'}}>
+                current streak{user.bestStreak ? ` · best ${user.bestStreak}` : ''}
+              </div>
+            </div>
+          </div>
+        </Section>
+      )}
+
+      {sub === 'account' && (
+        <Section title="Energy" hint="How much you reckon you have in a normal day.">
+          <div className="card">
+            <div className="spread" style={{marginBottom:12}}>
+              <span style={{fontSize:13.5}}>Your daily baseline</span>
+              <b className="mono" style={{fontSize:20}}>{settings.energyBase || DEFAULT_BASE}</b>
+            </div>
+            <input type="range" min="3" max="40" value={settings.energyBase || DEFAULT_BASE}
+              onChange={e => setSettings({...settings, energyBase:+e.target.value})}
+              style={{width:'100%', padding:0}} />
+            <div style={{fontSize:12.5, color:'var(--ink35)', marginTop:10, lineHeight:1.55}}>
+              Tasks cost between −1 and 3. Your day turns orange within 5 of this number and red past that,
+              which is the signal you've planned more than you can carry.
+            </div>
+          </div>
+        </Section>
+      )}
+
       {sub === 'account' && <SignupSources user={user} />}
       {sub === 'account' && user.role !== 'parent' && <Referrals user={user} toast={toast} />}
 
@@ -4425,14 +4565,14 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
           <div className="card">
             <div className="spread">
               <div style={{fontSize:13.5}}>
-                {sync.state === 'ok' ? <><b style={{color:'#0F9E68'}}>Uploaded</b>
+                {sync.state === 'ok' ? <><b style={{color:'#0F9E68'}}>Synced automatically</b>
                     <div style={{color:'var(--ink35)',fontSize:12}}>
                       {new Date(sync.at).toLocaleTimeString()}</div></>
                  : sync.state === 'saving' ? 'Uploading…'
                  : sync.state === 'err' ? <span style={{color:'#B92A61'}}>{sync.msg}</span>
-                 : 'Nothing uploaded yet this session.'}
+                 : 'Syncs on its own a moment after any change.'}
               </div>
-              <button className="btn" onClick={onSyncNow}>Sync now</button>
+              <button className="btn sm" onClick={onSyncNow}>Sync now</button>
             </div>
           </div>
         </Section>
@@ -4941,6 +5081,94 @@ function NewsPanel({onClose, readIds, markRead, requests = [], onDecide, report,
   );
 }
 
+/* ============ TUTORIAL ============ */
+// Shown once, right after an account is made. Never again — it is flagged on
+// the profile rather than in this browser, so it doesn't reappear elsewhere.
+function Tutorial({user, energyBase, setEnergyBase, onDone}){
+  const [i, setI] = useState(0);
+  const [base, setBase] = useState(energyBase || DEFAULT_BASE);
+  const [busy, setBusy] = useState(false);
+
+  const steps = [
+    {emoji:'👋', title:`Welcome, ${user.username}`, color:'var(--org)',
+     body:"PlanIt is four things that feed each other: a list, a calendar, a record of what you've done, and a way to actually focus. Two minutes and you'll know where everything lives."},
+
+    {emoji:'📓', title:'List It — get it out of your head', color:'var(--list)',
+     body:"Write down everything you owe, without worrying when you'll do it. Daily for today, Weekly and Monthly for the bigger goals. Nothing here needs a time yet."},
+
+    {emoji:'📅', title:'Organize It — decide when', color:'var(--org)',
+     body:"Your daily list appears beside the schedule. Drag an item onto the grid and it has a time; drag it back to take the time off. The same task, two views — never typed twice."},
+
+    {emoji:'🗓️', title:'The week and the month', color:'var(--org)',
+     body:"Weekly shows what you put on each day plus your week goals. Monthly is for tests, deadlines and birthdays. Drag anything between days to move it."},
+
+    {emoji:'⚡', title:'Energy — the honest part', color:'var(--brag)', energy:true,
+     body:"Every task costs energy: relax (−1), none, low, medium or high. Your day adds it up. Set what a normal day holds for you and PlanIt warns you when you've planned more than that — orange as you approach it, red past it."},
+
+    {emoji:'☀️', title:'Your day has its own hours', color:'var(--org)',
+     body:"The schedule runs from when you wake to when you sleep, not a fixed 6am–11pm. You set those two times and the grid is built between them — past midnight if that's when you sleep."},
+
+    {emoji:'🏆', title:'Brag It — write it down now', color:'var(--brag)',
+     body:"Activities, honors and certifications, in the fields the Common App asks for. Log things the week they happen; reconstructing dates and hours two years later is miserable. Export it as a résumé any time."},
+
+    {emoji:'🔒', title:'Lock It — focus, together', color:'var(--lock)',
+     body:"A timer or a full pomodoro run, with beeps counting down the last five seconds. Share a room code and up to nine of you focus in the same room, cameras optional. Reports show where your time went and who you studied with."},
+
+    {emoji:'⚙️', title:'Settings — make it yours', color:'var(--set)',
+     body:"Your account, your energy baseline, notifications, and where to report a bug when something breaks. There's a bug report form in there — please use it, it goes straight to us."},
+  ];
+
+  const step = steps[i];
+  const last = i === steps.length - 1;
+
+  const finish = async () => {
+    setBusy(true);
+    setEnergyBase(base);
+    try{ await saveProfile(user.id, {tutorialDone:true}); }catch(e){}
+    onDone();
+  };
+
+  return (
+    <div className="tutwrap">
+      <div className="tutcard" style={{'--step':step.color}}>
+        <div className="tutdots">
+          {steps.map((_,n) => <i key={n} className={n === i ? 'on' : n < i ? 'done' : ''} />)}
+        </div>
+
+        <div className="tutemoji">{step.emoji}</div>
+        <h2>{step.title}</h2>
+        <p>{step.body}</p>
+
+        {step.energy && (
+          <div className="card" style={{textAlign:'left', marginTop:4}}>
+            <div className="spread" style={{marginBottom:10}}>
+              <span style={{fontSize:13.5, fontWeight:600}}>A normal day holds about</span>
+              <b className="mono" style={{fontSize:22}}>{base}</b>
+            </div>
+            <input type="range" min="3" max="40" value={base}
+              onChange={e => setBase(+e.target.value)} style={{width:'100%', padding:0}} />
+            <div style={{fontSize:12, color:'var(--ink35)', marginTop:8, lineHeight:1.5}}>
+              Roughly 10 suits most school days — say four medium tasks and a couple of small ones.
+              You can change it whenever in Settings.
+            </div>
+          </div>
+        )}
+
+        <div className="tutbtns">
+          {i > 0 && <button className="btn" onClick={() => setI(i-1)}>Back</button>}
+          {last
+            ? <button className="btn primary" disabled={busy} onClick={finish}>
+                {busy ? 'Setting up…' : 'Start planning'}
+              </button>
+            : <button className="btn primary" onClick={() => setI(i+1)}>Next</button>}
+        </div>
+
+        {!last && <button className="tutskip" onClick={finish}>Skip the tour</button>}
+      </div>
+    </div>
+  );
+}
+
 /* ============ APP ============ */
 const TABS = [
   {id:'brag',     emoji:'🏆', label:'Brag It',    sub:'Extracurriculars', color:'var(--brag)',
@@ -4968,8 +5196,21 @@ const BASE_ACCENTS = {brag:'#E09A12', list:'#0F9E68', organize:'#5350E8', lock:'
 function App({user, onSignOut}){
   const [ready, setReady] = useState(false);
   const isParent = user.role === 'parent';
+
+  // Counts days in a row with at least one visit. A gap resets it to 1.
+  const [streak, setStreak] = useState(user.streak || 0);
+  useEffect(() => {
+    const today = iso(new Date());
+    if(user.lastSeen === today){ setStreak(user.streak || 1); return; }
+    const yesterday = iso(addDays(new Date(), -1));
+    const next = user.lastSeen === yesterday ? (user.streak || 0) + 1 : 1;
+    const best = Math.max(next, user.bestStreak || 0);
+    setStreak(next);
+    saveProfile(user.id, {streak:next, bestStreak:best, lastSeen:today}).catch(() => {});
+  }, [user.id, user.lastSeen, user.streak, user.bestStreak]);
   const [sync, setSync] = useState({state:'idle'});
   const [newsOpen, setNewsOpen] = useState(false);
+  const [tourDone, setTourDone] = useState(!!user.tutorialDone);
   const [tab, setTab] = useState('organize');
   const [sub, setSub] = useState({brag:'honor', list:'daily', organize:'daily', lock:'focus', settings:'account', watch:'children'});
   const [date, setDate] = useState(new Date());
@@ -5037,6 +5278,11 @@ function App({user, onSignOut}){
   const [cycle, setCycle] = useState(1);
 
   const lastPush = useRef(0);
+  // Housekeeping (the midnight rollover, week/month bookkeeping) changes the
+  // store on its own. If an idle second browser pushed those, it would upload
+  // its stale copy and undo edits made elsewhere. Only real edits push.
+  const dirty = useRef(false);
+  const touch = fn => (...args) => { dirty.current = true; return fn(...args); };
   useEffect(() => { (async () => {
     const [local, remote] = await Promise.all([loadStore(user.id), fetchPlanner(user.id)]);
     // Whichever copy was written last wins, so opening on a second device
@@ -5045,6 +5291,10 @@ function App({user, onSignOut}){
     setStore(useRemote ? remote.data : (local || seed()));
     lastPush.current = useRemote ? remote.at : ((local && local.at) || 0);
     setReady(true);
+    // local was ahead of the server — publish it so other devices catch up
+    if(local && !useRemote && (local.at || 0) > 0) dirty.current = true;
+    // make sure a linked parent always has a copy, even on a quiet day
+    if(!remote) dirty.current = true;
   })(); }, [user.id]);
 
   const firstSave = useRef(true);
@@ -5053,9 +5303,10 @@ function App({user, onSignOut}){
     if(firstSave.current){ firstSave.current = false; }
     const t = setTimeout(() => {
       const stamped = {...store, at: Date.now()};
+      saveStore(user.id, stamped);          // the local copy always keeps up
+      if(isParent || !dirty.current) return;
+      dirty.current = false;
       lastPush.current = stamped.at;
-      saveStore(user.id, stamped);
-      if(isParent) return;
       setSync(s0 => ({...s0, state:'saving'}));
       pushPlanner(user.id, stamped)
         .then(() => setSync({state:'ok', at:Date.now()}))
@@ -5113,13 +5364,15 @@ function App({user, onSignOut}){
   // even if a control slips through the interface.
   const guard = fn => (...args) => {
     if(isParent){ toast('Parent accounts can look, but not edit'); return; }
+    dirty.current = true;
     fn(...args);
   };
 
   const settings = store.settings || DEFAULT_SETTINGS;
-  const setSettings = next => setStore(s => ({...s, settings:next}));
+  const setSettings = next => { dirty.current = true; setStore(s => ({...s, settings:next})); };
 
   const readNews = settings.readNews || [];
+  const energyBase = (store.settings && store.settings.energyBase) || DEFAULT_BASE;
   const report = useMemo(() => buildReport(store.lock), [store.lock]);
   const thisWeek = weekKey(new Date());
   // Out on Saturday, the day before everything rolls over.
@@ -5141,6 +5394,7 @@ function App({user, onSignOut}){
   const resetPlanner = async () => {
     if(!window.confirm('Delete every task, calendar entry, and activity in this planner? This cannot be undone.')) return;
     const fresh = seed();
+    dirty.current = true;
     setStore(fresh);
     await saveStore(user.id, fresh);
     await DB.del('planit:data:v1');   // don't let the old sample data come back
@@ -5151,6 +5405,7 @@ function App({user, onSignOut}){
   // Seconds are banked so short stretches aren't rounded away to nothing.
   const creditElapsed = useCallback(() => {
     if(!runFrom.current) return 0;
+    dirty.current = true;
     const secs = Math.max(0, Math.round((Date.now() - runFrom.current)/1000));
     runFrom.current = null;
     if(secs > 0) setStore(s => {
@@ -5248,7 +5503,8 @@ function App({user, onSignOut}){
             play('workEnd');
             lastBeep.current = null;
             creditElapsed();
-            setStore(s => ({...s, lock:{...s.lock, sessions:s.lock.sessions+1}}));
+            dirty.current = true;
+        setStore(s => ({...s, lock:{...s.lock, sessions:s.lock.sessions+1}}));
             if(cycle < pomo.cycles){
               toast(`Cycle ${cycle} of ${pomo.cycles} done — break time.`);
               beginPhase('break', cycle);
@@ -5404,11 +5660,38 @@ function App({user, onSignOut}){
         });
         changed = true;
       });
+      if(changed) dirty.current = true;
       return changed ? {...s0, lock:{...lk, partners, partnersMonth, partnersAll}} : s0;
     });
     const i = setInterval(tick, 60000);
     return () => clearInterval(i);
   }, [isParent, room, running, user.id]);
+
+  // Anything from a past day that never got done follows you to today, if the
+  // toggle in List It is on. Repeating tasks are left alone — they come back
+  // on their own schedule.
+  useEffect(() => {
+    if(!ready || isParent) return;
+    const carry = () => {
+      if(!(store.settings || DEFAULT_SETTINGS).carryOver) return;
+      const today = iso(new Date());
+      setStore(s0 => {
+        let moved = 0;
+        const tasks = s0.tasks.map(t => {
+          if(t.scope !== 'daily' || isRepeat(t)) return t;
+          if(!t.date || t.date >= today || t.done) return t;
+          moved++;
+          return {...t, date: today};
+        });
+        if(!moved) return s0;
+        dirty.current = true;
+        return {...s0, tasks};
+      });
+    };
+    carry();
+    const i = setInterval(carry, 60000);
+    return () => clearInterval(i);
+  }, [ready, isParent, store.settings]);
 
   // Focus stats are a daily figure and the report is a weekly one, so two
   // things roll over here: the day counters at midnight, and the study-partner
@@ -5486,11 +5769,31 @@ function App({user, onSignOut}){
     return watchPlanner(user.id, res => {
       if(!res || !res.data || res.error || res.empty) return;
       if((res.at || 0) <= lastPush.current + 1500) return;   // our own write echoing back
+      if(dirty.current) return;                              // we have edits not sent yet
       lastPush.current = res.at;
       setStore(res.data);
       toast('Updated from another device');
     });
   }, [ready, isParent, user.id, toast]);
+
+  // Coming back to a tab that slept: make sure we are not showing a stale copy.
+  useEffect(() => {
+    if(!ready || isParent) return;
+    const recheck = async () => {
+      if(document.hidden || dirty.current) return;
+      const remote = await fetchPlanner(user.id);
+      if(remote && (remote.at || 0) > lastPush.current + 1500){
+        lastPush.current = remote.at;
+        setStore(remote.data);
+      }
+    };
+    document.addEventListener('visibilitychange', recheck);
+    window.addEventListener('focus', recheck);
+    return () => {
+      document.removeEventListener('visibilitychange', recheck);
+      window.removeEventListener('focus', recheck);
+    };
+  }, [ready, isParent, user.id]);
 
   // A small live status beside the planner: in a room, focusing, or neither.
   useEffect(() => {
@@ -5590,7 +5893,9 @@ function App({user, onSignOut}){
             <Initial name={user.username || user.email} size={34} className="railav" />
             <div className="who">
               <b>{user.username}</b>
-              <small>{user.provider === 'google' ? 'Google account' : user.email}</small>
+              <small className="streak" title={`${streak} days in a row`}>
+                🔥 {streak} day{streak === 1 ? '' : 's'}
+              </small>
             </div>
             <button className="iconbtn" onClick={onSignOut} title="Sign out" aria-label="Sign out"><IconOut /></button>
           </div>
@@ -5651,18 +5956,21 @@ function App({user, onSignOut}){
         <div className="pane-body">
           {tab === 'organize' && sub.organize === 'daily' &&
             <Daily date={date} setDate={setDate} tasks={view.tasks} add={addTask} update={updateTask} remove={removeTask} toast={toast}
-              day={view.day || user.day || DEFAULT_DAY} setDay={d => setStore(s => ({...s, day:d}))} />}
+              day={view.day || user.day || DEFAULT_DAY} energyBase={energyBase}
+              setDay={d => { dirty.current = true; setStore(s => ({...s, day:d})); }} />}
           {tab === 'organize' && sub.organize === 'weekly' &&
             <Weekly date={date} setDate={setDate} tasks={view.tasks} events={view.events} addEvent={addEvent}
               updateEvent={updateEvent} removeEvent={removeEvent} setDaily={goDaily} update={updateTask}
-              remove={removeTask} day={view.day || user.day || DEFAULT_DAY} toast={toast} />}
+              remove={removeTask} day={view.day || user.day || DEFAULT_DAY} toast={toast} energyBase={energyBase} />}
           {tab === 'organize' && sub.organize === 'monthly' &&
             <Monthly date={date} setDate={setDate} events={view.events} addEvent={addEvent} updateEvent={updateEvent}
               removeEvent={removeEvent} setDaily={goDaily} toast={toast} tasks={view.tasks}
-              update={updateTask} remove={removeTask} />}
+              update={updateTask} remove={removeTask} energyBase={energyBase} />}
 
           {tab === 'list' &&
             <ListIt sub={sub.list} date={date} setDate={setDate} tasks={view.tasks} add={addTask} update={updateTask} remove={removeTask}
+              carryOver={(store.settings || DEFAULT_SETTINGS).carryOver !== false && !!(store.settings || DEFAULT_SETTINGS).carryOver}
+              setCarryOver={v => setSettings({...(store.settings || DEFAULT_SETTINGS), carryOver:v})}
               day={view.day || user.day || DEFAULT_DAY}
               setTab={t => { setTab(t); setSub(p => ({...p, organize:'daily'})); }} />}
 
@@ -5753,6 +6061,12 @@ function App({user, onSignOut}){
       {!store.day && !user.day && (
         <DayEditor first day={DEFAULT_DAY} onClose={() => setStore(s => ({...s, day:DEFAULT_DAY}))}
           onSave={d => setStore(s => ({...s, day:d}))} />
+      )}
+
+      {!tourDone && ready && (
+        <Tutorial user={user} energyBase={energyBase}
+          setEnergyBase={v => setSettings({...(store.settings || DEFAULT_SETTINGS), energyBase:v})}
+          onDone={() => setTourDone(true)} />
       )}
 
       {newsOpen && <NewsPanel onClose={() => setNewsOpen(false)} readIds={readNews} markRead={markNewsRead}
