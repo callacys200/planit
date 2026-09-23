@@ -176,6 +176,11 @@
   .block .bt{font-weight:600;font-size:13px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .block .bm{font-size:10.5px;color:var(--ink60);margin-top:1px}
   .block.done .bt{text-decoration:line-through;opacity:.55}
+  .daypicks{display:flex;gap:7px}
+  .daypick{width:36px;height:36px;border-radius:99px;border:1.5px solid var(--line);background:var(--card);
+    font-weight:700;font-size:13px;color:var(--ink60);padding:0;transition:.14s}
+  .daypick:hover{border-color:var(--accent)}
+  .daypick.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink,#fff)}
   .blockcolors{display:flex;gap:7px;flex-wrap:wrap}
   .bc{width:28px;height:28px;border-radius:99px;border:2px solid transparent;padding:0;cursor:pointer;
     box-shadow:0 0 0 1px var(--line) inset;transition:.14s}
@@ -303,6 +308,8 @@
   .energy.near{background:#FDF3E6;color:#9A6212;border-color:#F0DEB0}
   .energy.over{background:#FFF1F5;color:#B92A61;border-color:#F3CEDA}
   .batt{flex:none}
+  .echip{display:inline-flex;align-items:center;gap:5px}
+  .blockenergy{display:inline-flex;align-items:center;gap:3px;margin-left:7px;font-weight:600;vertical-align:-3px}
   .cellbatt.low{color:#0F9E68} .cellbatt.near{color:#D98A16} .cellbatt.over{color:#E03F7C}
   .daycol h4 .spread{align-items:center;gap:6px}
   .metatag{font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:99px;
@@ -356,6 +363,22 @@
   .shieldinner{margin:auto;display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:620px}
   .shield .big{font-family:"IBM Plex Mono",monospace;font-size:min(19vw,120px);font-weight:500;letter-spacing:-.04em;line-height:1}
   .shield .sub{color:var(--shield-dim,#D6C7E6);max-width:420px;font-size:14px}
+  .listtoggle{position:fixed;top:18px;right:18px;border:1px solid rgba(255,255,255,.25);
+    background:rgba(255,255,255,.1);color:#fff;border-radius:99px;padding:8px 15px;font-weight:600;font-size:13px}
+  .listtoggle:hover{background:rgba(255,255,255,.18)}
+  .shieldlist{position:fixed;top:64px;right:18px;bottom:18px;width:min(320px,calc(100vw - 36px));
+    background:rgba(18,12,30,.86);border:1px solid rgba(255,255,255,.14);border-radius:16px;
+    padding:16px;overflow:auto;text-align:left;z-index:2}
+  .shieldlist b{font-size:15px}
+  .shieldnote{color:rgba(255,255,255,.55);font-size:12px;margin:0 0 12px}
+  .slrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+  .slrow:last-child{border-bottom:0}
+  .sltitle{flex:1;min-width:0;font-size:13.5px;word-break:break-word}
+  .sltime{font-size:11px;color:rgba(255,255,255,.5)}
+  .slrow.done .sltitle{text-decoration:line-through;opacity:.5}
+  .shieldlist .check{background:transparent;border-color:rgba(255,255,255,.4)}
+  .freezes{text-align:center;font-size:18px;line-height:1.2;flex:none}
+  .freezes small{display:block;font-size:11px;color:var(--ink35);font-family:"IBM Plex Mono",monospace}
   .shieldbtns{display:grid;grid-auto-flow:column;grid-auto-columns:max-content;gap:10px;justify-content:center;margin-top:18px}
   .shield .btn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.24);color:#fff}
   @media (max-width:560px){ .shieldbtns{grid-auto-flow:row} .shieldbtns .btn{width:100%;justify-content:center} }
@@ -369,10 +392,22 @@
   .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:11px;font-size:13.5px;z-index:95;box-shadow:0 14px 30px -10px rgba(20,23,42,.6);animation:pop .2s}
 
   /* ---------- auth ---------- */
-  .tutwrap{position:fixed;inset:0;z-index:8000;background:rgba(20,23,42,.55);display:grid;
-    place-items:center;padding:20px;animation:fade .2s ease}
-  .tutcard{background:var(--card);border-radius:20px;width:min(480px,100%);max-height:88vh;overflow:auto;
-    padding:28px 26px 22px;text-align:center;box-shadow:0 30px 70px -20px rgba(20,23,42,.5)}
+  .tutlayer{position:fixed;inset:0;z-index:8000;pointer-events:none}
+  .tutdim{position:absolute;inset:0;background:rgba(20,23,42,.62);pointer-events:auto}
+  .tutspot{position:absolute;border-radius:14px;pointer-events:none;transition:all .3s cubic-bezier(.3,.8,.3,1);
+    box-shadow:0 0 0 9999px rgba(20,23,42,.62), 0 0 0 3px #fff, 0 0 26px 6px rgba(255,255,255,.45)}
+  .tutcard{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:auto;
+    background:var(--card);border-radius:20px;width:min(440px,calc(100vw - 32px));max-height:80vh;overflow:auto;
+    padding:24px 24px 20px;text-align:center;box-shadow:0 30px 70px -20px rgba(20,23,42,.55);transition:all .3s}
+  .tutcard.bottom{top:auto;bottom:22px;transform:translateX(-50%)}
+  .tutcard.top{top:22px;transform:translateX(-50%)}
+  .eslider{position:relative;padding:6px 0 24px}
+  .eslider input{position:relative;width:100%;padding:0;z-index:1;background:transparent}
+  .eband{position:absolute;top:6px;height:18px;border-radius:6px;background:rgba(130,90,230,.28);
+    border:1.5px solid rgba(130,90,230,.6)}
+  .escale{position:relative;display:flex;justify-content:space-between;font-size:10.5px;
+    color:var(--ink35);font-family:"IBM Plex Mono",monospace;margin-top:4px}
+  .erec{position:absolute;transform:translateX(-50%);color:#7A4FE0;font-weight:600;white-space:nowrap}
   .tutdots{display:flex;gap:5px;justify-content:center;margin-bottom:20px}
   .tutdots i{width:7px;height:7px;border-radius:99px;background:var(--line);display:block;transition:.2s}
   .tutdots i.done{background:var(--step);opacity:.4}
@@ -551,7 +586,7 @@
   .chartrow{display:flex;align-items:flex-end;gap:10px;height:150px}
   .chartrow.dense{gap:3px}
   .chartrow.dense .chartbar{grid-template-rows:0 1fr 16px}
-  .chartrow.dense .chartbar span{font-size:9px}
+  .chartrow.dense .chartbar span{font-size:9px;white-space:nowrap;overflow:visible}
   .chartbar{display:grid;grid-template-rows:16px 1fr 18px;align-items:end;justify-items:center;
     gap:5px;flex:1;height:100%}
   .chartbar.today i{opacity:1;box-shadow:0 0 0 3px var(--accent-soft)}
@@ -883,20 +918,52 @@ const BLOCK_COLORS = [
 ];
 const blockHex = id => (BLOCK_COLORS.find(c => c.id === id) || {}).hex;
 
-// Energy costs. 0 is the default so a task you never think about costs nothing.
-const ENERGY = [
-  [-1,'Relax','🛋️'], [0,'None','–'], [1,'Low','▁'], [2,'Medium','▄'], [3,'High','█'],
-];
+// Energy levels. 0 is the default so a task you never think about costs nothing.
+const ENERGY = [[-1,'Relax'], [0,'None'], [1,'Low'], [2,'Medium'], [3,'High']];
+
+function LotusIcon({size = 15}){
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{flex:'none'}}>
+      <path d="M12 3.5c2.1 2.6 2.7 5.2 2.7 7.9S13.6 17 12 18c-1.6-1-2.7-3.6-2.7-6.6S9.9 6.1 12 3.5z" fill="#E4679A"/>
+      <path d="M3.6 8.8c3.1.5 5.3 2.6 6.3 5.7.6 1.9.5 3.4.2 4-2.9-.3-5.7-2.9-6.3-6-.2-1.3-.2-2.6-.2-3.7z" fill="#F4A3C4"/>
+      <path d="M20.4 8.8c-3.1.5-5.3 2.6-6.3 5.7-.6 1.9-.5 3.4-.2 4 2.9-.3 5.7-2.9 6.3-6 .2-1.3.2-2.6.2-3.7z" fill="#F4A3C4"/>
+      <path d="M4.5 19.6c2.3 1 4.8 1.6 7.5 1.6s5.2-.6 7.5-1.6" stroke="#E4679A" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+// One flame, growing with the level rather than repeating.
+function FireIcon({level = 1}){
+  const size = [0, 12, 15, 19][Math.max(1, Math.min(3, level))];
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{flex:'none'}}>
+      <path d="M12 1.5c1.1 3.7 4.8 5.8 4.8 10.6a4.8 4.8 0 0 1-9.6 0c0-2.1 1-3.7 2.1-4.8 0 2.1 1.1 3.2 2.1 3.7C11 8.2 11.5 4.7 12 1.5z" fill="#E23B28"/>
+      <path d="M12 11.6c.7 1.7 2.1 2.5 2.1 4.3a2.1 2.1 0 0 1-4.2 0c0-1.3.7-2 1.3-2.6.1 1 .5 1.4.8 1.6-.1-1.3.1-2.3 0-3.3z" fill="#FFB547"/>
+    </svg>
+  );
+}
+
+const EnergyIcon = ({v}) => v < 0 ? <LotusIcon /> : v > 0 ? <FireIcon level={v} /> : <span style={{opacity:.5}}>–</span>;
+
+// Cost scales with how long the task runs: a high-energy hour costs 3, a
+// high-energy three hours costs 9. Unscheduled tasks count as an hour.
+const taskHours = t => {
+  if(!t.start || !t.end) return 1;
+  return ((((toMin(t.end) - toMin(t.start)) % 1440) + 1440) % 1440) / 60;
+};
+const taskEnergy = t => Math.round((t.energy || 0) * taskHours(t) * 10) / 10;
+const fmtE = n => Number.isInteger(n) ? String(n) : n.toFixed(1);
+
 const energyLabel = v => (ENERGY.find(e => e[0] === (v || 0)) || ENERGY[1])[1];
-const DEFAULT_BASE = 10;
+const DEFAULT_BASE = 27;
 
 // Under budget reads green, near it orange, well over it red.
 const energyState = (total, base) =>
   total < base - 5 ? 'low' : total <= base + 5 ? 'near' : 'over';
 
-const dayEnergy = (tasks, dk) => tasks
+const dayEnergy = (tasks, dk) => Math.round(tasks
   .filter(t => t.scope === 'daily' && occursOn(t, dk) && !isDone(t, dk))
-  .reduce((a,t) => a + (t.energy || 0), 0);
+  .reduce((a,t) => a + taskEnergy(t), 0) * 10) / 10;
 
 function EnergyPill({total, base, small}){
   const st = energyState(total, base);
@@ -904,8 +971,27 @@ function EnergyPill({total, base, small}){
     <span className={'energy ' + st + (small ? ' sm' : '')}
       title={`${total} of ${base} energy used today`}>
       <Battery fill={base ? Math.max(0, Math.min(1, total/base)) : 0} />
-      {total}<i>/{base}</i>
+      {fmtE(total)}<i>/{base}</i>
     </span>
+  );
+}
+
+const ENERGY_MIN = 1, ENERGY_MAX = 50, REC_LO = 25, REC_HI = 30;
+
+function EnergySlider({value, onChange}){
+  const pct = v => (v - ENERGY_MIN) / (ENERGY_MAX - ENERGY_MIN) * 100;
+  return (
+    <div className="eslider">
+      <div className="eband" style={{left:pct(REC_LO) + '%', width:(pct(REC_HI) - pct(REC_LO)) + '%'}}
+        title="What we recommend" />
+      <input type="range" min={ENERGY_MIN} max={ENERGY_MAX} value={value}
+        onChange={e => onChange(+e.target.value)} />
+      <div className="escale">
+        <span>{ENERGY_MIN}</span>
+        <span className="erec" style={{left:pct((REC_LO + REC_HI)/2) + '%'}}>{REC_LO}–{REC_HI} recommended</span>
+        <span>{ENERGY_MAX}</span>
+      </div>
+    </div>
   );
 }
 
@@ -925,24 +1011,59 @@ const REPEATS = [
   ['weekly','Every week'], ['monthly','Every month'],
 ];
 const repeatLabel = r => (REPEATS.find(x => x[0] === r) || REPEATS[0])[1];
+const DAY_LETTERS = ['S','M','T','W','T','F','S'];
+const repeatText = t => {
+  const d = t.repeatDays || [];
+  if(d.length === 7) return 'every day';
+  if(d.length === 5 && [1,2,3,4,5].every(x => d.includes(x))) return 'weekdays';
+  if(d.length) return d.slice().sort().map(x => DOW[x].slice(0,3)).join(', ');
+  return repeatLabel(t.repeat).toLowerCase();
+};
+
+// Changing one occurrence of a repeating task. 'one' splits that day off as its
+// own task, 'future' ends the series the day before and starts a new one, and
+// 'all' edits the series itself.
+function applyRepeatEdit({orig, next, scope, occ, add, update}){
+  if(scope === 'all' || occ === orig.date) {
+    if(scope !== 'one') return update(orig.id, next);
+  }
+  if(scope === 'one'){
+    update(orig.id, {skipDates:[...(orig.skipDates || []), occ]});
+    const {id, ...rest} = next;
+    return add({...rest, date:occ, repeat:'none', repeatDays:[], skipDates:[], doneDates:[], repeatUntil:null});
+  }
+  update(orig.id, {repeatUntil: iso(addDays(parseISO(occ), -1))});
+  const {id, ...rest} = next;
+  add({...rest, date:occ, skipDates:[], doneDates:[]});
+}
+function applyRepeatDelete({orig, scope, occ, update, remove}){
+  if(scope === 'all' || (scope === 'future' && occ === orig.date)) return remove(orig.id);
+  if(scope === 'one') return update(orig.id, {skipDates:[...(orig.skipDates || []), occ]});
+  update(orig.id, {repeatUntil: iso(addDays(parseISO(occ), -1))});
+}
 
 // One stored record, expanded on the fly. Nothing is duplicated in storage, so
 // changing a repeating item changes every future copy of it at once.
 const occursOn = (item, dk) => {
   const base = item.date;
   if(!base) return false;
+  if((item.skipDates || []).includes(dk)) return false;          // removed for just that day
+  const days = item.repeatDays || [];
   const r = item.repeat || 'none';
-  if(r === 'none') return dk === base;
+  if(!days.length && r === 'none') return dk === base;
   if(dk < base) return false;
   if(item.repeatUntil && dk > item.repeatUntil) return false;
-  const b = parseISO(base), d = parseISO(dk);
+  const d = parseISO(dk);
+  if(days.length) return days.includes(d.getDay());
+  // older entries saved before weekday picking existed
+  const b = parseISO(base);
   if(r === 'daily')    return true;
   if(r === 'weekdays') return d.getDay() >= 1 && d.getDay() <= 5;
   if(r === 'weekly')   return d.getDay() === b.getDay();
   if(r === 'monthly')  return d.getDate() === b.getDate();
   return dk === base;
 };
-const isRepeat = item => !!(item.repeat && item.repeat !== 'none');
+const isRepeat = item => !!((item.repeatDays || []).length || (item.repeat && item.repeat !== 'none'));
 
 // A repeating task is ticked off per day, not once for the whole series.
 const isDone = (t, dk) => isRepeat(t) ? (t.doneDates || []).includes(dk) : !!t.done;
@@ -1346,17 +1467,14 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
       <div className="spread dayhead">
         <DateNav label={fmtDay(date)} onPrev={() => setDate(addDays(date,-1))} onNext={() => setDate(addDays(date,1))} onToday={() => setDate(new Date())} />
         <div className="row" style={{gap:8}}>
-          <EnergyPill total={dayEnergy(tasks, dk)} base={energyBase} />
-          <button className="btn" onClick={() => setDayEdit(true)} title="Change your wake and sleep times">
-            ☀️ {pretty(day.wake)} → 🌙 {pretty(day.sleep)}
-          </button>
+          <span data-tour="energy"><EnergyPill total={dayEnergy(tasks, dk)} base={energyBase} /></span>
           <button className="btn primary" onClick={newBlock}>+ New time block</button>
         </div>
       </div>
 
-      <div className="sched-wrap">
+      <div className="sched-wrap" data-tour="schedule">
         <div>
-          <div className="anchor wake" onClick={() => setDayEdit(true)} role="button" tabIndex={0}
+          <div className="anchor wake" data-tour="dayhours" onClick={() => setDayEdit(true)} role="button" tabIndex={0}
             onKeyDown={e => e.key === 'Enter' && setDayEdit(true)}>
             <span>☀️ Wake up</span><span className="mono">{pretty(day.wake)}</span>
           </div>
@@ -1396,9 +1514,9 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
                       <div className="bm mono">
                         {pretty(t.start)} – {pretty(t.end)}
                         {t.onWeek && <span className="onweek" title="Shown on the weekly calendar">W</span>}
-                        {isRepeat(t) && <span className="onweek" title={repeatLabel(t.repeat)}>↻</span>}
-                        {t.energy ? <span className="onweek" title={`${energyLabel(t.energy)} energy`}>
-                          {t.energy < 0 ? '🛋️' : '⚡'.repeat(t.energy)}</span> : null}
+                        {isRepeat(t) && <span className="onweek" title={repeatText(t)}>↻</span>}
+                        {t.energy ? <span className="blockenergy" title={`${energyLabel(t.energy)} energy`}>
+                          {fmtE(taskEnergy(t))} <EnergyIcon v={t.energy} /></span> : null}
                       </div>
                     </div>
                   );
@@ -1447,11 +1565,7 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
             </div>
           )}
 
-          <div className="card soft" style={{marginTop:14,fontSize:12.5,color:'var(--ink60)'}}>
-            New blocks land in the first free slot after your first commitment. Drag a block to move it,
-            double-click one to change its length, double-click empty space to add one at that time.
-            Drag a block back onto this panel to take its time off again. On a phone, press and hold a block first, then drag — a normal swipe scrolls the day.
-          </div>
+
         </div>
       </div>
 
@@ -1460,7 +1574,8 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
       {dayEdit && <DayEditor day={day} onClose={() => setDayEdit(false)}
         onSave={d => { setDay(d); setDayEdit(false); toast('Day updated'); }} />}
 
-      {editing && <BlockEditor block={editing} day={day} onClose={() => setEditing(null)}
+      {editing && <BlockEditor block={editing} day={day} occ={dk} add={add} update={update} remove={remove}
+        onClose={() => setEditing(null)}
         onSave={b => {
           if(b.id) update(b.id, b); else add({...b, scope:'daily', done:false});
           setEditing(null);
@@ -1504,27 +1619,78 @@ function DayEditor({day, onClose, onSave, first}){
   );
 }
 
-function BlockEditor({block, day, onClose, onSave, onDelete}){
+function BlockEditor({block, day, onClose, onSave, onDelete, occ, add, update, remove}){
+  const legacyDays = () => {
+    const r = block.repeat || 'none', b = block.date ? parseISO(block.date).getDay() : 0;
+    if(r === 'daily') return [0,1,2,3,4,5,6];
+    if(r === 'weekdays') return [1,2,3,4,5];
+    if(r === 'weekly') return [b];
+    return [];
+  };
   const [f, setF] = useState({title:block.title||'', start:block.start||day.wake,
     end:block.end||day.sleep, date:block.date, color:block.color || null,
-    onWeek: !!block.onWeek, repeat: block.repeat || 'none', energy: block.energy || 0});
+    onWeek: !!block.onWeek, energy: block.energy || 0,
+    repeatDays: (block.repeatDays && block.repeatDays.length) ? block.repeatDays : legacyDays(),
+    repeatUntil: block.repeatUntil || ''});
   const [err, setErr] = useState('');
+  const [custom, setCustom] = useState(false);
+  const [asking, setAsking] = useState(null);     // null | 'save' | 'delete'
   const set = (k,v) => setF(p => ({...p,[k]:v}));
   const durOf = p => (((toMin(p.end) - toMin(p.start)) % 1440) + 1440) % 1440 || 60;
-  // Moving the start moves the end with it, so the length you chose survives.
   const setStart = v => setF(p => {
     const dur = durOf(p);
     return {...p, start:v, end: toTime((toMin(v) + dur) % 1440)};
   });
   const setLength = mins => setF(p => ({...p, end: toTime((toMin(p.start) + mins) % 1440)}));
+  const toggleDay = d => setF(p => ({...p, repeatDays: p.repeatDays.includes(d)
+    ? p.repeatDays.filter(x => x !== d) : [...p.repeatDays, d].sort()}));
+
+  const wasRepeating = block.id && isRepeat(block);
+  const payload = () => ({...block, ...f, title:f.title.trim(),
+    repeat:'none', repeatUntil: f.repeatDays.length ? (f.repeatUntil || null) : null});
+
   const save = () => {
     if(!f.title.trim()) return setErr('Give it a name first.');
-    onSave({...block, ...f, title:f.title.trim()});
+    if(wasRepeating && occ) return setAsking('save');
+    onSave(payload());
   };
+  const del = () => {
+    if(wasRepeating && occ) return setAsking('delete');
+    onDelete(block.id);
+  };
+  const scoped = scope => {
+    if(asking === 'save') applyRepeatEdit({orig:block, next:payload(), scope, occ, add, update});
+    else applyRepeatDelete({orig:block, scope, occ, update, remove});
+    onClose();
+  };
+
+  // keep the time, move the day
+  const nextDay = () => {
+    const d0 = iso(addDays(parseISO(f.date || iso(new Date())), 1));
+    onSave({...payload(), date:d0});
+  };
+
+  if(asking) return (
+    <Modal title={asking === 'save' ? 'Change a repeating task' : 'Delete a repeating task'} onClose={() => setAsking(null)}>
+      <p style={{marginTop:0, color:'var(--ink60)', fontSize:13.5}}>
+        "{block.title}" repeats. Which days should this {asking === 'save' ? 'change' : 'removal'} apply to?
+      </p>
+      <button className="rolecard" onClick={() => scoped('one')}>
+        <span><b>Just {fmtDay(parseISO(occ))}</b><small>Every other day stays as it was.</small></span>
+      </button>
+      <button className="rolecard" onClick={() => scoped('future')}>
+        <span><b>This day and every one after</b><small>Earlier days are left alone.</small></span>
+      </button>
+      <button className="rolecard" onClick={() => scoped('all')}>
+        <span><b>Every day it repeats</b><small>The whole series, past and future.</small></span>
+      </button>
+    </Modal>
+  );
+
   return (
     <Modal title={block.id ? 'Edit time block' : 'New time block'} onClose={onClose}
       footer={<>
-        {block.id && <button className="btn danger" onClick={() => onDelete(block.id)}>Delete</button>}
+        {block.id && <button className="btn danger" onClick={del}>Delete</button>}
         <button className="btn primary" onClick={save}>Save block</button>
       </>}>
       <Field label="What are you doing?"><input autoFocus value={f.title}
@@ -1535,38 +1701,54 @@ function BlockEditor({block, day, onClose, onSave, onDelete}){
         <Field label="Starts"><input type="time" value={f.start} onChange={e => setStart(e.target.value)} /></Field>
         <Field label="Ends"><input type="time" value={f.end} onChange={e => set('end', e.target.value)} /></Field>
       </div>
-      <div className="field">
-        <span>How much energy will it take?</span>
-        <div className="row" style={{gap:7, flexWrap:'wrap'}}>
-          {ENERGY.map(([v,l,g]) => (
-            <button key={v} className={'chip' + ((f.energy || 0) === v ? ' on' : '')}
-              onClick={() => set('energy', v)}>{g} {l}</button>
-          ))}
-        </div>
-      </div>
 
       <div className="field">
         <span className="spread">How long<span className="counter">{durOf(f)} min</span></span>
         <div className="row" style={{gap:7, flexWrap:'wrap'}}>
           {[1,15,30,60,90].map(n => (
-            <button key={n} className={'chip' + (durOf(f) === n ? ' on' : '')}
-              onClick={() => setLength(n)}>{n} min</button>
+            <button key={n} className={'chip' + (!custom && durOf(f) === n ? ' on' : '')}
+              onClick={() => { setCustom(false); setLength(n); }}>{n} min</button>
+          ))}
+          <button className={'chip' + (custom ? ' on' : '')} onClick={() => setCustom(true)}>Custom</button>
+        </div>
+        {custom && (
+          <div className="row" style={{gap:8, marginTop:10}}>
+            <input type="number" min="1" max="1440" value={durOf(f)} style={{width:110}}
+              onChange={e => setLength(Math.max(1, Math.min(1440, +e.target.value || 1)))} />
+            <span style={{fontSize:13, color:'var(--ink60)'}}>minutes</span>
+          </div>
+        )}
+      </div>
+
+      <div className="field">
+        <span className="spread">How much energy will it take?
+          <span className="counter">{fmtE(taskEnergy(f))} for this length</span></span>
+        <div className="row" style={{gap:7, flexWrap:'wrap'}}>
+          {ENERGY.map(([v,l]) => (
+            <button key={v} className={'chip echip' + ((f.energy || 0) === v ? ' on' : '')}
+              onClick={() => set('energy', v)}><EnergyIcon v={v} /> {l}</button>
           ))}
         </div>
       </div>
-      <div className="grid2">
-        <Field label="Date"><input type="date" value={f.date} onChange={e => set('date', e.target.value)} /></Field>
-        <Field label="Repeats">
-          <select value={f.repeat} onChange={e => set('repeat', e.target.value)}>
-            {REPEATS.map(([k,l]) => <option key={k} value={k}>{l}</option>)}
-          </select>
-        </Field>
+
+      <Field label="Date"><input type="date" value={f.date} onChange={e => set('date', e.target.value)} /></Field>
+
+      <div className="field">
+        <span className="spread">Repeats on
+          <span className="counter">{f.repeatDays.length ? repeatText(f) : 'does not repeat'}</span></span>
+        <div className="daypicks">
+          {DAY_LETTERS.map((l, d) => (
+            <button key={d} className={'daypick' + (f.repeatDays.includes(d) ? ' on' : '')}
+              onClick={() => toggleDay(d)} aria-label={DOW[d]} title={DOW[d]}>{l}</button>
+          ))}
+        </div>
       </div>
-      {f.repeat !== 'none' && (
+      {f.repeatDays.length > 0 && (
         <Field label="Repeat until (optional)">
-          <input type="date" value={f.repeatUntil || ''} onChange={e => set('repeatUntil', e.target.value || null)} />
+          <input type="date" value={f.repeatUntil || ''} onChange={e => set('repeatUntil', e.target.value)} />
         </Field>
       )}
+
       <label className="row" style={{gap:9,margin:'2px 0 16px',fontSize:13.5,fontWeight:500,alignItems:'flex-start'}}>
         <input type="checkbox" checked={f.onWeek} onChange={e => set('onWeek', e.target.checked)}
           style={{width:16,height:16,marginTop:2,flex:'none'}} />
@@ -1589,13 +1771,18 @@ function BlockEditor({block, day, onClose, onSave, onDelete}){
           ))}
         </div>
       </div>
-      {block.id && <button className="btn sm" onClick={() => onSave({...block, ...f, start:null, end:null})}>Move back to unscheduled</button>}
+      {block.id && (
+        <div className="row" style={{gap:8, flexWrap:'wrap'}}>
+          {!isRepeat(block) && <button className="btn sm" onClick={nextDay}>Move to the next day</button>}
+          <button className="btn sm" onClick={() => onSave({...payload(), start:null, end:null})}>Move back to unscheduled</button>
+        </div>
+      )}
     </Modal>
   );
 }
 
 /* ============ ORGANIZE IT — weekly ============ */
-function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEvent, setDaily, update, remove, day, toast, energyBase}){
+function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEvent, setDaily, update, remove, add, day, toast, energyBase}){
   const s = startOfWeek(date);
   const days = Array.from({length:7}, (_,i) => addDays(s,i));
   const wk = weekKey(date);
@@ -1607,6 +1794,7 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
   const weekTodos = tasks.filter(t => t.scope === 'weekly' && t.anchor === wk);
   const [newEv, setNewEv] = useState(null);
   const [editTask, setEditTask] = useState(null);
+  const [editOcc, setEditOcc] = useState(null);
   const [editEv, setEditEv] = useState(null);
 
   // Things from List It that aren't on the week yet: unscheduled items from
@@ -1705,7 +1893,7 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
         <button className="btn primary" onClick={() => setNewEv({title:'', date:iso(date), type:'deadline', note:''})}>+ Add to the week</button>
       </div>
 
-      <div className="week">
+      <div className="week" data-tour="week">
         {days.map(d => {
           const dk = iso(d);
           const evs = events.filter(e => occursOn(e, dk));
@@ -1731,7 +1919,7 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
                 ))}
                 {blocks.slice(0,4).map(t => (
                   <div key={t.id} className="pill draggable"
-                    onPointerDown={e => onGrab(e, t, 'day')} onDoubleClick={() => setEditTask(t)}
+                    onPointerDown={e => onGrab(e, t, 'day')} onDoubleClick={() => { setEditTask(t); setEditOcc(dk); }}
                     title="Double-click to edit · drag to another day"
                     style={{borderLeftColor: blockHex(t.color) || 'var(--line)', background:'var(--soft)', color:'var(--ink60)'}}>
                     {t.start && <span className="mono" style={{fontSize:10}}>{pretty(t.start)} </span>}{t.title}
@@ -1755,7 +1943,7 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
             const done = isDone(t, t.date);
             return (
               <div key={t.id} className={'inboxrow' + (done ? ' done' : '')}
-                onDoubleClick={ev => { if(!ev.target.closest('button')) setEditTask(t); }}
+                onDoubleClick={ev => { if(!ev.target.closest('button')) { setEditTask(t); setEditOcc(t.date); } }}
                 title="Double-click to edit">
                 <button className="grabber" onPointerDown={e => onGrab(e, t, t.onWeek ? 'day' : 'tray')}
                   title="Drag onto a day"><IconGrip /></button>
@@ -1766,11 +1954,11 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
                     {blockHex(t.color) && <i className="cdot" style={{background:blockHex(t.color)}} />}
                     {t.onWeek ? `On ${DOW[parseISO(t.date).getDay()]}` : 'Not on the week'}
                     {t.start ? ` · ${pretty(t.start)}` : ''}
-                    {isRepeat(t) ? ` · ${repeatLabel(t.repeat).toLowerCase()}` : ''}
+                    {isRepeat(t) ? ` · ${repeatText(t)}` : ''}
                   </div>
                 </div>
                 <div className="todo-actions">
-                  <button className="btn sm" onClick={() => setEditTask(t)}>Edit</button>
+                  <button className="btn sm" onClick={() => { setEditTask(t); setEditOcc(t.date); }}>Edit</button>
                   <XBtn onClick={() => remove(t.id)} />
                 </div>
               </div>
@@ -1795,7 +1983,7 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
                   <b>{e.title}</b>
                   <div className="meta">
                     {evLabel(e.type)} · {fmtDay(parseISO(e.on))}
-                    {isRepeat(e) ? ` · ${repeatLabel(e.repeat).toLowerCase()}` : ''}{e.note ? ` · ${e.note}` : ''}
+                    {isRepeat(e) ? ` · ${repeatText(e)}` : ''}{e.note ? ` · ${e.note}` : ''}
                   </div>
                 </div>
                 <div className="todo-actions"><XBtn onClick={() => removeEvent(e.id)} label="Remove" /></div>
@@ -1823,7 +2011,8 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
         onSave={e => { updateEvent(e.id, e); setEditEv(null); }}
         onDelete={() => { removeEvent(editEv.id); setEditEv(null); }} />}
 
-      {editTask && <BlockEditor block={editTask} day={day || DEFAULT_DAY} onClose={() => setEditTask(null)}
+      {editTask && <BlockEditor block={editTask} day={day || DEFAULT_DAY} occ={editOcc || editTask.date}
+        add={add} update={update} remove={remove} onClose={() => setEditTask(null)}
         onSave={b => { update(b.id, b); setEditTask(null); }}
         onDelete={id => { remove(id); setEditTask(null); }} />}
     </div>
@@ -2053,7 +2242,7 @@ function EventEditor({ev, onClose, onSave, onDelete}){
 }
 
 /* ============ LIST IT ============ */
-function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, carryOver, setCarryOver}){
+function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, carryOver, setCarryOver, toast}){
   const [text, setText] = useState('');
   const anchor = sub === 'daily' ? iso(date) : sub === 'weekly' ? weekKey(date) : monthKey(date);
   // Scheduled things read in the order the day happens; anything without a
@@ -2105,7 +2294,7 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, ca
         </div>
       </div>
 
-      <div className={'addbar' + (shake ? ' shake' : '')}>
+      <div className={'addbar' + (shake ? ' shake' : '')} data-tour="listadd">
         <div className="addwrap">
           <span className="addplus" aria-hidden="true">+</span>
           <input ref={inputRef} value={text} onChange={e => setText(e.target.value)}
@@ -2128,7 +2317,7 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, ca
               <div className="meta">
                 {blockHex(t.color) && <i className="cdot" style={{background:blockHex(t.color)}} />}
                 {t.start ? `Scheduled ${pretty(t.start)} – ${pretty(t.end)}` : 'Not on the schedule yet'}
-                {isRepeat(t) ? ` · ${repeatLabel(t.repeat).toLowerCase()}` : ''}
+                {isRepeat(t) ? ` · ${repeatText(t)}` : ''}
               </div>
             )}
             </div>
@@ -2139,7 +2328,8 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, ca
           </div>
         ))}
 
-      {editing && <BlockEditor block={editing} day={day || DEFAULT_DAY} onClose={() => setEditing(null)}
+      {editing && <BlockEditor block={editing} day={day || DEFAULT_DAY} occ={anchor}
+        add={add} update={update} remove={remove} onClose={() => setEditing(null)}
         onSave={b => { update(b.id, b); setEditing(null); }}
         onDelete={id => { remove(id); setEditing(null); }} />}
 
@@ -2327,7 +2517,7 @@ const ACT_TYPES = [
   'Work (Paid)','Other Club/Activity','Other',
 ];
 const GRADE_SETS = {
-  hs:      [['9','9th'],['10','10th'],['11','11th'],['12','12th'],['pg','After 12th']],
+  hs:      [['ms','Middle school'],['9','9th'],['10','10th'],['11','11th'],['12','12th'],['pg','After 12th']],
   college: [['c1','1st year'],['c2','2nd year'],['c3','3rd year'],['c4','4th year']],
 };
 const gradesFor = stage => GRADE_SETS[stage === 'college' ? 'college' : 'hs'];
@@ -2389,7 +2579,7 @@ function BragIt({sub, ecs, add, update, remove, toast, stage}){
 
   return (
     <div>
-      <div className="spread dayhead">
+      <div className="spread dayhead" data-tour="brag">
         <div className="row" style={{gap:7,flexWrap:'wrap'}}>
           {[['all','All'],['unfinished','Unfinished'],['finished','Finished']].map(([k,l]) => (
             <button key={k} className={'chip' + (state === k ? ' on' : '')} onClick={() => setState(k)}>{l}</button>
@@ -2701,7 +2891,7 @@ function LockIt({sub, lock, running, left, minutes, start, pause, reset, toast, 
   return (
     <div className="lockgrid">
       <div>
-        <div className="card" style={{textAlign:'center',padding:'26px 20px'}}>
+        <div className="card" data-tour="timer" style={{textAlign:'center',padding:'26px 20px'}}>
           <div className="modeswitch">
             <button className={mode === 'timer' ? 'on' : ''} disabled={running} onClick={() => setMode('timer')}>Timer</button>
             <button className={mode === 'pomo' ? 'on' : ''} disabled={running} onClick={() => setMode('pomo')}>Pomodoro</button>
@@ -2965,7 +3155,7 @@ const FB_ERRORS = {
   'auth/popup-closed-by-user':'The Google window closed before it finished.',
   'auth/popup-blocked':'Your browser blocked the Google popup. Allow popups for this site, then try again.',
   'auth/cancelled-popup-request':'',
-  'auth/unauthorized-domain':'This site is not in the Firebase authorized domains list. Add it under Authentication → Settings → Authorized domains.',
+  'auth/unauthorized-domain':`Add "${window.location.hostname}" under Firebase → Authentication → Settings → Authorized domains, then reload.`,
   'auth/operation-not-allowed':'That sign-in method is not switched on yet in the Firebase console.',
   'auth/network-request-failed':'Network problem — check your connection and try again.'
 };
@@ -4362,7 +4552,7 @@ async function changeUsername(newName, user, oldName){
   await withTimeout(batch.commit(), 10000);
 }
 
-function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksChange, sync, onSyncNow}){
+function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksChange, sync, onSyncNow, streakInfo, canRestore, onUseFreeze}){
   const auth = initFirebase();
   const [profile, setProfile] = useState(null);
   const [err, setErr] = useState('');
@@ -4527,14 +4717,31 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
 
       {sub === 'account' && (
         <Section title="Streak" hint="Days in a row you've opened PlanIt.">
-          <div className="card row" style={{gap:16}}>
-            <div className="streakbig">🔥</div>
-            <div style={{flex:1, minWidth:0}}>
-              <b className="mono" style={{fontSize:26}}>{user.streak || 0}</b>
-              <div style={{fontSize:12.5, color:'var(--ink35)'}}>
-                current streak{user.bestStreak ? ` · best ${user.bestStreak}` : ''}
+          <div className="card">
+            <div className="row" style={{gap:16}}>
+              <div className="streakbig">🔥</div>
+              <div style={{flex:1, minWidth:0}}>
+                <b className="mono" style={{fontSize:26}}>{streakInfo.streak}</b>
+                <div style={{fontSize:12.5, color:'var(--ink35)'}}>
+                  current streak{streakInfo.best ? ` · best ${streakInfo.best}` : ''}
+                </div>
+              </div>
+              <div className="freezes" title="Streak freezes banked">
+                {'🧊'.repeat(streakInfo.freezes) || '—'}
+                <small>{streakInfo.freezes} {streakInfo.freezes === 1 ? 'freeze' : 'freezes'}</small>
               </div>
             </div>
+            {canRestore ? (
+              <div className="formnote" style={{marginTop:14, marginBottom:0}}>
+                Your {streakInfo.prev}-day streak ended. Use a freeze to keep it going?
+                <button className="btn sm primary" style={{marginLeft:10}} onClick={onUseFreeze}>Use a freeze</button>
+              </div>
+            ) : (
+              <div style={{fontSize:12, color:'var(--ink35)', marginTop:12, lineHeight:1.5}}>
+                You earn a freeze every 7 days in a row, up to 3. If you miss a day, come back that day
+                and one freeze restores the streak.
+              </div>
+            )}
           </div>
         </Section>
       )}
@@ -4546,9 +4753,8 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
               <span style={{fontSize:13.5}}>Your daily baseline</span>
               <b className="mono" style={{fontSize:20}}>{settings.energyBase || DEFAULT_BASE}</b>
             </div>
-            <input type="range" min="3" max="40" value={settings.energyBase || DEFAULT_BASE}
-              onChange={e => setSettings({...settings, energyBase:+e.target.value})}
-              style={{width:'100%', padding:0}} />
+            <EnergySlider value={settings.energyBase || DEFAULT_BASE}
+              onChange={v => setSettings({...settings, energyBase:v})} />
             <div style={{fontSize:12.5, color:'var(--ink35)', marginTop:10, lineHeight:1.55}}>
               Tasks cost between −1 and 3. Your day turns orange within 5 of this number and red past that,
               which is the signal you've planned more than you can carry.
@@ -4679,15 +4885,11 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
                   <div className="eyebrow" style={{color:'var(--accent)'}}>Coming soon</div>
                   <h3>PlanIt Pro</h3>
                 </div>
-                <div className="proprice">{CONFIG.PRO_PRICE || '$3'}<small>/mo</small></div>
+                <div className="proprice" style={{fontSize:15}}>To be announced</div>
               </div>
-              <ul className="prolist">
-                <li>Your planner synced across every device</li>
-                <li>Unlimited study rooms with more than four friends</li>
-                <li>Export Brag It as a formatted activities résumé</li>
-                <li>Recurring tasks and repeating class schedules</li>
-                <li>Full history and stats for focus sessions</li>
-              </ul>
+              <p style={{color:'var(--ink60)', fontSize:14, lineHeight:1.6, margin:'0 0 18px'}}>
+                What Pro includes and what it costs are to be announced.
+              </p>
               {CONFIG.PRO_CHECKOUT_URL
                 ? <a className="btn primary wide" href={CONFIG.PRO_CHECKOUT_URL} target="_blank" rel="noopener noreferrer">Upgrade to Pro</a>
                 : <>
@@ -4768,7 +4970,7 @@ function LegalModal({kind, onClose}){
             <h4>Children</h4>
             <p>PlanIt is built for students. If you are under 13, ask a parent or guardian before making an account.</p>
             <h4>Contact</h4>
-            <p>{CONFIG.CONTACT_EMAIL || 'Add your contact email to CONFIG.CONTACT_EMAIL.'}</p>
+            <p>{CONFIG.CONTACT_EMAIL || 'To be announced.'}</p>
           </>
         ) : (
           <>
@@ -4794,7 +4996,7 @@ function LegalModal({kind, onClose}){
             <h4>Changes</h4>
             <p>These terms may be updated. Continuing to use PlanIt after a change means you accept the new version.</p>
             <h4>Contact</h4>
-            <p>{CONFIG.CONTACT_EMAIL || 'Add your contact email to CONFIG.CONTACT_EMAIL.'}</p>
+            <p>{CONFIG.CONTACT_EMAIL || 'To be announced.'}</p>
           </>
         )}
       </div>
@@ -4823,18 +5025,27 @@ function buildReport(lock, range = 'week'){
     });
     partners = lk.partnersMonth || {};
   } else if(range === 'all'){
-    // one bar per month, oldest first
-    const months = {};
-    Object.values(byDate).forEach(d => {
-      const k = d.date.slice(0,7);
-      months[k] = months[k] || {minutes:0, sessions:0};
-      months[k].minutes += d.minutes || 0;
-      months[k].sessions += d.sessions || 0;
+    // Every week from the first one with data to this one — including the
+    // weeks nothing happened, so gaps show up as gaps.
+    const dates = Object.keys(byDate).sort();
+    const first = startOfWeek(dates.length ? parseISO(dates[0]) : new Date());
+    const thisWeek = startOfWeek(new Date());
+    const weeks = [];
+    for(let w = new Date(first); w <= thisWeek; w = addDays(w, 7)) weeks.push(new Date(w));
+    const shown = weeks.slice(-52);
+    let prevMonth = null;
+    bars = shown.map(w => {
+      let m = 0, ss = 0;
+      for(let d = 0; d < 7; d++){
+        const k = iso(addDays(w, d));
+        if(byDate[k]){ m += byDate[k].minutes || 0; ss += byDate[k].sessions || 0; }
+      }
+      const mo = w.getMonth();
+      const label = mo !== prevMonth ? MON[mo].slice(0,3) : '';
+      prevMonth = mo;
+      return {key:iso(w), label, minutes:m, sessions:ss, now:iso(w) === iso(thisWeek),
+              title:`Week of ${fmtDay(w)}`};
     });
-    bars = Object.keys(months).sort().slice(-12).map(k => ({
-      key:k, label:MON[+k.slice(5,7)-1].slice(0,1),
-      minutes:months[k].minutes, sessions:months[k].sessions, now:k === today.slice(0,7)
-    }));
     partners = lk.partnersAll || {};
   } else {
     const start = startOfWeek(new Date());
@@ -4877,7 +5088,7 @@ function Reports({lock}){
         <div>
           <Section title={heading}
             hint={range === 'week' ? 'Resets on Sunday.'
-              : range === 'month' ? 'Resets on the 1st.' : 'Everything since you started.'}>
+              : range === 'month' ? 'Resets on the 1st.' : 'One bar per week since you started, quiet weeks included.'}>
             <div className="row" style={{gap:12, flexWrap:'wrap', marginBottom:16}}>
               <div className="card" style={{flex:1, minWidth:140}}>
                 <div className="eyebrow">Time focused</div>
@@ -4890,7 +5101,7 @@ function Reports({lock}){
                 <div className="mono" style={{fontSize:26, fontWeight:500}}>{r.sessions}</div>
               </div>
               <div className="card" style={{flex:1, minWidth:140}}>
-                <div className="eyebrow">Best {range === 'all' ? 'month' : 'day'}</div>
+                <div className="eyebrow">Best {range === 'all' ? 'week' : 'day'}</div>
                 <div className="mono" style={{fontSize:26, fontWeight:500}}>{r.best.minutes || 0}m</div>
               </div>
             </div>
@@ -4899,7 +5110,7 @@ function Reports({lock}){
               <div className={'chartrow' + (r.bars.length > 12 ? ' dense' : '')}>
                 {r.bars.map(d => (
                   <div key={d.key} className={'chartbar' + (d.now ? ' today' : '')}
-                    title={`${d.minutes} min`}>
+                    title={`${d.title ? d.title + ' — ' : ''}${d.minutes} min`}>
                     <b className="mono">{r.bars.length > 12 ? '' : (d.minutes || '')}</b>
                     <i style={{height:Math.round(d.minutes/peak*86) + 3 + 'px'}} />
                     <span className="mono">{d.label}</span>
@@ -4981,12 +5192,8 @@ function Reports({lock}){
 // Everything here is flagged as planned rather than live. A promo that reads
 // as active but can't be claimed is worse than one that says "coming".
 const NEWS = [
-  {id:'founding30', emoji:'🎁', tag:'Planned', title:'Founding 30 — Pro free for life',
-   body:"The first 30 people to make a PlanIt account keep Pro forever, at no cost. We're still counting, and we'll get in touch once Pro exists."},
-  {id:'refer5', emoji:'👥', tag:'Planned', title:'Bring five friends, get Pro free',
-   body:'Your username is your referral code. Five people type it in when they sign up and Pro is on us for three months — see your count in Settings.'},
-  {id:'prosoon', emoji:'✨', tag:'Coming soon', title:"What Pro will include",
-   body:'Your planner synced across devices, Brag It exported as a formatted activities résumé, repeating tasks and class schedules, bigger study rooms, and full focus history.'},
+  {id:'founding100', emoji:'🎁', tag:'Planned', title:'Founding 100 — PlanIt Pro free',
+   body:"The first 100 people to make a PlanIt account get Pro free for a full year. Early members after that get shorter free periods. We'll let you know when Pro arrives."},
   {id:'survey', emoji:'📋', tag:'Coming soon', title:'Tell us what to build next',
    body:"A short survey is going here. What you'd add, what gets in your way, what you'd actually pay for."},
 ];
@@ -5082,87 +5289,108 @@ function NewsPanel({onClose, readIds, markRead, requests = [], onDecide, report,
 }
 
 /* ============ TUTORIAL ============ */
-// Shown once, right after an account is made. Never again — it is flagged on
-// the profile rather than in this browser, so it doesn't reappear elsewhere.
-function Tutorial({user, energyBase, setEnergyBase, onDone}){
+// Shown once, right after an account is made — flagged on the profile, so it
+// never reappears on another device. Each step opens the screen it describes
+// and dims everything except the part it is talking about.
+const TOUR = [
+  {emoji:'👋', title:'Welcome to PlanIt',
+   body:"Four things that feed each other: a list, a calendar, a record of what you've done, and a way to actually focus. Two minutes and you'll know where everything is."},
+  {emoji:'📓', title:'List It — get it out of your head', tab:'list', sub:'daily', target:'listadd',
+   body:"Write down everything you owe, without deciding when yet. Daily for today, Weekly and Monthly for bigger goals."},
+  {emoji:'📅', title:'Organize It — decide when', tab:'organize', sub:'daily', target:'schedule',
+   body:"Your list sits beside the schedule. Drag an item onto the grid to give it a time, drag it back to take the time off. Same task, two views."},
+  {emoji:'🗓️', title:'The week at a glance', tab:'organize', sub:'weekly', target:'week',
+   body:"Put tasks on specific days and see the whole week. Monthly holds tests, deadlines and birthdays. Drag anything between days to move it."},
+  {emoji:'⚡', title:'Energy — the honest part', tab:'organize', sub:'daily', target:'energy', energy:true,
+   body:"Each task costs relax (−1), none, low, medium or high. Your day adds it up and turns orange near your limit, red past it. Set what a normal day holds for you."},
+  {emoji:'☀️', title:'Your day has its own hours', tab:'organize', sub:'daily', target:'dayhours',
+   body:"The schedule runs from when you wake to when you sleep. Tap the wake-up bar to set those two times — past midnight is fine."},
+  {emoji:'🏆', title:'Brag It — write it down now', tab:'brag', sub:'experience', target:'brag',
+   body:"Activities, honors and certifications in the Common App's own fields. Log them the week they happen, and export a résumé whenever you need one."},
+  {emoji:'🔒', title:'Lock It — focus, together', tab:'lock', sub:'focus', target:'timer',
+   body:"A timer or a full pomodoro run, with beeps for the last five seconds. Share a room code and up to nine of you focus together."},
+  {emoji:'⚙️', title:'Settings — make it yours', tab:'settings', sub:'account', target:'settings',
+   body:"Your account, your energy baseline, notifications — and a bug report form. When something breaks, please tell us there."},
+];
+
+function Tutorial({user, energyBase, setEnergyBase, onDone, goTo}){
   const [i, setI] = useState(0);
   const [base, setBase] = useState(energyBase || DEFAULT_BASE);
+  const [rect, setRect] = useState(null);
   const [busy, setBusy] = useState(false);
+  const step = TOUR[i];
+  const last = i === TOUR.length - 1;
 
-  const steps = [
-    {emoji:'👋', title:`Welcome, ${user.username}`, color:'var(--org)',
-     body:"PlanIt is four things that feed each other: a list, a calendar, a record of what you've done, and a way to actually focus. Two minutes and you'll know where everything lives."},
-
-    {emoji:'📓', title:'List It — get it out of your head', color:'var(--list)',
-     body:"Write down everything you owe, without worrying when you'll do it. Daily for today, Weekly and Monthly for the bigger goals. Nothing here needs a time yet."},
-
-    {emoji:'📅', title:'Organize It — decide when', color:'var(--org)',
-     body:"Your daily list appears beside the schedule. Drag an item onto the grid and it has a time; drag it back to take the time off. The same task, two views — never typed twice."},
-
-    {emoji:'🗓️', title:'The week and the month', color:'var(--org)',
-     body:"Weekly shows what you put on each day plus your week goals. Monthly is for tests, deadlines and birthdays. Drag anything between days to move it."},
-
-    {emoji:'⚡', title:'Energy — the honest part', color:'var(--brag)', energy:true,
-     body:"Every task costs energy: relax (−1), none, low, medium or high. Your day adds it up. Set what a normal day holds for you and PlanIt warns you when you've planned more than that — orange as you approach it, red past it."},
-
-    {emoji:'☀️', title:'Your day has its own hours', color:'var(--org)',
-     body:"The schedule runs from when you wake to when you sleep, not a fixed 6am–11pm. You set those two times and the grid is built between them — past midnight if that's when you sleep."},
-
-    {emoji:'🏆', title:'Brag It — write it down now', color:'var(--brag)',
-     body:"Activities, honors and certifications, in the fields the Common App asks for. Log things the week they happen; reconstructing dates and hours two years later is miserable. Export it as a résumé any time."},
-
-    {emoji:'🔒', title:'Lock It — focus, together', color:'var(--lock)',
-     body:"A timer or a full pomodoro run, with beeps counting down the last five seconds. Share a room code and up to nine of you focus in the same room, cameras optional. Reports show where your time went and who you studied with."},
-
-    {emoji:'⚙️', title:'Settings — make it yours', color:'var(--set)',
-     body:"Your account, your energy baseline, notifications, and where to report a bug when something breaks. There's a bug report form in there — please use it, it goes straight to us."},
-  ];
-
-  const step = steps[i];
-  const last = i === steps.length - 1;
+  // open the right screen, then find the thing to light up once it has drawn
+  useEffect(() => {
+    if(step.tab) goTo(step.tab, step.sub);
+    setRect(null);
+    if(!step.target) return;
+    let tries = 0, alive = true;
+    const find = () => {
+      if(!alive) return;
+      const el = document.querySelector(`[data-tour="${step.target}"]`);
+      if(el){
+        el.scrollIntoView({block:'center', behavior:'smooth'});
+        setTimeout(() => {
+          if(!alive) return;
+          const r = el.getBoundingClientRect();
+          setRect({top:r.top, left:r.left, width:r.width, height:r.height});
+        }, 280);
+      } else if(tries++ < 20) setTimeout(find, 60);
+    };
+    find();
+    const onResize = () => {
+      const el = document.querySelector(`[data-tour="${step.target}"]`);
+      if(el){ const r = el.getBoundingClientRect(); setRect({top:r.top, left:r.left, width:r.width, height:r.height}); }
+    };
+    window.addEventListener('resize', onResize);
+    return () => { alive = false; window.removeEventListener('resize', onResize); };
+  }, [i]);
 
   const finish = async () => {
     setBusy(true);
     setEnergyBase(base);
     try{ await saveProfile(user.id, {tutorialDone:true}); }catch(e){}
+    goTo('organize', 'daily');
     onDone();
   };
 
-  return (
-    <div className="tutwrap">
-      <div className="tutcard" style={{'--step':step.color}}>
-        <div className="tutdots">
-          {steps.map((_,n) => <i key={n} className={n === i ? 'on' : n < i ? 'done' : ''} />)}
-        </div>
+  // keep the card out of the way of whatever is lit up
+  const pad = 8;
+  const cardBelow = rect && (rect.top + rect.height/2) < window.innerHeight/2;
 
+  return (
+    <div className="tutlayer">
+      {rect
+        ? <div className="tutspot" style={{top:rect.top - pad, left:rect.left - pad,
+            width:rect.width + pad*2, height:rect.height + pad*2}} />
+        : <div className="tutdim" />}
+
+      <div className={'tutcard' + (rect ? (cardBelow ? ' bottom' : ' top') : '')}>
+        <div className="tutdots">
+          {TOUR.map((_,n) => <i key={n} className={n === i ? 'on' : n < i ? 'done' : ''} />)}
+        </div>
         <div className="tutemoji">{step.emoji}</div>
         <h2>{step.title}</h2>
         <p>{step.body}</p>
 
         {step.energy && (
           <div className="card" style={{textAlign:'left', marginTop:4}}>
-            <div className="spread" style={{marginBottom:10}}>
+            <div className="spread" style={{marginBottom:8}}>
               <span style={{fontSize:13.5, fontWeight:600}}>A normal day holds about</span>
               <b className="mono" style={{fontSize:22}}>{base}</b>
             </div>
-            <input type="range" min="3" max="40" value={base}
-              onChange={e => setBase(+e.target.value)} style={{width:'100%', padding:0}} />
-            <div style={{fontSize:12, color:'var(--ink35)', marginTop:8, lineHeight:1.5}}>
-              Roughly 10 suits most school days — say four medium tasks and a couple of small ones.
-              You can change it whenever in Settings.
-            </div>
+            <EnergySlider value={base} onChange={setBase} />
           </div>
         )}
 
         <div className="tutbtns">
           {i > 0 && <button className="btn" onClick={() => setI(i-1)}>Back</button>}
           {last
-            ? <button className="btn primary" disabled={busy} onClick={finish}>
-                {busy ? 'Setting up…' : 'Start planning'}
-              </button>
+            ? <button className="btn primary" disabled={busy} onClick={finish}>{busy ? 'Setting up…' : 'Start planning'}</button>
             : <button className="btn primary" onClick={() => setI(i+1)}>Next</button>}
         </div>
-
         {!last && <button className="tutskip" onClick={finish}>Skip the tour</button>}
       </div>
     </div>
@@ -5197,19 +5425,47 @@ function App({user, onSignOut}){
   const [ready, setReady] = useState(false);
   const isParent = user.role === 'parent';
 
-  // Counts days in a row with at least one visit. A gap resets it to 1.
-  const [streak, setStreak] = useState(user.streak || 0);
+  // Days in a row with at least one visit. Missing a day resets it to 1, but
+  // the old streak is remembered for that day so a freeze can restore it.
+  // A freeze is earned every 7 days of streak, up to 3 banked.
+  const [sk, setSk] = useState({
+    streak: user.streak || 0, best: user.bestStreak || 0,
+    freezes: user.freezes != null ? user.freezes : 1,
+    prev: user.prevStreak || 0, brokenAt: user.brokenAt || null,
+  });
+  const streak = sk.streak;
   useEffect(() => {
     const today = iso(new Date());
-    if(user.lastSeen === today){ setStreak(user.streak || 1); return; }
+    if(user.lastSeen === today) return;
     const yesterday = iso(addDays(new Date(), -1));
-    const next = user.lastSeen === yesterday ? (user.streak || 0) + 1 : 1;
+    let freezes = user.freezes != null ? user.freezes : 1;
+    let next, prev = 0, brokenAt = null;
+    if(user.lastSeen === yesterday) next = (user.streak || 0) + 1;
+    else {
+      next = 1;
+      if((user.streak || 0) > 1){ prev = user.streak; brokenAt = today; }
+    }
+    if(next > 1 && next % 7 === 0) freezes = Math.min(3, freezes + 1);
     const best = Math.max(next, user.bestStreak || 0);
-    setStreak(next);
-    saveProfile(user.id, {streak:next, bestStreak:best, lastSeen:today}).catch(() => {});
-  }, [user.id, user.lastSeen, user.streak, user.bestStreak]);
+    setSk({streak:next, best, freezes, prev, brokenAt});
+    saveProfile(user.id, {streak:next, bestStreak:best, lastSeen:today,
+      freezes, prevStreak:prev, brokenAt}).catch(() => {});
+  }, [user.id]);
+
+  const canRestore = sk.brokenAt === iso(new Date()) && sk.prev > 0 && sk.freezes > 0;
+  const useFreeze = () => {
+    if(!canRestore) return;
+    const restored = sk.prev + 1;
+    const next = {...sk, streak:restored, best:Math.max(sk.best, restored),
+      freezes:sk.freezes - 1, prev:0, brokenAt:null};
+    setSk(next);
+    saveProfile(user.id, {streak:restored, bestStreak:next.best, freezes:next.freezes,
+      prevStreak:0, brokenAt:null}).catch(() => {});
+    toast(`Streak saved — back to ${restored} days`);
+  };
   const [sync, setSync] = useState({state:'idle'});
   const [newsOpen, setNewsOpen] = useState(false);
+  const [shieldList, setShieldList] = useState(false);
   const [tourDone, setTourDone] = useState(!!user.tutorialDone);
   const [tab, setTab] = useState('organize');
   const [sub, setSub] = useState({brag:'honor', list:'daily', organize:'daily', lock:'focus', settings:'account', watch:'children'});
@@ -5882,7 +6138,7 @@ function App({user, onSignOut}){
             {unreadNews > 0 && <i className="tabcount">{unreadNews}</i>}
           </button>
           {TABS.filter(t => t.id === 'settings').map(t => (
-            <button key={t.id} className={'tab' + (tab === t.id ? ' on' : '')} style={{'--tabcolor':t.color}}
+            <button key={t.id} data-tour="settings" className={'tab' + (tab === t.id ? ' on' : '')} style={{'--tabcolor':t.color}}
               disabled={running} title={running ? 'Locked until the session ends' : t.label}
               onClick={() => setTab(t.id)} aria-current={tab === t.id}>
               <span className="emoji">{t.emoji}</span>
@@ -5961,7 +6217,7 @@ function App({user, onSignOut}){
           {tab === 'organize' && sub.organize === 'weekly' &&
             <Weekly date={date} setDate={setDate} tasks={view.tasks} events={view.events} addEvent={addEvent}
               updateEvent={updateEvent} removeEvent={removeEvent} setDaily={goDaily} update={updateTask}
-              remove={removeTask} day={view.day || user.day || DEFAULT_DAY} toast={toast} energyBase={energyBase} />}
+              remove={removeTask} add={addTask} day={view.day || user.day || DEFAULT_DAY} toast={toast} energyBase={energyBase} />}
           {tab === 'organize' && sub.organize === 'monthly' &&
             <Monthly date={date} setDate={setDate} events={view.events} addEvent={addEvent} updateEvent={updateEvent}
               removeEvent={removeEvent} setDaily={goDaily} toast={toast} tasks={view.tasks}
@@ -5971,6 +6227,7 @@ function App({user, onSignOut}){
             <ListIt sub={sub.list} date={date} setDate={setDate} tasks={view.tasks} add={addTask} update={updateTask} remove={removeTask}
               carryOver={(store.settings || DEFAULT_SETTINGS).carryOver !== false && !!(store.settings || DEFAULT_SETTINGS).carryOver}
               setCarryOver={v => setSettings({...(store.settings || DEFAULT_SETTINGS), carryOver:v})}
+              toast={toast}
               day={view.day || user.day || DEFAULT_DAY}
               setTab={t => { setTab(t); setSub(p => ({...p, organize:'daily'})); }} />}
 
@@ -5985,6 +6242,7 @@ function App({user, onSignOut}){
           {tab === 'settings' &&
             <Settings sub={sub.settings} user={user} onSignOut={onSignOut} settings={settings}
               setSettings={setSettings} toast={toast} onLinksChange={refreshLinks}
+              streakInfo={sk} canRestore={canRestore} onUseFreeze={useFreeze}
               sync={sync} onSyncNow={() => {
                 setSync({state:'saving'});
                 pushPlanner(user.id, store)
@@ -6046,6 +6304,35 @@ function App({user, onSignOut}){
             </div>
           )}
 
+          <button className="listtoggle" onClick={() => setShieldList(v => !v)}>
+            📓 {shieldList ? 'Hide my list' : 'My list'}
+          </button>
+
+          {shieldList && (() => {
+            const today = iso(new Date());
+            const todays = store.tasks
+              .filter(t => t.scope === 'daily' && occursOn(t, today))
+              .sort((a,b) => (a.start || '~').localeCompare(b.start || '~'));
+            return (
+              <div className="shieldlist">
+                <div className="spread" style={{marginBottom:10}}>
+                  <b>Today's list</b>
+                  <button className="x" style={{color:'#fff'}} onClick={() => setShieldList(false)} aria-label="Close list">×</button>
+                </div>
+                <p className="shieldnote">The timer keeps running while this is open.</p>
+                {todays.length === 0
+                  ? <p className="shieldnote">Nothing on today's list.</p>
+                  : todays.map(t => (
+                    <div key={t.id} className={'slrow' + (isDone(t, today) ? ' done' : '')}>
+                      <Check on={isDone(t, today)} onClick={() => updateTask(t.id, toggleDone(t, today))} />
+                      <span className="sltitle">{t.title}</span>
+                      {t.start && <span className="mono sltime">{pretty(t.start)}</span>}
+                    </div>
+                  ))}
+              </div>
+            );
+          })()}
+
           <div className="shieldbtns">
             <button className="btn" onClick={pauseTimer}>End session early</button>
             <button className="btn" onClick={() => resetTimer()}>End &amp; reset</button>
@@ -6066,6 +6353,7 @@ function App({user, onSignOut}){
       {!tourDone && ready && (
         <Tutorial user={user} energyBase={energyBase}
           setEnergyBase={v => setSettings({...(store.settings || DEFAULT_SETTINGS), energyBase:v})}
+          goTo={(t, sb) => { setTab(t); if(sb) setSub(p => ({...p, [t]:sb})); }}
           onDone={() => setTourDone(true)} />
       )}
 
