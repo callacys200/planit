@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Caveat:wght@600&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Caveat:wght@600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
     --paper:#ECEEF5;
@@ -47,11 +47,11 @@
   button{touch-action:manipulation}
   body{
     margin:0; background:var(--paper); color:var(--ink);
-    font-family:"Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-family:"Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     font-size:15px; line-height:1.45;
     -webkit-font-smoothing:antialiased;
   }
-  h1,h2,h3,.display{font-family:"Bricolage Grotesque","Instrument Sans",sans-serif; letter-spacing:-.02em; margin:0}
+  h1,h2,h3,.display{font-family:"Plus Jakarta Sans",sans-serif; font-weight:800; letter-spacing:-.03em; margin:0}
   .mono{font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums}
   button{font:inherit;color:inherit;cursor:pointer}
   input,textarea,select{font:inherit;color:inherit}
@@ -67,7 +67,7 @@
   }
   .brand{display:flex;align-items:center;gap:11px;padding:2px 10px 18px 6px}
   .logomark{flex:none;object-fit:contain;border-radius:5px}
-  .brand b{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:22px;letter-spacing:-.03em;white-space:nowrap}
+  .brand b{font-family:"Plus Jakarta Sans",sans-serif;font-weight:800;font-size:22px;letter-spacing:-.03em;white-space:nowrap}
   .brand span{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink35);font-family:"IBM Plex Mono",monospace}
   .tab{
     position:relative;display:flex;align-items:center;gap:11px;
@@ -75,7 +75,7 @@
     border-radius:12px 0 0 12px;color:var(--ink60);font-weight:500;transition:background .16s, color .16s;
   }
   .tab .emoji{font-size:18px;line-height:1}
-  .tab .lbl{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .tab .lbl{font-family:"Plus Jakarta Sans",sans-serif;font-weight:700;font-size:15px;letter-spacing:-.01em}
   .tab .sub{display:block;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink35);font-weight:400}
   .tab:hover{background:rgba(255,255,255,.6);color:var(--ink)}
   .tab.on{background:var(--card);color:var(--ink);box-shadow:-1px 0 0 var(--line) inset, 0 -1px 0 var(--line), 0 1px 0 var(--line)}
@@ -127,7 +127,7 @@
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
   .card.soft{background:var(--soft)}
   .empty{border:1.5px dashed #D3D8E8;border-radius:var(--r);padding:30px 22px;text-align:center;color:var(--ink60)}
-  .empty b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:16px;color:var(--ink);margin-bottom:5px}
+  .empty b{display:block;font-family:"Plus Jakarta Sans",sans-serif;font-size:16px;color:var(--ink);margin-bottom:5px}
   .field{display:block;margin-bottom:12px}
   .field > span{display:block;font-size:12px;font-weight:600;color:var(--ink60);margin-bottom:5px}
   .field input,.field textarea,.field select{
@@ -139,7 +139,7 @@
   .navdate{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:11px;padding:2px;background:var(--card)}
   .navdate button{border:0;background:transparent;padding:6px 10px;border-radius:8px;color:var(--ink60);font-size:15px;line-height:1}
   .navdate button:hover{background:#F2F3F8;color:var(--ink)}
-  .navdate .cur{padding:5px 12px;font-weight:700;font-size:13.5px;min-width:150px;text-align:center;font-family:"Bricolage Grotesque",sans-serif}
+  .navdate .cur{padding:5px 12px;font-weight:700;font-size:13.5px;min-width:150px;text-align:center;font-family:"Plus Jakarta Sans",sans-serif}
 
   /* ---------- modal ---------- */
   .scrim{position:fixed;inset:0;background:rgba(20,23,42,.52);display:flex;align-items:center;justify-content:center;padding:18px;z-index:80;animation:fade .16s ease}
@@ -227,7 +227,7 @@
   /* ---------- week ---------- */
   .week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
   .daycol{min-width:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;min-height:180px;display:flex;flex-direction:column}
-  .daycol h4{background:#F7F8FC;padding:7px 9px;font-size:12px;font-weight:700;border-bottom:1px solid var(--line);font-family:"Bricolage Grotesque",sans-serif}
+  .daycol h4{background:#F7F8FC;padding:7px 9px;font-size:12px;font-weight:700;border-bottom:1px solid var(--line);font-family:"Plus Jakarta Sans",sans-serif}
   .daycol h4 small{display:block;font-weight:500;color:var(--ink35);font-family:"IBM Plex Mono",monospace;font-size:10px}
   .daycol.is-today h4{background:var(--accent-soft)}
   .daycol.dropping{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
@@ -337,9 +337,10 @@
   .dial{display:grid;place-items:center;padding:14px 0 4px}
   .dial-num{font-family:"IBM Plex Mono",monospace;font-size:52px;font-weight:500;letter-spacing:-.03em}
   .presets{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-  .soundtoggle{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:5px 12px;
-    font-size:12px;font-weight:600;color:var(--ink60);margin-top:14px}
-  .soundtoggle:hover{border-color:#C6CBDC;color:var(--ink)}
+  .soundtoggle{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 18px;
+    font-size:12.5px;font-weight:700;color:var(--ink60);margin-top:14px;transition:.14s}
+  .soundtoggle:hover{border-color:#C6CBDC}
+  .soundtoggle.on{background:#6B4DE6;border-color:#6B4DE6;color:#fff}
   .modeswitch{display:inline-flex;gap:3px;padding:3px;background:var(--soft);border:1px solid var(--line);border-radius:11px}
   .modeswitch button{border:0;background:transparent;padding:7px 18px;border-radius:8px;font-weight:600;font-size:13px;color:var(--ink60)}
   .modeswitch button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(20,23,42,.14)}
@@ -384,8 +385,14 @@
   @media (max-width:560px){ .shieldbtns{grid-auto-flow:row} .shieldbtns .btn{width:100%;justify-content:center} }
   .shield .btn:hover{background:rgba(255,255,255,.18)}
   .roomcode{font-size:24px;font-weight:500;letter-spacing:.14em;display:block;margin-top:2px}
-  .member{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px}
-  .avatar{width:32px;height:32px;border-radius:99px;display:grid;place-items:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:14px;line-height:1;color:#fff;flex:none;overflow:hidden;text-transform:uppercase}
+  .member{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;
+    padding:9px 10px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px}
+  .memberwho{min-width:0}
+  .memberwho b{font-size:13.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .memberwho .mono{font-size:11.5px;color:var(--ink35)}
+  .memberactions{display:grid;grid-auto-flow:column;grid-auto-columns:max-content;align-items:center;gap:6px}
+  .memberactions > *{position:relative;z-index:1}
+  .avatar{width:32px;height:32px;border-radius:99px;display:grid;place-items:center;font-family:"Plus Jakarta Sans",sans-serif;font-weight:700;font-size:14px;line-height:1;color:#fff;flex:none;overflow:hidden;text-transform:uppercase}
   .status{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:#F2F3F8;color:var(--ink60)}
   .status.focusing{background:#FDEBF2;color:#B92A61}
 
@@ -431,7 +438,7 @@
   .authpage{--accent:var(--org);--accent-soft:rgba(83,80,232,.12);height:100%;overflow:auto;background:#fff;display:flex;flex-direction:column}
   .topnav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:10}
   .tn-brand{display:flex;align-items:center;gap:9px}
-  .tn-brand b{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:20px;letter-spacing:-.03em}
+  .tn-brand b{font-family:"Plus Jakarta Sans",sans-serif;font-weight:800;font-size:20px;letter-spacing:-.03em}
   .beta{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;padding:3px 9px;border-radius:99px;background:var(--accent-soft);color:var(--org);font-weight:600}
   .tn-actions{display:flex;gap:6px}
   .tn-link{border:0;background:transparent;padding:8px 14px;border-radius:10px;font-weight:600;font-size:14px;color:var(--ink60)}
@@ -442,7 +449,7 @@
   .authleft{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 28px;background:linear-gradient(180deg,#FFFFFF,#FBFBFE)}
   .lead{text-align:center;margin-bottom:22px}
   .leadmark{display:flex;align-items:center;justify-content:center;gap:11px}
-  .leadmark b{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:27px;letter-spacing:-.03em}
+  .leadmark b{font-family:"Plus Jakarta Sans",sans-serif;font-weight:800;font-size:27px;letter-spacing:-.03em}
   .script{font-family:"Caveat",cursive;font-size:23px;color:var(--org);margin:18px 0 6px}
   .leadsub{color:var(--ink60);font-size:14.5px;max-width:330px;margin:0 auto;line-height:1.5}
 
@@ -511,14 +518,20 @@
 
   .authright{background:linear-gradient(165deg,#F7F6FE,#EFEDFB 55%,#F4EFFA);border-left:1px solid var(--line);padding:60px 52px;display:flex;flex-direction:column;justify-content:center}
   .rscript{margin:0 0 14px;font-size:24px}
-  .rhead{font-family:"Bricolage Grotesque",sans-serif;font-size:38px;font-weight:800;letter-spacing:-.03em;line-height:1.1;max-width:520px}
+  .rhead{font-family:"Plus Jakarta Sans",sans-serif;font-size:38px;font-weight:800;letter-spacing:-.03em;line-height:1.1;max-width:520px}
   .rsub{color:var(--ink60);font-size:15.5px;line-height:1.6;max-width:480px;margin:18px 0 0}
-  .tipcard{background:#fff;border:1px solid #E4E1F6;border-radius:18px;padding:26px 28px;margin-top:48px;max-width:540px;box-shadow:0 18px 44px -28px rgba(50,40,120,.4)}
+  .tipcard{background:#fff;border:1px solid #E4E1F6;border-radius:18px;padding:24px 26px;margin-top:0;max-width:540px;box-shadow:0 18px 44px -28px rgba(50,40,120,.4)}
   .tipicon{width:46px;height:46px;border-radius:13px;background:var(--accent-soft);display:grid;place-items:center;font-size:21px;margin-bottom:18px}
   .tipeyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--org);font-weight:600;margin-bottom:9px}
-  .tipcard h3{font-family:"Bricolage Grotesque",sans-serif;font-size:21px;font-weight:800;letter-spacing:-.02em}
+  .tipcard h3{font-family:"Plus Jakarta Sans",sans-serif;font-size:21px;font-weight:800;letter-spacing:-.02em}
   .tipcard p{color:var(--ink60);font-size:14.5px;line-height:1.6;margin:9px 0 0}
   .tipfoot{border-top:1px solid var(--line);margin-top:18px;padding-top:14px;font-size:12px;color:var(--ink35)}
+  .paneltabs{display:flex;gap:6px;flex-wrap:wrap;margin:26px 0 14px}
+  .paneltabs button{border:1px solid #DCD8F2;background:rgba(255,255,255,.6);border-radius:99px;
+    padding:7px 14px;font-size:13px;font-weight:600;color:var(--ink60);transition:.14s}
+  .paneltabs button:hover{background:#fff;color:var(--ink)}
+  .paneltabs button.on{background:var(--org);border-color:var(--org);color:#fff}
+  .tipcard h3{margin-bottom:2px}
   .dots{display:flex;gap:7px;margin-top:26px}
   .dots button{width:11px;height:11px;padding:0;border:0;border-radius:99px;background:#D3CFEA;transition:.2s}
   .dots button.on{width:34px;background:var(--org)}
@@ -560,6 +573,8 @@
   .rolecard.on{border-color:var(--org);box-shadow:0 0 0 3px var(--accent-soft)}
   .rolecard b{display:block;font-size:15px}
   .rolecard small{display:block;color:var(--ink35);font-size:12.5px;margin-top:2px;line-height:1.45}
+  .pickhead{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;margin-bottom:6px}
+  .pickhead b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pickrow{display:flex;align-items:flex-start;gap:10px;padding:7px 0;cursor:pointer}
   .pickrow input{width:16px;height:16px;margin-top:2px;flex:none}
   .pickrow b{font-size:13.5px;font-weight:600;display:block}
@@ -632,12 +647,12 @@
   .legalrow b{font-size:14px}
   .legalrow small{display:block;color:var(--ink35);font-size:12px;margin-top:2px}
   .legaldoc{font-size:13.5px;line-height:1.65;color:var(--ink60)}
-  .legaldoc h4{font-family:"Bricolage Grotesque",sans-serif;font-size:14.5px;color:var(--ink);margin:18px 0 4px}
+  .legaldoc h4{font-family:"Plus Jakarta Sans",sans-serif;font-size:14.5px;color:var(--ink);margin:18px 0 4px}
   .legaldoc p{margin:0}
   .procard{border:1px solid var(--line);border-radius:var(--r);padding:22px;background:var(--card)}
   .prohead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
-  .prohead h3{font-family:"Bricolage Grotesque",sans-serif;font-size:22px;font-weight:800;margin-top:2px}
-  .proprice{font-family:"Bricolage Grotesque",sans-serif;font-size:26px;font-weight:800}
+  .prohead h3{font-family:"Plus Jakarta Sans",sans-serif;font-size:22px;font-weight:800;margin-top:2px}
+  .proprice{font-family:"Plus Jakarta Sans",sans-serif;font-size:26px;font-weight:800}
   .proprice small{font-size:13px;font-weight:500;color:var(--ink35)}
   .prolist{list-style:none;padding:0;margin:0 0 20px;font-size:14px;color:var(--ink60)}
   .prolist li{padding:7px 0 7px 24px;position:relative;line-height:1.5}
@@ -648,10 +663,10 @@
 
   /* ---------- avatar + study seats ---------- */
   .initial{border-radius:99px;display:grid;place-items:center;flex:none;color:#fff;
-    font-family:"Bricolage Grotesque",sans-serif;font-weight:700;line-height:1;text-transform:uppercase}
+    font-family:"Plus Jakarta Sans",sans-serif;font-weight:700;line-height:1;text-transform:uppercase}
   .railav{border:1px solid var(--line)}
   .seatinitial{width:100%;height:100%;display:grid;place-items:center;color:#fff;
-    font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:38px;text-transform:uppercase}
+    font-family:"Plus Jakarta Sans",sans-serif;font-weight:800;font-size:38px;text-transform:uppercase}
   .seats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:26px 0 4px;width:min(560px,92vw)}
   .seat{position:relative;aspect-ratio:1;border-radius:16px;overflow:hidden;
     background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14)}
@@ -2339,11 +2354,7 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, ca
           to set a time, a colour, or make it repeat.
         </div>
       )}
-      {sub === 'monthly' && (
-        <div className="card soft" style={{marginTop:16,color:'var(--ink60)',fontSize:13}}>
-          This list stays separate from the monthly calendar. Tests, deadlines, and birthdays live in <b style={{color:'var(--ink)'}}>Organize It → Monthly</b>.
-        </div>
-      )}
+
     </div>
   );
 }
@@ -2479,11 +2490,9 @@ function ResumeExport({ecs, onClose, toast}){
       <div className="eyebrow" style={{margin:'20px 0 8px'}}>What to include</div>
       {groups.map(([k, label, rows]) => (
         <div key={k} style={{marginBottom:14}}>
-          <div className="spread" style={{marginBottom:6}}>
-            <b style={{fontSize:13.5}}>{label}</b>
-            <button className="btn sm ghost" onClick={() => toggleGroup(rows)}>
-              {allIn(rows) ? 'None' : 'All'}
-            </button>
+          <div className="pickhead">
+            <b>{label}</b>
+            <button className="btn sm" onClick={() => toggleGroup(rows)}>{allIn(rows) ? 'None' : 'All'}</button>
           </div>
           {rows.map(e => (
             <label key={e.id} className="pickrow">
@@ -2944,9 +2953,9 @@ function LockIt({sub, lock, running, left, minutes, start, pause, reset, toast, 
             </div>
           )}
 
-          <button className="soundtoggle" onClick={() => setSound(!sound)}
-            title={sound ? 'Sounds on' : 'Sounds off'}>
-            {sound ? '🔊' : '🔇'} {sound ? 'Sound on' : 'Sound off'}
+          <button className={'soundtoggle' + (sound ? ' on' : '')} onClick={() => setSound(!sound)}
+            aria-pressed={sound} title={sound ? 'Sound is on' : 'Sound is off'}>
+            Sound
           </button>
 
           <div className="timerbtns">
@@ -2975,13 +2984,7 @@ function LockIt({sub, lock, running, left, minutes, start, pause, reset, toast, 
           </div>
         </div>
 
-        <div className="card" style={{marginTop:14,color:'var(--ink60)',fontSize:13}}>
-          {mode === 'pomo'
-            ? 'Each work stretch counts as a finished session. Breaks are not counted as focus minutes, and the next stretch starts on its own.'
-            : 'The countdown runs off the clock, so it keeps time even if you switch tabs or close the laptop.'}
-          While a session runs, PlanIt covers the screen and the other tabs stay shut until the timer ends or you end it early.
-          A website can't lock the apps outside your browser — that takes a phone app with Screen Time or Digital Wellbeing permissions.
-        </div>
+
       </div>
 
       <div>
@@ -2999,10 +3002,7 @@ function LockIt({sub, lock, running, left, minutes, start, pause, reset, toast, 
             </Field>
             <button className="btn" style={{width:'100%',justifyContent:'center'}} disabled={busy} onClick={join}>Join room</button>
             {roomErr && <div className="formerr" style={{marginTop:12,marginBottom:0}}>{roomErr}</div>}
-            <div style={{fontSize:12,color:'var(--ink35)',marginTop:10,lineHeight:1.5}}>
-              Creating a room gives you a code no one else has. Share it with friends — up to nine of you.
-              Anyone with the code can see your name, avatar, and focus minutes, and your video if your camera is on.
-            </div>
+
           </div>
         ) : (
           <div className="card">
@@ -3029,16 +3029,16 @@ function LockIt({sub, lock, running, left, minutes, start, pause, reset, toast, 
               : members.slice().sort((a,b) => (b.min||0)-(a.min||0)).map(m => (
                 <div className="member" key={m.id}>
                   <Initial name={m.name} size={32} />
-                  <div style={{flex:1,minWidth:0}}>
-                    <b style={{fontSize:13.5}}>{m.name}{m.id === myId ? ' (you)' : ''}</b>
-                    <div style={{fontSize:11.5,color:'var(--ink35)'}} className="mono">
-                      {m.min || 0} min today{m.camOn ? ' · camera on' : ''}
-                    </div>
+                  <div className="memberwho">
+                    <b>{m.name}{m.id === myId ? ' (you)' : ''}</b>
+                    <div className="mono">{m.min || 0} min today{m.camOn ? ' · camera on' : ''}</div>
                   </div>
-                  <span className={'status' + (m.focusing ? ' focusing' : '')}>{m.focusing ? 'Focusing' : 'On a break'}</span>
-                  {host === myId && m.id !== myId && (
-                    <button className="btn sm ghost" onClick={() => kick(m)} title="Remove from the room">Remove</button>
-                  )}
+                  <div className="memberactions">
+                    <span className={'status' + (m.focusing ? ' focusing' : '')}>{m.focusing ? 'Focusing' : 'On a break'}</span>
+                    {host === myId && m.id !== myId && (
+                      <button className="btn sm" onClick={() => kick(m)} title="Remove from the room">Remove</button>
+                    )}
+                  </div>
                 </div>
               ))}
           </div>
@@ -3175,15 +3175,16 @@ const GMark = () => (
 );
 
 const PANELS = [
-  {eyebrow:'List It → Organize It', title:'Everything in your head, in one schedule',
-   body:'Dump it all out first — homework, the email you owe, the thing you keep forgetting. Then drag each one onto a time or a day until the whole scattered list is a schedule you can actually follow.',
-   foot:'List It → Organize It', emoji:'📓'},
-  {eyebrow:'Why Brag It exists', title:'Write it down while you remember it',
-   body:'Positions, dates, hours, and awards are almost impossible to reconstruct two years later. Log them the week they happen.',
-   foot:'Brag It', emoji:'🏆'},
-  {eyebrow:'Lock It', title:'Lock in together, not alone',
-   body:'Share a room code and up to nine of you focus in the same room. Cameras if you want them, a thumbs up or a hand raised when you need one.',
-   foot:'Lock It', emoji:'🔒'},
+  {id:'brag', label:'Brag It', emoji:'🏆',
+   body:'Track your brag sheets and export them into a full résumé to send teachers and counsellors.'},
+  {id:'list', label:'List It', emoji:'📓',
+   body:'List what you remember, and schedule it later.'},
+  {id:'organize', label:'Organize It', emoji:'📅',
+   body:'An organised schedule with repeating tasks, colour customisation and a daily energy tracker — across daily, weekly and monthly calendars, so every class stays in one place.'},
+  {id:'lock', label:'Lock It', emoji:'🔒',
+   body:'Study by yourself behind a locked screen, or with friends in a group room, with a full study report every week.'},
+  {id:'view', label:'View It', emoji:'👀',
+   body:'Connect a parent to the planner and stay on track for both academics and extracurriculars.'},
 ];
 
 // Your logo file, sitting next to index.html in the repo. If it's missing or
@@ -3263,7 +3264,6 @@ function Auth(){
 
   useEffect(() => { if(cool <= 0) return; const t = setTimeout(() => setCool(c => c-1), 1000); return () => clearTimeout(t); }, [cool]);
   useEffect(() => { setErr(''); setNote(''); }, [mode, step]);
-  useEffect(() => { const t = setInterval(() => setPanel(p => (p+1) % PANELS.length), 7000); return () => clearInterval(t); }, []);
 
   // live "is that name free?" check, once typing settles
   useEffect(() => {
@@ -3446,7 +3446,7 @@ function Auth(){
   const p = PANELS[panel];
   const script = mode === 'in' ? "welcome back, let's get to work"
     : mode === 'up' ? "let's get your year in one place"
-    : "your year, in one place";
+    : "A goal is just a wish without a plan";
 
   return (
     <div className="authpage">
@@ -3597,32 +3597,23 @@ function Auth(){
             )}
           </div>
 
-          <p className="fineprint">
-            Accounts are handled by Firebase, so your password never touches this page.
-            Your planner entries are saved in this browser.
-          </p>
+
         </section>
 
         <aside className="authright">
-          <p className="script rscript">four tabs, one year</p>
+          <p className="script rscript">One site, one planner — your whole academic career</p>
           <h2 className="rhead">A planner that keeps up with the whole year, not just today.</h2>
-          <p className="rsub">
-            Move your day around by hand, keep the month's tests and deadlines in view, and log every activity while
-            you still remember the details.
-          </p>
+
+          <div className="paneltabs">
+            {PANELS.map((p2, n) => (
+              <button key={p2.id} className={n === panel ? 'on' : ''} onClick={() => setPanel(n)}>{p2.label}</button>
+            ))}
+          </div>
 
           <div className="tipcard">
             <div className="tipicon">{p.emoji}</div>
-            <div className="tipeyebrow">{p.eyebrow}</div>
-            <h3>{p.title}</h3>
+            <h3>{p.label}</h3>
             <p>{p.body}</p>
-            <div className="tipfoot mono">{p.foot}</div>
-          </div>
-
-          <div className="dots">
-            {PANELS.map((_,i) => (
-              <button key={i} className={i === panel ? 'on' : ''} onClick={() => setPanel(i)} aria-label={`Panel ${i+1}`} />
-            ))}
           </div>
         </aside>
       </div>
