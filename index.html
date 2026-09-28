@@ -525,6 +525,8 @@
   .resend:disabled{color:#B7B4E8;cursor:default}
 
   .formerr{background:#FFF3F6;border:1px solid #F3CEDA;color:#B92A61;padding:9px 12px;border-radius:10px;font-size:13px;margin:0 0 14px}
+  .softwarn{font-size:12.5px;color:#B92A61;background:#FFF1F5;border:1px solid #F3CEDA;
+    border-radius:10px;padding:8px 11px;margin-top:8px;line-height:1.45}
   .formnote{background:#EEF8F3;border:1px solid #C6E6D6;color:#0B7A50;padding:9px 12px;border-radius:10px;font-size:13px;margin:0 0 14px}
   .verifybox{background:#FAFAFD;border:1px solid var(--line);border-radius:14px;padding:22px 20px;text-align:center;margin:4px 0 18px}
   .venvelope{font-size:34px;line-height:1;margin-bottom:12px}
@@ -1059,13 +1061,13 @@ function FireIcon({level = 1}){
 
 const EnergyIcon = ({v}) => v < 0 ? <LotusIcon /> : v > 0 ? <FireIcon level={v} /> : <span style={{opacity:.5}}>–</span>;
 
-// Cost scales with how long the task runs: a high-energy hour costs 3, a
-// high-energy three hours costs 9. Unscheduled tasks count as an hour.
-const taskHours = t => {
+// Cost is the level once per half hour: low is 1 for 30 minutes and 2 for an
+// hour, medium 2 and 4, high 3 and 6. Unscheduled tasks count as half an hour.
+const taskHalves = t => {
   if(!t.start || !t.end) return 1;
-  return ((((toMin(t.end) - toMin(t.start)) % 1440) + 1440) % 1440) / 60;
+  return ((((toMin(t.end) - toMin(t.start)) % 1440) + 1440) % 1440) / 30;
 };
-const taskEnergy = t => Math.round((t.energy || 0) * taskHours(t) * 10) / 10;
+const taskEnergy = t => Math.round((t.energy || 0) * taskHalves(t) * 10) / 10;
 const fmtE = n => Number.isInteger(n) ? String(n) : n.toFixed(1);
 
 const energyLabel = v => (ENERGY.find(e => e[0] === (v || 0)) || ENERGY[1])[1];
@@ -1624,8 +1626,9 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
       <div className="spread dayhead">
         <DateNav label={fmtDay(date)} onPrev={() => setDate(addDays(date,-1))} onNext={() => setDate(addDays(date,1))} onToday={() => setDate(new Date())} />
         <div className="row" style={{gap:8}}>
-          <button data-tour="energy" className="energybtn" onClick={() => onEditBase && onEditBase()}
-            title="Change your baseline">
+          <button data-tour="energy" className="energybtn" disabled={!onEditBase}
+            onClick={() => onEditBase && onEditBase()}
+            title={onEditBase ? 'Change your baseline' : 'Viewing only'}>
             <EnergyPill total={dayEnergy(tasks, dk)} base={energyBase} />
           </button>
           <button className="btn primary" onClick={newBlock}>+ New time block</button>
@@ -3574,10 +3577,12 @@ function Auth(){
         <>
           <label className="flabel">Their PlanIt username</label>
           <input className="finput" value={refBy} onChange={e => setRefBy(e.target.value)}
-            placeholder="Enter their username here" autoComplete="off" />
-          <div className="avail hint" style={{marginTop:-10}}>
-            They get credit toward a free month of Pro.
-          </div>
+            placeholder="Their username" autoCapitalize="off" autoCorrect="off" />
+          {refBy.trim()
+            ? <div className="formnote">They get credit toward a free month of Pro.</div>
+            : <div className="softwarn">
+                Add their username or they won't get credit. You can still continue without it.
+              </div>}
         </>
       )}
     </>
@@ -3785,6 +3790,7 @@ function Auth(){
           </div>
         </aside>
       </div>
+    {legalOpen && <LegalModal kind={legalOpen} onClose={() => setLegalOpen(null)} />}
     </div>
   );
 }
@@ -4282,7 +4288,6 @@ function Onboarding({user, onDone}){
           </p>
         </aside>
       </div>
-      {legalOpen && <LegalModal kind={legalOpen} onClose={() => setLegalOpen(null)} />}
     </div>
   );
 }
@@ -4770,8 +4775,8 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
   const [form, setForm] = useState(null);
   useEffect(() => {
     if(profile && !form) setForm({
-      name: profile.name || '', dob: profile.dob || '', grade: profile.grade || '',
-      stage: profile.stage || 'hs',
+      name: profile.name || user.name || '', dob: profile.dob || user.dob || '',
+      grade: profile.grade || user.grade || '', stage: profile.stage || user.stage || 'hs',
       gender: profile.gender || '', school: profile.school || ''
     });
   }, [profile, form]);
@@ -4958,8 +4963,10 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
               <span style={{fontSize:13.5}}>Your daily baseline</span>
               <b className="mono" style={{fontSize:20}}>{settings.energyBase || DEFAULT_BASE}</b>
             </div>
-            <EnergyStepper value={settings.energyBase || DEFAULT_BASE}
-              onChange={v => setSettings({...settings, energyBase:v})} />
+            {user.role === 'parent'
+              ? <div className="mono" style={{fontSize:22, fontWeight:600}}>{settings.energyBase || DEFAULT_BASE}</div>
+              : <EnergyStepper value={settings.energyBase || DEFAULT_BASE}
+                  onChange={v => setSettings({...settings, energyBase:v})} />}
             <div style={{fontSize:12.5, color:'var(--ink35)', marginTop:10, lineHeight:1.55}}>
               Tasks cost between −1 and 3. Your day turns orange within 5 of this number and red past that,
               which is the signal you've planned more than you can carry.
@@ -5823,20 +5830,6 @@ function App({user, onSignOut}){
       freezes, prevStreak:prev, brokenAt}).catch(() => {});
   }, [user.id]);
 
-  // first visit of the day gets the streak screen
-  useEffect(() => {
-    if(!ready || isParent) return;
-    const today = iso(new Date());
-    if((store.settings || DEFAULT_SETTINGS).streakSeen === today) return;
-    const t = setTimeout(() => setStreakPop(true), 600);
-    return () => clearTimeout(t);
-  }, [ready, isParent, store.settings]);
-
-  const closeStreakPop = () => {
-    setStreakPop(false);
-    setSettings({...(store.settings || DEFAULT_SETTINGS), streakSeen: iso(new Date())});
-  };
-
   const canRestore = sk.brokenAt === iso(new Date()) && sk.prev > 0 && sk.freezes > 0;
   const useFreeze = () => {
     if(!canRestore) return;
@@ -6020,6 +6013,20 @@ function App({user, onSignOut}){
 
   const settings = store.settings || DEFAULT_SETTINGS;
   const setSettings = next => { dirty.current = true; setStore(s => ({...s, settings:next})); };
+
+  // first visit of the day gets the streak screen
+  useEffect(() => {
+    if(!ready || isParent) return;
+    const today = iso(new Date());
+    if((store.settings || DEFAULT_SETTINGS).streakSeen === today) return;
+    const t = setTimeout(() => setStreakPop(true), 600);
+    return () => clearTimeout(t);
+  }, [ready, isParent, store.settings]);
+
+  const closeStreakPop = () => {
+    setStreakPop(false);
+    setSettings({...(store.settings || DEFAULT_SETTINGS), streakSeen: iso(new Date())});
+  };
 
   const readNews = settings.readNews || [];
   const baseDefault = (store.settings && store.settings.energyBase) || DEFAULT_BASE;
@@ -6679,7 +6686,7 @@ function App({user, onSignOut}){
           {tab === 'organize' && sub.organize === 'daily' &&
             <Daily date={date} setDate={setDate} tasks={view.tasks} add={addTask} update={updateTask} remove={removeTask} toast={toast}
               day={view.day || user.day || DEFAULT_DAY} energyBase={energyBase}
-              onEditBase={() => setBaseEdit(true)}
+              onEditBase={isParent ? null : () => setBaseEdit(true)}
               setDay={d => { dirty.current = true; setStore(s => ({...s, day:d})); }} />}
           {tab === 'organize' && sub.organize === 'weekly' &&
             <Weekly date={date} setDate={setDate} tasks={view.tasks} events={view.events} addEvent={addEvent}
