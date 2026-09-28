@@ -652,17 +652,6 @@
   .tabcount{position:absolute;top:9px;right:9px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;
     background:#E03F7C;color:#fff;font-size:10.5px;font-weight:700;font-style:normal;display:grid;
     place-items:center;line-height:1}
-  .sidetoggle{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;
-    font-size:12.5px;font-weight:600;color:var(--ink60);margin-top:12px}
-  .sidetoggle:hover{border-color:#C6CBDC;color:var(--ink)}
-  .sidetoggle.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink,#fff)}
-  .pane-body.withside{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:22px;align-items:start}
-  .sidedock{border-left:1px solid var(--line);padding-left:20px;position:sticky;top:0}
-  .sidedock .dayhead{display:none}
-  @media (max-width:1100px){
-    .pane-body.withside{grid-template-columns:1fr}
-    .sidedock{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:18px;position:static}
-  }
   .reportgrid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:22px;align-items:start}
   @media (max-width:1000px){.reportgrid{grid-template-columns:1fr}}
   .chartrow{display:flex;align-items:flex-end;gap:10px;height:150px}
@@ -5846,7 +5835,6 @@ function App({user, onSignOut}){
   const [shieldList, setShieldList] = useState(false);
   const [shieldTab, setShieldTab] = useState('list');
   const [railOpen, setRailOpen] = useState(false);   // phone drawer
-  const [sideList, setSideList] = useState(false);   // List It docked beside the calendar
   const [tourDone, setTourDone] = useState(!!user.tutorialDone);
   const [streakPop, setStreakPop] = useState(false);
   const [tab, setTab] = useState('organize');
@@ -6676,13 +6664,7 @@ function App({user, onSignOut}){
           <div className="divider" />
         </div>
 
-        <div className={'pane-body' + (tab === 'organize' && sideList ? ' withside' : '')}>
-          {tab === 'organize' && (
-            <button className={'sidetoggle' + (sideList ? ' on' : '')} onClick={() => setSideList(v => !v)}>
-              📓 {sideList ? 'Hide List It' : 'Show List It'}
-            </button>
-          )}
-
+        <div className="pane-body">
           {tab === 'organize' && sub.organize === 'daily' &&
             <Daily date={date} setDate={setDate} tasks={view.tasks} add={addTask} update={updateTask} remove={removeTask} toast={toast}
               day={view.day || user.day || DEFAULT_DAY} energyBase={energyBase}
@@ -6697,18 +6679,6 @@ function App({user, onSignOut}){
             <Monthly date={date} setDate={setDate} events={view.events} addEvent={addEvent} updateEvent={updateEvent}
               removeEvent={removeEvent} setDaily={goDaily} toast={toast} tasks={view.tasks}
               update={updateTask} remove={removeTask} energyBase={energyBase} baseFor={baseFor} />}
-
-          {tab === 'organize' && sideList && (
-            <aside className="sidedock">
-              <div className="eyebrow" style={{marginBottom:8}}>List It · {fmtDay(date)}</div>
-              <ListIt sub="daily" date={date} setDate={setDate} tasks={view.tasks} add={addTask}
-                update={updateTask} remove={removeTask} setTab={setTab}
-                day={view.day || user.day || DEFAULT_DAY}
-                carryOver={!!(store.settings || DEFAULT_SETTINGS).carryOver}
-                setCarryOver={v => setSettings({...(store.settings || DEFAULT_SETTINGS), carryOver:v})}
-                toast={toast} />
-            </aside>
-          )}
 
           {tab === 'list' &&
             <ListIt sub={sub.list} date={date} setDate={setDate} tasks={view.tasks} add={addTask} update={updateTask} remove={removeTask}
