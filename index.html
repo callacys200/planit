@@ -372,6 +372,14 @@
     padding:16px;overflow:auto;text-align:left;z-index:2}
   .shieldlist b{font-size:15px}
   .shieldnote{color:rgba(255,255,255,.55);font-size:12px;margin:0 0 12px}
+  .shieldtabs{display:grid;grid-auto-flow:column;grid-auto-columns:max-content;gap:3px;padding:3px;
+    background:rgba(255,255,255,.08);border-radius:10px}
+  .shieldtabs button{border:0;background:transparent;color:rgba(255,255,255,.6);padding:5px 11px;
+    border-radius:8px;font-size:12px;font-weight:600}
+  .shieldtabs button.on{background:rgba(255,255,255,.18);color:#fff}
+  .slsched{border-left:3px solid;padding:8px 0 8px 10px;margin-bottom:8px}
+  .slsched .sltitle{font-size:13.5px;margin-top:1px}
+  .slsched.done{opacity:.45}
   .slrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.08)}
   .slrow:last-child{border-bottom:0}
   .sltitle{flex:1;min-width:0;font-size:13.5px;word-break:break-word}
@@ -408,6 +416,14 @@
     padding:24px 24px 20px;text-align:center;box-shadow:0 30px 70px -20px rgba(20,23,42,.55);transition:all .3s}
   .tutcard.bottom{top:auto;bottom:22px;transform:translateX(-50%)}
   .tutcard.top{top:22px;transform:translateX(-50%)}
+  .estep{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+  .estep button{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);
+    font-size:20px;font-weight:700;color:var(--ink60);padding:0;line-height:1}
+  .estep button:hover{border-color:var(--accent);color:var(--ink)}
+  .estep input{width:76px;text-align:center;font-family:"IBM Plex Mono",monospace;font-size:22px;
+    font-weight:600;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--soft)}
+  .esteprec{width:100%;font-size:11.5px;color:#7A4FE0;font-weight:600}
+  .energybtn{border:0;background:transparent;padding:0}
   .eslider{position:relative;padding:6px 0 24px}
   .eslider input{position:relative;width:100%;padding:0;z-index:1;background:transparent}
   .eband{position:absolute;top:6px;height:18px;border-radius:6px;background:rgba(130,90,230,.28);
@@ -427,6 +443,27 @@
   .tutskip:hover{color:var(--ink60);text-decoration:underline}
   .streak{color:#D9621A !important;font-weight:600}
   .streakbig{font-size:32px;line-height:1}
+  .streakwrap{position:fixed;inset:0;z-index:8500;background:rgba(12,10,20,.72);display:grid;
+    place-items:center;padding:20px;animation:fade .25s ease}
+  .streakcard{background:var(--card);border-radius:24px;padding:32px 28px 26px;width:min(340px,100%);
+    text-align:center;box-shadow:0 30px 80px -20px rgba(0,0,0,.6);animation:popin .4s cubic-bezier(.2,.9,.3,1.2)}
+  @keyframes popin{from{transform:scale(.82) translateY(14px);opacity:0}}
+  .streakflame{font-size:72px;line-height:1;margin-bottom:6px;
+    animation:flicker 2.4s ease-in-out infinite;transform-origin:50% 90%}
+  @keyframes flicker{0%,100%{transform:scale(1) rotate(-1deg)}50%{transform:scale(1.07) rotate(1deg)}}
+  .streakflame.frozen{animation:none;filter:drop-shadow(0 0 14px rgba(90,160,255,.6))}
+  .streakflame.out{animation:goingout 2.6s ease-in forwards}
+  @keyframes goingout{
+    0%{transform:scale(1);opacity:1;filter:grayscale(0)}
+    55%{transform:scale(.7) rotate(4deg);opacity:.75;filter:grayscale(.4)}
+    100%{transform:scale(.34);opacity:.28;filter:grayscale(1)}
+  }
+  .streaknum{font-size:56px;font-weight:800;letter-spacing:-.04em;line-height:1}
+  .streakcard.frozen .streaknum{color:#3E8CD8}
+  .streakcard.out .streaknum{color:var(--ink35)}
+  .streakword{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink35);
+    font-weight:700;margin-top:2px}
+  .streakline{color:var(--ink60);font-size:14px;line-height:1.55;margin:14px 0 0}
   .crash{max-width:520px;margin:12vh auto;padding:28px 24px;text-align:center}
   .crash h2{font-size:22px;font-weight:800;margin-bottom:6px}
   .crash p{color:var(--ink60);font-size:14px;margin:0 0 16px}
@@ -514,6 +551,11 @@
   .sbar i.on{background:#E2761B}
   .sbar i.on.s3,.sbar i.on.s4{background:#0F9E68}
   .ok{color:#0F9E68;font-weight:700}
+  .consent{display:grid;gap:10px;margin:4px 0 16px;text-align:left}
+  .consent label{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;color:var(--ink60);line-height:1.5}
+  .consent input{width:16px;height:16px;margin-top:1px;flex:none}
+  .inlink{border:0;background:transparent;padding:0;color:var(--org);font-weight:600;
+    font-size:12.5px;text-decoration:underline}
   .fineprint{font-size:11.5px;color:var(--ink35);line-height:1.55;margin:20px auto 0;text-align:center;max-width:400px}
 
   .authright{background:linear-gradient(165deg,#F7F6FE,#EFEDFB 55%,#F4EFFA);border-left:1px solid var(--line);padding:60px 52px;display:flex;flex-direction:column;justify-content:center}
@@ -572,6 +614,19 @@
   .rolecard.on{border-color:var(--org);box-shadow:0 0 0 3px var(--accent-soft)}
   .rolecard b{display:block;font-size:15px}
   .rolecard small{display:block;color:var(--ink35);font-size:12.5px;margin-top:2px;line-height:1.45}
+  .bgswatch{width:42px;height:42px;border-radius:12px;border:2px solid var(--line);padding:0;transition:.14s}
+  .bgswatch:hover{transform:scale(1.06)}
+  .bgswatch.on{border-color:var(--ink);box-shadow:0 0 0 3px var(--accent-soft)}
+  .palette{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);
+    padding:7px 12px;border-radius:99px;font-size:13px;font-weight:600}
+  .palette:hover{border-color:#C6CBDC}
+  .swatches{display:flex;gap:2px}
+  .swatches i{width:9px;height:14px;border-radius:2px;display:block}
+  .colorrow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;
+    border-bottom:1px solid var(--line);font-size:14px;font-weight:500}
+  .colorrow:last-of-type{border-bottom:0}
+  .colorrow input[type=color]{width:44px;height:28px;padding:0;border:1px solid var(--line);
+    border-radius:8px;background:none;cursor:pointer}
   .pickhead{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;margin-bottom:6px}
   .pickhead b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pickrow{display:flex;align-items:flex-start;gap:10px;padding:7px 0;cursor:pointer}
@@ -595,6 +650,17 @@
   .tabcount{position:absolute;top:9px;right:9px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;
     background:#E03F7C;color:#fff;font-size:10.5px;font-weight:700;font-style:normal;display:grid;
     place-items:center;line-height:1}
+  .sidetoggle{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;
+    font-size:12.5px;font-weight:600;color:var(--ink60);margin-top:12px}
+  .sidetoggle:hover{border-color:#C6CBDC;color:var(--ink)}
+  .sidetoggle.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink,#fff)}
+  .pane-body.withside{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:22px;align-items:start}
+  .sidedock{border-left:1px solid var(--line);padding-left:20px;position:sticky;top:0}
+  .sidedock .dayhead{display:none}
+  @media (max-width:1100px){
+    .pane-body.withside{grid-template-columns:1fr}
+    .sidedock{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:18px;position:static}
+  }
   .reportgrid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:22px;align-items:start}
   @media (max-width:1000px){.reportgrid{grid-template-columns:1fr}}
   .chartrow{display:flex;align-items:flex-end;gap:10px;height:150px}
@@ -648,6 +714,19 @@
   .legaldoc{font-size:13.5px;line-height:1.65;color:var(--ink60)}
   .legaldoc h4{font-family:"Plus Jakarta Sans",sans-serif;font-size:14.5px;color:var(--ink);margin:18px 0 4px}
   .legaldoc p{margin:0}
+  .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+  .plan{border:1px solid var(--line);border-radius:var(--r);padding:20px 18px;background:var(--card);position:relative}
+  .plan.best{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .planflag{position:absolute;top:-10px;left:18px;background:var(--accent);color:var(--accent-ink,#fff);
+    font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:99px;letter-spacing:.04em}
+  .planname{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink35);font-weight:700}
+  .planprice{font-size:30px;font-weight:800;letter-spacing:-.03em;margin:4px 0 12px}
+  .planprice small{font-size:13px;font-weight:500;color:var(--ink35)}
+  .plan ul{list-style:none;padding:0;margin:0 0 16px;font-size:13px;color:var(--ink60)}
+  .plan li{padding:5px 0 5px 18px;position:relative;line-height:1.45}
+  .plan li::before{content:"";position:absolute;left:2px;top:12px;width:8px;height:4px;
+    border-left:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(-45deg)}
+  .planalt{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink60)}
   .procard{border:1px solid var(--line);border-radius:var(--r);padding:22px;background:var(--card)}
   .prohead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
   .prohead h3{font-family:"Plus Jakarta Sans",sans-serif;font-size:22px;font-weight:800;margin-top:2px}
@@ -864,8 +943,13 @@ const CONFIG = {
   // Your own account's user ID, from Firebase Console → Authentication → Users.
   // Fill this in and Settings shows you where signups are coming from.
   ADMIN_UID: '',
-  PRO_CHECKOUT_URL: '',
-  PRO_PRICE: '$3',
+  // Stripe Payment Links. Leave empty and the buttons say "coming soon"
+  // instead of pretending to take money.
+  PRO_CHECKOUT_URL: '',          // $10 / month
+  PRO_YEAR_CHECKOUT_URL: '',     // $110 / year
+  GIFT_CHECKOUT_URL: '',         // gift a year to someone else
+  FREEZE_CHECKOUT_URL: '',       // 5 streak freezes
+  PRO_PRICE: '$10.59',
   // Shown at the bottom of the privacy policy and terms.
   CONTACT_EMAIL: '',
   // Set true to print video connection steps to the browser console.
@@ -1007,6 +1091,45 @@ function EnergyPill({total, base, small}){
 }
 
 const ENERGY_MIN = 1, ENERGY_MAX = 50, REC_LO = 25, REC_HI = 30;
+
+// Stepper rather than a slider: a slider is fiddly on a phone and imprecise
+// with a 1–50 range.
+function EnergyStepper({value, onChange, small}){
+  const set = v => { onChange(Math.max(ENERGY_MIN, Math.min(ENERGY_MAX, v))); buzz('light'); };
+  return (
+    <div className={'estep' + (small ? ' sm' : '')}>
+      <button onClick={() => set(value - 1)} aria-label="Less">−</button>
+      <input type="number" min={ENERGY_MIN} max={ENERGY_MAX} value={value}
+        onChange={e => onChange(Math.max(ENERGY_MIN, Math.min(ENERGY_MAX, +e.target.value || ENERGY_MIN)))} />
+      <button onClick={() => set(value + 1)} aria-label="More">+</button>
+      <span className="esteprec">{REC_LO}–{REC_HI} recommended</span>
+    </div>
+  );
+}
+
+function EnergyBaseEditor({value, onClose, onApply}){
+  const [v, setV] = useState(value);
+  return (
+    <Modal title="Daily energy baseline" onClose={onClose}>
+      <p style={{marginTop:0, color:'var(--ink60)', fontSize:13.5}}>
+        How much a normal day holds for you. Days turn orange within 5 of this and red past it.
+      </p>
+      <div style={{textAlign:'center', margin:'6px 0 18px'}}>
+        <EnergyStepper value={v} onChange={setV} />
+      </div>
+      <div className="eyebrow" style={{marginBottom:8}}>Apply this to</div>
+      <button className="rolecard" onClick={() => onApply(v, 'today')}>
+        <span><b>Just today</b><small>Other days keep the usual number.</small></span>
+      </button>
+      <button className="rolecard" onClick={() => onApply(v, 'future')}>
+        <span><b>Today and future days</b><small>Past days are left as they were.</small></span>
+      </button>
+      <button className="rolecard" onClick={() => onApply(v, 'all')}>
+        <span><b>Every day</b><small>Replaces your baseline everywhere.</small></span>
+      </button>
+    </Modal>
+  );
+}
 
 function EnergySlider({value, onChange}){
   const pct = v => (v - ENERGY_MIN) / (ENERGY_MAX - ENERGY_MIN) * 100;
@@ -1191,6 +1314,7 @@ function seed(){
 
 /* ============ small components ============ */
 function Modal({title, onClose, children, footer}){
+  useEffect(() => { buzz('light'); }, []);
   useEffect(() => {
     const k = e => { if(e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
@@ -1260,7 +1384,7 @@ const Check = ({on, onClick}) => (
 );
 
 /* ============ ORGANIZE IT — daily ============ */
-function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, energyBase}){
+function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, energyBase, onEditBase}){
   const dk = iso(date);
   const dayTasks = tasks.filter(t => t.scope === 'daily' && occursOn(t, dk));
   const tray = dayTasks.filter(t => !t.start);
@@ -1322,6 +1446,7 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
   }, []);
 
   const beginDrag = (pt, task, mode) => {
+    buzz('medium');
     const offset = mode === 'move' ? yToMin(pt.clientY) - norm(toMin(task.start)) : 0;
     document.body.classList.add('dragging');
     setDrag({id:task.id, mode, offset, task});
@@ -1348,7 +1473,7 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
       window.addEventListener('pointercancel', stop);
       pending.current = setTimeout(() => {
         stop();
-        if(navigator.vibrate) navigator.vibrate(8);
+        buzz('medium');
         beginDrag({clientX:sx, clientY:sy}, task, mode);
       }, 260);
       return;
@@ -1377,6 +1502,7 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
     const up = e => {
       // dropped back on the tray: it keeps its name and colour, loses its time
       if(drag.mode === 'move' && overTrayNow(e.clientX, e.clientY)){
+        buzz('light');
         update(drag.id, {start:null, end:null});
         toast('Moved to unscheduled');
         setOverTray(false);
@@ -1391,6 +1517,7 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
         if(inside){
           const s = yToMin(e.clientY);
           update(drag.id, {start:wire(s), end:wire(Math.min(endM, s+60))});
+          buzz('light');
           toast('Added to the schedule');
         }
         setGhost(null);
@@ -1497,7 +1624,10 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
       <div className="spread dayhead">
         <DateNav label={fmtDay(date)} onPrev={() => setDate(addDays(date,-1))} onNext={() => setDate(addDays(date,1))} onToday={() => setDate(new Date())} />
         <div className="row" style={{gap:8}}>
-          <span data-tour="energy"><EnergyPill total={dayEnergy(tasks, dk)} base={energyBase} /></span>
+          <button data-tour="energy" className="energybtn" onClick={() => onEditBase && onEditBase()}
+            title="Change your baseline">
+            <EnergyPill total={dayEnergy(tasks, dk)} base={energyBase} />
+          </button>
           <button className="btn primary" onClick={newBlock}>+ New time block</button>
         </div>
       </div>
@@ -1812,7 +1942,7 @@ function BlockEditor({block, day, onClose, onSave, onDelete, occ, add, update, r
 }
 
 /* ============ ORGANIZE IT — weekly ============ */
-function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEvent, setDaily, update, remove, add, day, toast, energyBase}){
+function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEvent, setDaily, update, remove, add, day, toast, energyBase, baseFor}){
   const s = startOfWeek(date);
   const days = Array.from({length:7}, (_,i) => addDays(s,i));
   const wk = weekKey(date);
@@ -1860,7 +1990,7 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
       window.addEventListener('pointerup', stop);
       hold.current = setTimeout(() => {
         stop();
-        if(navigator.vibrate) navigator.vibrate(8);
+        buzz('medium');
         beginDrag({clientX:sx, clientY:sy}, task, from);
       }, 260);
       return;
@@ -1893,6 +2023,7 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
         }
       } else if(dk2){
         update(drag.task.id, {scope:'daily', date:dk2, onWeek:true, anchor:null});
+        buzz('light');
         toast(`Moved to ${DOW[parseISO(dk2).getDay()]}`);
       }
       setDrag(null); setGhost(null); setOverDay(null);
@@ -1934,7 +2065,7 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
               <h4>
                 <span className="spread">
                   <span>{DOW[d.getDay()]}<small>{MON[d.getMonth()].slice(0,3)} {d.getDate()}</small></span>
-                  <EnergyPill small total={dayEnergy(tasks, dk)} base={energyBase} />
+                  <EnergyPill small total={dayEnergy(tasks, dk)} base={baseFor ? baseFor(dk) : energyBase} />
                 </span>
               </h4>
               <div className="inner">
@@ -2050,7 +2181,7 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
 }
 
 /* ============ ORGANIZE IT — monthly ============ */
-function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, setDaily, toast, tasks, update, remove, energyBase}){
+function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, setDaily, toast, tasks, update, remove, energyBase, baseFor}){
   const first = new Date(date.getFullYear(), date.getMonth(), 1);
   const gridStart = startOfWeek(first);
   const cells = Array.from({length:42}, (_,i) => addDays(gridStart,i));
@@ -2078,7 +2209,7 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
       window.addEventListener('pointerup', stop);
       hold.current = setTimeout(() => {
         stop();
-        if(navigator.vibrate) navigator.vibrate(8);
+        buzz('medium');
         start({clientX:sx, clientY:sy});
       }, 260);
       return;
@@ -2102,6 +2233,7 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
     const up = e => {
       const dk2 = dayUnder(e.clientX, e.clientY);
       if(dk2 && dk2 !== drag.date){
+        buzz('light');
         updateEvent(drag.id, {date:dk2});
         toast(`Moved to ${fmtDay(parseISO(dk2))}`);
       }
@@ -2155,8 +2287,9 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
                 <span className="dnum">{d.getDate()}</span>
                 {(() => {
                   const e = dayEnergy(tasks || [], dk);
-                  return e ? <span className={'cellbatt ' + energyState(e, energyBase)} title={`${e} of ${energyBase} energy`}>
-                    <Battery fill={energyBase ? e/energyBase : 0} size={12} />
+                  const b = baseFor ? baseFor(dk) : energyBase;
+                  return e ? <span className={'cellbatt ' + energyState(e, b)} title={`${e} of ${b} energy`}>
+                    <Battery fill={b ? e/b : 0} size={12} />
                   </span> : null;
                 })()}
               </div>
@@ -2646,8 +2779,8 @@ function BragIt({sub, ecs, add, update, remove, toast, stage}){
                   <div className="org">{e.org || (e.actType || '')}</div>
                 </div>
                 <div className="ec-actions">
-                  <span className="prio" title={`Importance ${e.priority} of 5`}>
-                    {[1,2,3,4,5].map(n => <i key={n} className={n <= e.priority ? 'on' : ''} />)}
+                  <span className="prio" title={`Importance ${e.priority || 0} of 5`}>
+                    {[1,2,3,4,5].map(n => <i key={n} className={n <= (e.priority || 0) ? 'on' : ''} />)}
                   </span>
                   <button className="btn sm" onClick={() => setEditing(e)}>Edit</button>
                   <XBtn onClick={() => remove(e.id)} />
@@ -2837,8 +2970,8 @@ function EcEditor({ec, onClose, onSave, stage}){
         </span>
       </label>
 
-      <Field label={`How important is this to you? (${f.priority} of 5)`}>
-        <input type="range" min="1" max="5" value={f.priority}
+      <Field label={`How important is this to you? (${f.priority || 0} of 5)`}>
+        <input type="range" min="0" max="5" value={f.priority || 0}
           onChange={e => set('priority', +e.target.value)} style={{padding:0}} />
       </Field>
 
@@ -2969,9 +3102,7 @@ function LockIt({sub, lock, running, left, minutes, start, pause, reset, toast, 
           )}
 
           <button className={'soundtoggle' + (sound ? ' on' : '')} onClick={() => setSound(!sound)}
-            aria-pressed={sound} title={sound ? 'Sound is on' : 'Sound is off'}>
-            Sound
-          </button>
+            aria-pressed={sound} title={sound ? 'Sound is on' : 'Sound is off'}>Sound</button>
 
           <div className="timerbtns">
             {!running
@@ -3262,9 +3393,11 @@ function Auth(){
   const [note, setNote] = useState('');
   const [cool, setCool] = useState(0);
   const [panel, setPanel] = useState(0);
+  const [legalOpen, setLegalOpen] = useState(null);
   const [avail, setAvail] = useState(null);          // null | 'checking' | 'free' | 'taken' | 'invalid' | 'offline'
   const [refBy, setRefBy] = useState('');
   const [source, setSource] = useState('');
+  const [agree, setAgree] = useState({terms:false, privacy:false, guardian:false});
 
   // reloaded mid-flow, or signed in with Google but never picked a username
   useEffect(() => { (async () => {
@@ -3318,6 +3451,7 @@ function Auth(){
   const strengthLabel = ['Too short','Weak','Okay','Strong','Very strong'][strength];
 
   const signUp = async () => {
+    if(!agree.terms || !agree.privacy) return setErr('Please agree to the terms and the privacy policy.');
     const u = username.trim();
     if(!validUsername(u)) return setErr('Usernames are 3–20 characters: letters, numbers, underscores, and periods.');
     if(pw.length < 8) return setErr('Passwords need at least 8 characters.');
@@ -3334,7 +3468,7 @@ function Auth(){
     try{
       await reserveUsername(u, cred.user);
       if(source === 'friend') await recordReferral(cred.user.uid, refBy);
-      saveProfile(cred.user.uid, {source}).catch(() => {});
+      saveProfile(cred.user.uid, {source, agreedAt:Date.now(), guardianConsent:!!agree.guardian}).catch(() => {});
       recordSignup(cred.user.uid, source, refBy);
     }catch(e){
       // someone claimed it in the seconds between the check and the write
@@ -3352,13 +3486,14 @@ function Auth(){
   };
 
   const claimUsername = async () => {
+    if(!agree.terms || !agree.privacy) return setErr('Please agree to the terms and the privacy policy.');
     const u = username.trim();
     if(!validUsername(u)) return setErr('Usernames are 3–20 characters: letters, numbers, underscores, and periods.');
     setBusy(true); setErr('');
     try{
       await reserveUsername(u, auth.currentUser);
       if(source === 'friend') await recordReferral(auth.currentUser.uid, refBy);
-      saveProfile(auth.currentUser.uid, {source}).catch(() => {});
+      saveProfile(auth.currentUser.uid, {source, agreedAt:Date.now(), guardianConsent:!!agree.guardian}).catch(() => {});
       recordSignup(auth.currentUser.uid, source, refBy);
       await auth.currentUser.updateProfile({displayName:u});
       window.location.reload();
@@ -3446,6 +3581,24 @@ function Auth(){
         </>
       )}
     </>
+  );
+
+  const consentBoxes = (
+    <div className="consent">
+      <label>
+        <input type="checkbox" checked={agree.terms} onChange={e => setAgree({...agree, terms:e.target.checked})} />
+        <span>I agree to the <button type="button" className="inlink" onClick={() => setLegalOpen('terms')}>terms and conditions</button>.</span>
+      </label>
+      <label>
+        <input type="checkbox" checked={agree.privacy} onChange={e => setAgree({...agree, privacy:e.target.checked})} />
+        <span>I agree to the <button type="button" className="inlink" onClick={() => setLegalOpen('privacy')}>privacy policy</button>.</span>
+      </label>
+      <label>
+        <input type="checkbox" checked={agree.guardian} onChange={e => setAgree({...agree, guardian:e.target.checked})} />
+        <span>By selecting this box, you agree that you are the child's guardian, and agree to the terms and
+        conditions, the privacy policy, and your child's use of this application.</span>
+      </label>
+    </div>
   );
 
   const Err = () => err ? <div className="formerr" role="alert">{err}</div> : null;
@@ -3537,6 +3690,7 @@ function Auth(){
                     onKeyDown={e => e.key === 'Enter' && claimUsername()} placeholder="Enter your username here" autoComplete="username" />
                   <Avail />
                   {sourceFields}
+                  {consentBoxes}
                   <Err />
                   <button className="pillbtn" disabled={busy || avail === 'taken' || avail === 'invalid'} onClick={claimUsername}>
                     {busy ? 'Saving…' : 'Save username'} <IconArrow />
@@ -3571,6 +3725,7 @@ function Auth(){
                     </div>
                   )}
                   {sourceFields}
+                  {consentBoxes}
                   <Err />
                   <button className="pillbtn" disabled={busy || avail === 'taken' || avail === 'invalid'} onClick={signUp}>
                     {busy ? 'Creating…' : 'Continue'} <IconArrow />
@@ -3689,6 +3844,16 @@ const ICE = () => ({
     ...(CONFIG.TURN && CONFIG.TURN.urls ? [CONFIG.TURN] : [])
   ]
 });
+
+// The Swift plugin, when PlanIt is running as an iOS app. In a browser this
+// stays undefined and the interface says so instead of offering a dead switch.
+// The website has no haptics and no app blocking — both are iOS-app features.
+// These stubs keep the shared call sites harmless.
+const buzz = () => {};
+const setHaptics = () => {};
+
+const Blocker = () => null;
+const blockerReady = () => false;
 
 const log = (...a) => { if(CONFIG.DEBUG_VIDEO) console.log('[planit-video]', ...a); };
 
@@ -4117,6 +4282,7 @@ function Onboarding({user, onDone}){
           </p>
         </aside>
       </div>
+      {legalOpen && <LegalModal kind={legalOpen} onClose={() => setLegalOpen(null)} />}
     </div>
   );
 }
@@ -4306,6 +4472,23 @@ function ViewIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
 }
 
 /* ============ SETTINGS ============ */
+const ACCENT_PRESETS = [
+  {id:'default',  label:'Default',       c:{brag:'#E09A12', list:'#0F9E68', organize:'#5350E8', lock:'#E03F7C'}},
+  {id:'fauna',    label:'Fauna',         c:{brag:'#DCBC98', list:'#2A3723', organize:'#B9BBA8', lock:'#0C0A08'}},
+  {id:'pastel',   label:'Pastel',        c:{brag:'#D2B6AB', list:'#9BA9AA', organize:'#B0B1B6', lock:'#B18C85'}},
+  {id:'academia', label:'Dark academia', c:{brag:'#BB8E76', list:'#B29E93', organize:'#5E1C1F', lock:'#160E08'}},
+  {id:'mono',     label:'Slate',         c:{brag:'#7A7F99', list:'#5E6580', organize:'#454B66', lock:'#8A6478'}},
+];
+const ACCENT_KEYS = [['brag','Brag It'],['list','List It'],['organize','Organize It'],['lock','Lock It']];
+const BG_PRESETS = [
+  ['#ECEEF5','Default'], ['#F4F1EA','Paper'], ['#EAF2EE','Mint'],
+  ['#F3EDF7','Lilac'], ['#F6EEEA','Blush'], ['#E9EDF2','Steel'],
+];
+const EVENT_KEYS = [['test','Test or quiz'],['deadline','Deadline'],['birthday','Birthday'],
+  ['meeting','Meeting'],['other','Other']];
+const EVENT_DEFAULTS = {test:'#E23D6D', deadline:'#E2761B', birthday:'#8A5CF6',
+  meeting:'#2F80ED', other:'#6B7280'};
+
 const SOURCE_LABELS = {friend:'A friend', social:'Social media', search:'A search',
   school:'School or a teacher', other:'Somewhere else', unsaid:'Did not say'};
 
@@ -4360,6 +4543,7 @@ function SignupSources({user}){
 
 function Referrals({user, toast}){
   const [count, setCount] = useState(null);
+  const REWARD_AT = 5;
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     countReferrals(user.id).then(setCount).catch(() => setCount(0));
@@ -4388,10 +4572,19 @@ function Referrals({user, toast}){
           <span className="mono">{Math.min(100, Math.round(n/goal*100))}%</span>
         </div>
         <div className="bar"><i style={{width:Math.min(100, n/goal*100) + '%'}} /></div>
-        <div style={{fontSize:12.5,color:'var(--ink35)',marginTop:10,lineHeight:1.5}}>
-          Five sign-ups earns free Pro for three months. Pro isn't built yet — your count is being kept
-          either way, so nothing is lost by sharing now.
-        </div>
+        {n >= REWARD_AT ? (
+          <div className="formnote" style={{marginTop:12, marginBottom:0}}>
+            <b>You've earned it.</b> {n} people signed up with your code — that's free Pro for three months.
+            <button className="btn sm primary" style={{marginLeft:10}} onClick={() => {
+              saveProfile(user.id, {referralRewardClaimed:Date.now()}).catch(() => {});
+              toast('Claim recorded — we\'ll apply it when Pro launches');
+            }}>Redeem</button>
+          </div>
+        ) : (
+          <div style={{fontSize:12.5,color:'var(--ink35)',marginTop:10,lineHeight:1.5}}>
+            {REWARD_AT - n} more and Pro is free for three months. Counts are kept as you go.
+          </div>
+        )}
       </div>
     </Section>
   );
@@ -4735,6 +4928,14 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
                 <small>{streakInfo.freezes} {streakInfo.freezes === 1 ? 'freeze' : 'freezes'}</small>
               </div>
             </div>
+            <div className="spread" style={{marginTop:14, paddingTop:12, borderTop:'1px solid var(--line)'}}>
+              <span style={{fontSize:13, color:'var(--ink60)'}}>Need more?</span>
+              {CONFIG.FREEZE_CHECKOUT_URL
+                ? <a className="btn sm" href={CONFIG.FREEZE_CHECKOUT_URL} target="_blank" rel="noopener noreferrer">
+                    Buy 5 freezes
+                  </a>
+                : <button className="btn sm" disabled title="Payments aren't switched on yet">Buy freezes — soon</button>}
+            </div>
             {canRestore ? (
               <div className="formnote" style={{marginTop:14, marginBottom:0}}>
                 Your {streakInfo.prev}-day streak ended. Use a freeze to keep it going?
@@ -4742,8 +4943,8 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
               </div>
             ) : (
               <div style={{fontSize:12, color:'var(--ink35)', marginTop:12, lineHeight:1.5}}>
-                You earn a freeze every 7 days in a row, up to 3. If you miss a day, come back that day
-                and one freeze restores the streak.
+                You start with five and earn one every 7 days in a row, up to ten. If you miss a day, come back
+                that day and one freeze restores the streak.
               </div>
             )}
           </div>
@@ -4757,7 +4958,7 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
               <span style={{fontSize:13.5}}>Your daily baseline</span>
               <b className="mono" style={{fontSize:20}}>{settings.energyBase || DEFAULT_BASE}</b>
             </div>
-            <EnergySlider value={settings.energyBase || DEFAULT_BASE}
+            <EnergyStepper value={settings.energyBase || DEFAULT_BASE}
               onChange={v => setSettings({...settings, energyBase:v})} />
             <div style={{fontSize:12.5, color:'var(--ink35)', marginTop:10, lineHeight:1.55}}>
               Tasks cost between −1 and 3. Your day turns orange within 5 of this number and red past that,
@@ -4797,6 +4998,71 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
           </div>
         </Section>
       )}
+
+      {sub === 'appearance' && (() => {
+        const accents = settings.accents || ACCENT_PRESETS[0].c;
+        return (
+          <>
+            <Section title="Tab colours" hint="Each section keeps its own colour across the app.">
+              <div className="row" style={{gap:9, flexWrap:'wrap', marginBottom:16}}>
+                {ACCENT_PRESETS.map(p => (
+                  <button key={p.id} className="palette" onClick={() => setSettings({...settings, accents:p.c})}>
+                    <span className="swatches">
+                      {['brag','list','organize','lock'].map(k => <i key={k} style={{background:p.c[k]}} />)}
+                    </span>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+              <div className="card">
+                {ACCENT_KEYS.map(([k,label]) => (
+                  <label key={k} className="colorrow">
+                    <span>{label}</span>
+                    <input type="color" value={accents[k]}
+                      onChange={e => setSettings({...settings, accents:{...accents, [k]:e.target.value}})} />
+                  </label>
+                ))}
+                <button className="btn sm" style={{marginTop:10}}
+                  onClick={() => setSettings({...settings, accents:null})}>Reset to default</button>
+              </div>
+            </Section>
+
+            <Section title="Background" hint="The colour behind the whole app.">
+              <div className="row" style={{gap:9, flexWrap:'wrap', marginBottom:12}}>
+                {BG_PRESETS.map(([hex,label]) => (
+                  <button key={hex} className={'bgswatch' + ((settings.bg || '#ECEEF5') === hex ? ' on' : '')}
+                    style={{background:hex}} onClick={() => setSettings({...settings, bg:hex})} title={label} />
+                ))}
+              </div>
+              <div className="card">
+                <label className="colorrow">
+                  <span>Pick your own</span>
+                  <input type="color" value={settings.bg || '#ECEEF5'}
+                    onChange={e => setSettings({...settings, bg:e.target.value})} />
+                </label>
+                <button className="btn sm" style={{marginTop:10}}
+                  onClick={() => setSettings({...settings, bg:null})}>Reset</button>
+              </div>
+            </Section>
+
+            <Section title="Monthly calendar" hint="The dot colour for each kind of date.">
+              <div className="card">
+                {EVENT_KEYS.map(([k,label]) => (
+                  <label key={k} className="colorrow">
+                    <span>{label}</span>
+                    <input type="color"
+                      value={(settings.eventColors && settings.eventColors[k]) || EVENT_DEFAULTS[k]}
+                      onChange={e => setSettings({...settings,
+                        eventColors:{...(settings.eventColors || {}), [k]:e.target.value}})} />
+                  </label>
+                ))}
+                <button className="btn sm" style={{marginTop:10}}
+                  onClick={() => setSettings({...settings, eventColors:null})}>Reset to default</button>
+              </div>
+            </Section>
+          </>
+        );
+      })()}
 
       {sub === 'security' && (
         <>
@@ -4880,34 +5146,64 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
         </>
       )}
 
-      {sub === 'pro' && (
-        <>
-          <Section title="PlanIt Pro">
-            <div className="procard">
-              <div className="prohead">
-                <div>
-                  <div className="eyebrow" style={{color:'var(--accent)'}}>Coming soon</div>
-                  <h3>PlanIt Pro</h3>
+      {sub === 'pro' && (() => {
+        const links = {
+          month: CONFIG.PRO_CHECKOUT_URL, year: CONFIG.PRO_YEAR_CHECKOUT_URL, gift: CONFIG.GIFT_CHECKOUT_URL,
+        };
+        const Buy = ({which, label}) => links[which]
+          ? <a className="btn primary wide" href={links[which]} target="_blank" rel="noopener noreferrer">{label}</a>
+          : <button className="btn primary wide" disabled title="Payments aren't switched on yet">Coming soon</button>;
+        return (
+          <>
+            <Section title="Choose a plan">
+              <div className="plans">
+                <div className="plan">
+                  <div className="planname">Free</div>
+                  <div className="planprice">$0</div>
+                  <ul>
+                    <li>Every planner feature</li>
+                    <li>Study rooms up to nine people</li>
+                    <li>Brag It and résumé export</li>
+                  </ul>
+                  <button className="btn wide" disabled>Your plan</button>
                 </div>
-                <div className="proprice" style={{fontSize:15}}>To be announced</div>
+
+                <div className="plan best">
+                  <div className="planflag">Most popular</div>
+                  <div className="planname">Pro</div>
+                  <div className="planprice">$10.59<small>/month</small></div>
+                  <ul>
+                    <li>Everything in Free</li>
+                    <li>More to be announced</li>
+                  </ul>
+                  <Buy which="month" label="Get Pro monthly" />
+                  <div className="planalt">
+                    or <b>$113.49 a year</b> — two months free
+                    <div style={{marginTop:8}}><Buy which="year" label="Get Pro yearly" /></div>
+                  </div>
+                </div>
+
+                <div className="plan">
+                  <div className="planname">Gift</div>
+                  <div className="planprice">$113.49<small>/year</small></div>
+                  <ul>
+                    <li>A year of Pro for someone else</li>
+                    <li>They get a code by email</li>
+                  </ul>
+                  <Buy which="gift" label="Gift a year" />
+                </div>
               </div>
-              <p style={{color:'var(--ink60)', fontSize:14, lineHeight:1.6, margin:'0 0 18px'}}>
-                What Pro includes and what it costs are to be announced.
-              </p>
-              {CONFIG.PRO_CHECKOUT_URL
-                ? <a className="btn primary wide" href={CONFIG.PRO_CHECKOUT_URL} target="_blank" rel="noopener noreferrer">Upgrade to Pro</a>
-                : <>
-                    <button className="btn primary wide" disabled>Not available yet</button>
-                    <div className="gnote" style={{marginTop:12}}>
-                      <b>To turn this on</b>
-                      Create a Stripe Payment Link, then paste its URL into <code>CONFIG.PRO_CHECKOUT_URL</code> at
-                      the top of index.html. Stripe hosts the checkout page, so no server is needed.
-                    </div>
-                  </>}
-            </div>
-          </Section>
-        </>
-      )}
+            </Section>
+
+            <Section title="How paying works">
+              <div className="card soft" style={{fontSize:13, color:'var(--ink60)', lineHeight:1.65}}>
+                Card details are entered on Stripe's own checkout page, never on PlanIt. That keeps card
+                numbers off this site entirely, which is both safer for you and required by card industry rules.
+              </div>
+            </Section>
+          </>
+        );
+      })()}
 
       {sub === 'feedback' && <BugReport user={user} toast={toast} />}
 
@@ -5202,7 +5498,7 @@ const NEWS = [
    body:"A short survey is going here. What you'd add, what gets in your way, what you'd actually pay for."},
 ];
 
-function NewsPanel({onClose, readIds, markRead, requests = [], onDecide, report, reportDue, onOpenReports}){
+function NewsPanel({onClose, readIds, markRead, requests = [], onDecide, report, reportDue, onOpenReports, referralReady, refCount, onOpenReferral}){
   // News gets marked read on open; requests don't — they stay until answered.
   useEffect(() => { markRead(NEWS.map(n => n.id)); }, [markRead]);
   return (
@@ -5231,6 +5527,19 @@ function NewsPanel({onClose, readIds, markRead, requests = [], onDecide, report,
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {referralReady && (
+        <div style={{marginBottom:20}}>
+          <div className="eyebrow" style={{marginBottom:9}}>You've earned something</div>
+          <div className="reqcard">
+            <b style={{fontSize:15, display:'block', marginBottom:4}}>🎉 {refCount} friends used your code</b>
+            <p style={{margin:'0 0 12px', fontSize:13, color:'var(--ink60)', lineHeight:1.55}}>
+              That's three months of PlanIt Pro, free. Claim it in Settings and it'll be applied when Pro launches.
+            </p>
+            <button className="btn primary" onClick={onOpenReferral}>Redeem it</button>
+          </div>
         </div>
       )}
 
@@ -5385,7 +5694,7 @@ function Tutorial({user, energyBase, setEnergyBase, onDone, goTo}){
               <span style={{fontSize:13.5, fontWeight:600}}>A normal day holds about</span>
               <b className="mono" style={{fontSize:22}}>{base}</b>
             </div>
-            <EnergySlider value={base} onChange={setBase} />
+            <EnergyStepper value={base} onChange={setBase} />
           </div>
         )}
 
@@ -5396,6 +5705,64 @@ function Tutorial({user, energyBase, setEnergyBase, onDone, goTo}){
             : <button className="btn primary" onClick={() => setI(i+1)}>Next</button>}
         </div>
         {!last && <button className="tutskip" onClick={finish}>Skip the tour</button>}
+      </div>
+    </div>
+  );
+}
+
+/* ============ DAILY STREAK POPUP ============ */
+// Shown once a day, on the first visit. Three faces: alive, frozen, or going
+// out — the last one is the only time it asks for anything.
+function StreakPopup({streak, prev, freezes, state, onUseFreeze, onBuy, onClose}){
+  useEffect(() => { buzz(state === 'out' ? 'warning' : 'success'); }, [state]);
+
+  const frozen = state === 'frozen';
+  const out = state === 'out';
+  const number = out ? prev : streak;
+
+  return (
+    <div className="streakwrap" onClick={onClose}>
+      <div className={'streakcard ' + state} onClick={e => e.stopPropagation()}>
+        <div className={'streakflame ' + state}>{frozen ? '🧊' : '🔥'}</div>
+
+        <div className="streaknum">{number}</div>
+        <div className="streakword">{number === 1 ? 'day' : 'days'}</div>
+
+        {!frozen && !out && (
+          <p className="streakline">
+            {streak < 3 ? "You're back. Keep it going."
+              : streak < 7 ? 'Nicely done — that adds up fast.'
+              : streak < 30 ? `${streak} days straight. That's a habit now.`
+              : `${streak} days. Genuinely impressive.`}
+          </p>
+        )}
+
+        {frozen && (
+          <p className="streakline">
+            You missed a day, so a freeze covered it. Your streak carries on.
+            <b style={{display:'block', marginTop:6}}>{freezes} {freezes === 1 ? 'freeze' : 'freezes'} left</b>
+          </p>
+        )}
+
+        {out && (
+          <>
+            <p className="streakline">
+              Your {prev}-day streak has gone out. No freezes left to save it.
+            </p>
+            <div className="row" style={{gap:8, justifyContent:'center', marginTop:14, flexWrap:'wrap'}}>
+              <button className="btn primary" onClick={onBuy}>Get more freezes</button>
+              <button className="btn" onClick={onClose}>Start again</button>
+            </div>
+          </>
+        )}
+
+        {!out && <button className="btn primary" style={{marginTop:16}} onClick={onClose}>
+          {frozen ? 'Thanks' : "Let's go"}
+        </button>}
+
+        {state === 'canfreeze' && (
+          <button className="btn" style={{marginTop:8}} onClick={onUseFreeze}>Use a freeze</button>
+        )}
       </div>
     </div>
   );
@@ -5420,7 +5787,7 @@ const TABS = [
    subs:[['children','Children']]},
   {id:'settings', emoji:'⚙️', label:'Settings',   sub:'Account', color:'var(--set)',
    title:'Settings', tagline:'Your account, how PlanIt looks, and what it can do.',
-   subs:[['account','My account'],['security','Username & password'],
+   subs:[['account','My account'],['appearance','Appearance'],['security','Username & password'],
          ['notifications','Notifications'],['pro','PlanIt Pro'],['feedback','Report a bug'],['legal','Legal']]},
 ];
 const BASE_ACCENTS = {brag:'#E09A12', list:'#0F9E68', organize:'#5350E8', lock:'#E03F7C', settings:'#5A6178', watch:'#0E8F86'};
@@ -5434,7 +5801,7 @@ function App({user, onSignOut}){
   // A freeze is earned every 7 days of streak, up to 3 banked.
   const [sk, setSk] = useState({
     streak: user.streak || 0, best: user.bestStreak || 0,
-    freezes: user.freezes != null ? user.freezes : 1,
+    freezes: user.freezes != null ? user.freezes : 5,
     prev: user.prevStreak || 0, brokenAt: user.brokenAt || null,
   });
   const streak = sk.streak;
@@ -5442,26 +5809,40 @@ function App({user, onSignOut}){
     const today = iso(new Date());
     if(user.lastSeen === today) return;
     const yesterday = iso(addDays(new Date(), -1));
-    let freezes = user.freezes != null ? user.freezes : 1;
+    let freezes = user.freezes != null ? user.freezes : 5;
     let next, prev = 0, brokenAt = null;
     if(user.lastSeen === yesterday) next = (user.streak || 0) + 1;
     else {
       next = 1;
       if((user.streak || 0) > 1){ prev = user.streak; brokenAt = today; }
     }
-    if(next > 1 && next % 7 === 0) freezes = Math.min(3, freezes + 1);
+    if(next > 1 && next % 7 === 0) freezes = Math.min(10, freezes + 1);
     const best = Math.max(next, user.bestStreak || 0);
     setSk({streak:next, best, freezes, prev, brokenAt});
     saveProfile(user.id, {streak:next, bestStreak:best, lastSeen:today,
       freezes, prevStreak:prev, brokenAt}).catch(() => {});
   }, [user.id]);
 
+  // first visit of the day gets the streak screen
+  useEffect(() => {
+    if(!ready || isParent) return;
+    const today = iso(new Date());
+    if((store.settings || DEFAULT_SETTINGS).streakSeen === today) return;
+    const t = setTimeout(() => setStreakPop(true), 600);
+    return () => clearTimeout(t);
+  }, [ready, isParent, store.settings]);
+
+  const closeStreakPop = () => {
+    setStreakPop(false);
+    setSettings({...(store.settings || DEFAULT_SETTINGS), streakSeen: iso(new Date())});
+  };
+
   const canRestore = sk.brokenAt === iso(new Date()) && sk.prev > 0 && sk.freezes > 0;
   const useFreeze = () => {
     if(!canRestore) return;
     const restored = sk.prev + 1;
     const next = {...sk, streak:restored, best:Math.max(sk.best, restored),
-      freezes:sk.freezes - 1, prev:0, brokenAt:null};
+      freezes:sk.freezes - 1, prev:0, brokenAt:null, usedFreeze:true};
     setSk(next);
     saveProfile(user.id, {streak:restored, bestStreak:next.best, freezes:next.freezes,
       prevStreak:0, brokenAt:null}).catch(() => {});
@@ -5470,8 +5851,11 @@ function App({user, onSignOut}){
   const [sync, setSync] = useState({state:'idle'});
   const [newsOpen, setNewsOpen] = useState(false);
   const [shieldList, setShieldList] = useState(false);
+  const [shieldTab, setShieldTab] = useState('list');
   const [railOpen, setRailOpen] = useState(false);   // phone drawer
+  const [sideList, setSideList] = useState(false);   // List It docked beside the calendar
   const [tourDone, setTourDone] = useState(!!user.tutorialDone);
+  const [streakPop, setStreakPop] = useState(false);
   const [tab, setTab] = useState('organize');
   const [sub, setSub] = useState({brag:'honor', list:'daily', organize:'daily', lock:'focus', settings:'account', watch:'children'});
   const [date, setDate] = useState(new Date());
@@ -5514,6 +5898,11 @@ function App({user, onSignOut}){
   };
   const soundOn = () => (store.settings || DEFAULT_SETTINGS).sound !== false;
   const play = kind => {
+    // haptics fire whether or not sound is on — they are separate switches
+    if(kind === 'count')         buzz('light');
+    else if(kind === 'start')    buzz('medium');
+    else if(kind === 'workEnd')  buzz('heavy');
+    else if(kind === 'breakEnd') buzz('success');
     if(!soundOn() || !actx.current) return;
     if(kind === 'count')    tone(880, 0, 0.09, 0.13);            // one of the last five seconds
     if(kind === 'start')    { tone(620, 0, 0.11); tone(880, 0.12, 0.18); }
@@ -5633,13 +6022,41 @@ function App({user, onSignOut}){
   const setSettings = next => { dirty.current = true; setStore(s => ({...s, settings:next})); };
 
   const readNews = settings.readNews || [];
-  const energyBase = (store.settings && store.settings.energyBase) || DEFAULT_BASE;
+  const baseDefault = (store.settings && store.settings.energyBase) || DEFAULT_BASE;
+  const baseFor = dk => {
+    const o = (store.settings && store.settings.energyDays) || {};
+    return o[dk] != null ? o[dk] : baseDefault;
+  };
+  const energyBase = baseFor(iso(date));
+  const applyBase = (v, scope) => {
+    const st = store.settings || DEFAULT_SETTINGS;
+    const dk = iso(date);
+    if(scope === 'today'){
+      setSettings({...st, energyDays:{...(st.energyDays || {}), [dk]:v}});
+    } else if(scope === 'future'){
+      // clear any one-off days from here on, so the new number actually sticks
+      const kept = {};
+      Object.entries(st.energyDays || {}).forEach(([k,val]) => { if(k < dk) kept[k] = val; });
+      setSettings({...st, energyBase:v, energyDays:kept});
+    } else {
+      setSettings({...st, energyBase:v, energyDays:{}});
+    }
+    setBaseEdit(false);
+  };
+  const [baseEdit, setBaseEdit] = useState(false);
+  const [refCount, setRefCount] = useState(0);
+  useEffect(() => {
+    if(isParent) return;
+    countReferrals(user.id).then(setRefCount).catch(() => {});
+  }, [user.id, isParent]);
+  const referralReady = refCount >= 5 && !user.referralRewardClaimed;
+
   const report = useMemo(() => buildReport(store.lock), [store.lock]);
   const thisWeek = weekKey(new Date());
   // Out on Saturday, the day before everything rolls over.
   const isSaturday = new Date().getDay() === 6;
   const reportUnread = (isSaturday && report.minutes > 0 && settings.reportSeen !== thisWeek) ? 1 : 0;
-  const unreadNews = NEWS.filter(n => !readNews.includes(n.id)).length + pendingList.length + reportUnread;
+  const unreadNews = NEWS.filter(n => !readNews.includes(n.id)).length + pendingList.length + reportUnread + (referralReady ? 1 : 0);
   const markNewsRead = useCallback(ids => {
     setStore(s0 => {
       const st = s0.settings || DEFAULT_SETTINGS;
@@ -5703,6 +6120,10 @@ function App({user, onSignOut}){
   const startTimer = useCallback(() => {
     goFullscreen();
     ensureAudio();
+    const b = Blocker();
+    if(b && (store.settings || DEFAULT_SETTINGS).blockApps){
+      b.startShield({minutes: mode === 'pomo' ? pomo.work : minutes}).catch(() => {});
+    }
     lastBeep.current = null;
     play('start');
     if(mode === 'pomo'){
@@ -5722,6 +6143,7 @@ function App({user, onSignOut}){
 
   const pauseTimer = useCallback(() => {
     leaveFullscreen();
+    const b = Blocker(); if(b) b.stopShield().catch(() => {});
     if(endsAt.current) setLeft(Math.max(0, Math.round((endsAt.current - Date.now())/1000)));
     const secs = creditElapsed();
     endsAt.current = null;
@@ -5731,6 +6153,7 @@ function App({user, onSignOut}){
 
   const resetTimer = useCallback(m => {
     leaveFullscreen();
+    const b = Blocker(); if(b) b.stopShield().catch(() => {});
     creditElapsed();
     endsAt.current = null;
     runFrom.current = null;
@@ -5786,6 +6209,7 @@ function App({user, onSignOut}){
         lastBeep.current = null;
         creditElapsed();
         leaveFullscreen();
+        { const b = Blocker(); if(b) b.stopShield().catch(() => {}); }
         setRunning(false);
         setLeft(minutes*60);
         setStore(s => ({...s, lock:{...s.lock, sessions:s.lock.sessions+1}}));
@@ -6038,6 +6462,29 @@ function App({user, onSignOut}){
   }, [ready, isParent, user.id, toast]);
 
   // Coming back to a tab that slept: make sure we are not showing a stale copy.
+  // custom colours live on <html> so modals and the lock screen get them too
+  useEffect(() => {
+    const root = document.documentElement;
+    if(settings.bg) root.style.setProperty('--paper', settings.bg);
+    else root.style.removeProperty('--paper');
+    const ev = settings.eventColors || {};
+    ['test','deadline','birthday','meeting','other'].forEach(k => {
+      if(ev[k]) root.style.setProperty('--t-' + k, ev[k]);
+      else root.style.removeProperty('--t-' + k);
+    });
+  }, [settings.bg, settings.eventColors]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const a = settings.accents;
+    ['brag','list','organize','lock'].forEach(k => {
+      const hex = (a && a[k]) || BASE_ACCENTS[k];
+      if(a && a[k]) root.style.setProperty('--' + k, hex);
+      else root.style.removeProperty('--' + k);
+      root.style.setProperty('--' + (k === 'organize' ? 'org' : k) + '-ink', inkOn(hex));
+    });
+  }, [settings.accents]);
+
   useEffect(() => {
     if(!ready || isParent) return;
     const recheck = async () => {
@@ -6105,10 +6552,10 @@ function App({user, onSignOut}){
   const addEc = guard(_addEc), updateEc = guard(_updateEc), removeEc = guard(_removeEc);
 
   const meta = TABS.find(t => t.id === tab);
-  const accentHex = BASE_ACCENTS[tab];
+  const accentHex = (settings.accents && settings.accents[tab]) || BASE_ACCENTS[tab];
 
   // the lock screen takes its mood from whatever Lock It is set to
-  const lockHex = BASE_ACCENTS.lock;
+  const lockHex = (settings.accents && settings.accents.lock) || BASE_ACCENTS.lock;
   const shieldStyle = useMemo(() => {
     const [h, sat] = hexToHsl(lockHex);
     const S = Math.max(8, Math.min(58, sat));          // keep it deep, never neon
@@ -6222,19 +6669,39 @@ function App({user, onSignOut}){
           <div className="divider" />
         </div>
 
-        <div className="pane-body">
+        <div className={'pane-body' + (tab === 'organize' && sideList ? ' withside' : '')}>
+          {tab === 'organize' && (
+            <button className={'sidetoggle' + (sideList ? ' on' : '')} onClick={() => setSideList(v => !v)}>
+              📓 {sideList ? 'Hide List It' : 'Show List It'}
+            </button>
+          )}
+
           {tab === 'organize' && sub.organize === 'daily' &&
             <Daily date={date} setDate={setDate} tasks={view.tasks} add={addTask} update={updateTask} remove={removeTask} toast={toast}
               day={view.day || user.day || DEFAULT_DAY} energyBase={energyBase}
+              onEditBase={() => setBaseEdit(true)}
               setDay={d => { dirty.current = true; setStore(s => ({...s, day:d})); }} />}
           {tab === 'organize' && sub.organize === 'weekly' &&
             <Weekly date={date} setDate={setDate} tasks={view.tasks} events={view.events} addEvent={addEvent}
               updateEvent={updateEvent} removeEvent={removeEvent} setDaily={goDaily} update={updateTask}
-              remove={removeTask} add={addTask} day={view.day || user.day || DEFAULT_DAY} toast={toast} energyBase={energyBase} />}
+              remove={removeTask} add={addTask} day={view.day || user.day || DEFAULT_DAY} toast={toast}
+              energyBase={energyBase} baseFor={baseFor} />}
           {tab === 'organize' && sub.organize === 'monthly' &&
             <Monthly date={date} setDate={setDate} events={view.events} addEvent={addEvent} updateEvent={updateEvent}
               removeEvent={removeEvent} setDaily={goDaily} toast={toast} tasks={view.tasks}
-              update={updateTask} remove={removeTask} energyBase={energyBase} />}
+              update={updateTask} remove={removeTask} energyBase={energyBase} baseFor={baseFor} />}
+
+          {tab === 'organize' && sideList && (
+            <aside className="sidedock">
+              <div className="eyebrow" style={{marginBottom:8}}>List It · {fmtDay(date)}</div>
+              <ListIt sub="daily" date={date} setDate={setDate} tasks={view.tasks} add={addTask}
+                update={updateTask} remove={removeTask} setTab={setTab}
+                day={view.day || user.day || DEFAULT_DAY}
+                carryOver={!!(store.settings || DEFAULT_SETTINGS).carryOver}
+                setCarryOver={v => setSettings({...(store.settings || DEFAULT_SETTINGS), carryOver:v})}
+                toast={toast} />
+            </aside>
+          )}
 
           {tab === 'list' &&
             <ListIt sub={sub.list} date={date} setDate={setDate} tasks={view.tasks} add={addTask} update={updateTask} remove={removeTask}
@@ -6326,22 +6793,47 @@ function App({user, onSignOut}){
             const todays = store.tasks
               .filter(t => t.scope === 'daily' && occursOn(t, today))
               .sort((a,b) => (a.start || '~').localeCompare(b.start || '~'));
+            const scheduled = todays.filter(t => t.start);
+            const loose = todays.filter(t => !t.start);
             return (
               <div className="shieldlist">
                 <div className="spread" style={{marginBottom:10}}>
-                  <b>Today's list</b>
-                  <button className="x" style={{color:'#fff'}} onClick={() => setShieldList(false)} aria-label="Close list">×</button>
+                  <div className="shieldtabs">
+                    <button className={shieldTab === 'list' ? 'on' : ''} onClick={() => setShieldTab('list')}>List It</button>
+                    <button className={shieldTab === 'sched' ? 'on' : ''} onClick={() => setShieldTab('sched')}>Organize It</button>
+                  </div>
+                  <button className="x" style={{color:'#fff'}} onClick={() => setShieldList(false)} aria-label="Close">×</button>
                 </div>
                 <p className="shieldnote">The timer keeps running while this is open.</p>
-                {todays.length === 0
-                  ? <p className="shieldnote">Nothing on today's list.</p>
-                  : todays.map(t => (
-                    <div key={t.id} className={'slrow' + (isDone(t, today) ? ' done' : '')}>
-                      <Check on={isDone(t, today)} onClick={() => updateTask(t.id, toggleDone(t, today))} />
-                      <span className="sltitle">{t.title}</span>
-                      {t.start && <span className="mono sltime">{pretty(t.start)}</span>}
-                    </div>
-                  ))}
+
+                {shieldTab === 'list' ? (
+                  todays.length === 0
+                    ? <p className="shieldnote">Nothing on today's list.</p>
+                    : todays.map(t => (
+                      <div key={t.id} className={'slrow' + (isDone(t, today) ? ' done' : '')}>
+                        <Check on={isDone(t, today)} onClick={() => updateTask(t.id, toggleDone(t, today))} />
+                        <span className="sltitle">{t.title}</span>
+                        {t.start && <span className="mono sltime">{pretty(t.start)}</span>}
+                      </div>
+                    ))
+                ) : (
+                  scheduled.length === 0
+                    ? <p className="shieldnote">Nothing scheduled today.</p>
+                    : <>
+                        {scheduled.map(t => (
+                          <div key={t.id} className={'slsched' + (isDone(t, today) ? ' done' : '')}
+                            style={{borderLeftColor: blockHex(t.color) || 'rgba(255,255,255,.35)'}}>
+                            <div className="mono sltime">{pretty(t.start)} – {pretty(t.end)}</div>
+                            <div className="sltitle">{t.title}</div>
+                          </div>
+                        ))}
+                        {loose.length > 0 && (
+                          <p className="shieldnote" style={{marginTop:10}}>
+                            {loose.length} not scheduled yet
+                          </p>
+                        )}
+                      </>
+                )}
               </div>
             );
           })()}
@@ -6363,6 +6855,16 @@ function App({user, onSignOut}){
           onSave={d => setStore(s => ({...s, day:d}))} />
       )}
 
+      {streakPop && tourDone && ReactDOM.createPortal(
+        <StreakPopup
+          streak={sk.streak} prev={sk.prev || sk.best} freezes={sk.freezes}
+          state={canRestore ? 'canfreeze'
+            : (sk.brokenAt === iso(new Date()) && sk.freezes === 0) ? 'out'
+            : (sk.usedFreeze ? 'frozen' : 'alive')}
+          onUseFreeze={() => { useFreeze(); closeStreakPop(); }}
+          onBuy={() => { closeStreakPop(); setTab('settings'); setSub(p => ({...p, settings:'account'})); }}
+          onClose={closeStreakPop} />, document.body)}
+
       {!tourDone && ready && (
         <Tutorial user={user} energyBase={energyBase}
           setEnergyBase={v => setSettings({...(store.settings || DEFAULT_SETTINGS), energyBase:v})}
@@ -6370,8 +6872,12 @@ function App({user, onSignOut}){
           onDone={() => setTourDone(true)} />
       )}
 
+      {baseEdit && <EnergyBaseEditor value={energyBase} onClose={() => setBaseEdit(false)} onApply={applyBase} />}
+
       {newsOpen && <NewsPanel onClose={() => setNewsOpen(false)} readIds={readNews} markRead={markNewsRead}
         requests={pendingList} onDecide={decideLink} report={report} reportDue={isSaturday}
+        referralReady={referralReady} refCount={refCount}
+        onOpenReferral={() => { setNewsOpen(false); setTab('settings'); setSub(p => ({...p, settings:'account'})); }}
         onOpenReports={() => { setNewsOpen(false); setTab('lock'); setSub(p => ({...p, lock:'reports'})); }} />}
 
       {toastMsg && <div className="toast">{toastMsg}</div>}
