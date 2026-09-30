@@ -136,6 +136,12 @@
   .field input:focus,.field textarea:focus,.field select:focus{background:#fff;border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
   .field textarea{resize:vertical;min-height:70px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+  /* icons only, one row — the labels made this section scroll */
+  .erow{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+  .echip{display:grid;place-items:center;height:44px;border:1.5px solid var(--line);
+    background:var(--card);border-radius:12px;padding:0;transition:.14s}
+  .echip:hover{border-color:var(--accent)}
+  .echip.on{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 2px var(--accent-soft)}
   .navdate{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:11px;padding:2px;background:var(--card)}
   .navdate button{border:0;background:transparent;padding:6px 10px;border-radius:8px;color:var(--ink60);font-size:15px;line-height:1}
   .navdate button:hover{background:#F2F3F8;color:var(--ink)}
@@ -598,6 +604,18 @@
     .tipcard{margin-top:30px}
     .authleft{padding:34px 22px}
   }
+  @media (max-width:560px){
+    /* the block editor has to fit without a long scroll */
+    .modal .grid2{grid-template-columns:1fr 1fr;gap:9px}
+    .modal .field{margin-bottom:12px}
+    .modal .field > span{font-size:12.5px}
+    .modal input,.modal select,.modal textarea{padding:9px 11px}
+    .modal .row .chip{padding:6px 11px;font-size:12.5px}
+    .daypicks{gap:5px}
+    .daypick{width:calc((100% - 30px)/7);height:34px;font-size:12px}
+    .blockcolors{gap:6px}
+    .modal textarea{min-height:60px}
+  }
   @media (max-width:520px){
     .topnav{padding:13px 16px}
     .cardbody{padding:24px 20px 22px}
@@ -858,7 +876,7 @@
     .brand .logomark{width:52px !important;height:52px !important}
     /* page subtitles and section hints are noise on a small screen */
     .tagline,.sethint{display:none}
-    .pane-head{padding:16px 14px 0 58px}
+    .pane-head{padding:16px 14px 0 60px}
     .pane-body{padding:14px 14px 40px}
     h1{font-size:23px}
     .month .cell{min-height:74px}
@@ -874,6 +892,8 @@
     .pane-body{--panepad:12px;padding:var(--panepad) 12px 40px}
     .pane{border-radius:14px 0 0 14px}
     .grid2{grid-template-columns:1fr}
+    /* but times and dates stay paired in a dialog, so the editor stays short */
+    .modal .grid2{grid-template-columns:1fr 1fr;gap:9px}
     .modal-body{padding:14px 16px}
     .modal-head{padding:16px 16px 0}
     .modal-foot{padding:0 16px 16px}
@@ -1021,7 +1041,10 @@ const BLOCK_COLORS = [
   {id:'rust',   label:'Rust',   hex:'#D2622B'},
   {id:'slate',  label:'Slate',  hex:'#5A6178'},
 ];
-const blockHex = id => (BLOCK_COLORS.find(c => c.id === id) || {}).hex;
+// Returns a CSS variable rather than a fixed colour, so changing the palette
+// in Settings repaints every block on every calendar at once.
+const blockHex = id => id && BLOCK_COLORS.some(c => c.id === id) ? `var(--bc-${id})` : null;
+const blockRawHex = id => (BLOCK_COLORS.find(c => c.id === id) || {}).hex || null;
 
 // Energy levels. 0 is the default so a task you never think about costs nothing.
 const ENERGY = [[-1,'Relax'], [0,'None'], [1,'Low'], [2,'Medium'], [3,'High']];
@@ -1847,7 +1870,8 @@ function BlockEditor({block, day, onClose, onSave, onDelete, occ, add, update, r
       </>}>
       <Field label="What are you doing?"><input autoFocus value={f.title}
         onChange={e => { set('title', e.target.value); setErr(''); }}
-        onKeyDown={e => e.key === 'Enter' && save()} placeholder="Enter what you're doing here" /></Field>
+        onKeyDown={e => { if(e.key === 'Enter'){ e.preventDefault(); e.target.blur(); } }}
+        placeholder="Enter what you're doing here" /></Field>
       {err && <div className="formerr">{err}</div>}
       <div className="grid2">
         <Field label="Starts"><input type="time" value={f.start} onChange={e => setStart(e.target.value)} /></Field>
@@ -1875,10 +1899,10 @@ function BlockEditor({block, day, onClose, onSave, onDelete, occ, add, update, r
       <div className="field">
         <span className="spread">How much energy will it take?
           <span className="counter">{fmtE(taskEnergy(f))} for this length</span></span>
-        <div className="row" style={{gap:7, flexWrap:'wrap'}}>
+        <div className="erow">
           {ENERGY.map(([v,l]) => (
-            <button key={v} className={'chip echip' + ((f.energy || 0) === v ? ' on' : '')}
-              onClick={() => set('energy', v)}><EnergyIcon v={v} /> {l}</button>
+            <button key={v} className={'echip' + ((f.energy || 0) === v ? ' on' : '')}
+              onClick={() => set('energy', v)} title={l} aria-label={l}><EnergyIcon v={v} /></button>
           ))}
         </div>
       </div>
@@ -1904,21 +1928,14 @@ function BlockEditor({block, day, onClose, onSave, onDelete, occ, add, update, r
       <label className="row" style={{gap:9,margin:'2px 0 16px',fontSize:13.5,fontWeight:500,alignItems:'flex-start'}}>
         <input type="checkbox" checked={f.onWeek} onChange={e => set('onWeek', e.target.checked)}
           style={{width:16,height:16,marginTop:2,flex:'none'}} />
-        <span>
-          Show this on the weekly calendar
-          <small style={{display:'block',color:'var(--ink35)',fontWeight:400,fontSize:12,marginTop:1}}>
-            Off by default, so the week stays a summary rather than a copy of every day.
-          </small>
-        </span>
+        <span>Show this on the weekly calendar</span>
       </label>
       <div className="field">
         <span>Colour</span>
         <div className="blockcolors">
-          <button className={'bc none' + (!f.color ? ' on' : '')} onClick={() => set('color', null)}
-            title="Default" aria-label="Default colour" />
           {BLOCK_COLORS.map(c => (
             <button key={c.id} className={'bc' + (f.color === c.id ? ' on' : '')}
-              style={{background:c.hex}} onClick={() => set('color', c.id)}
+              style={{background:`var(--bc-${c.id})`}} onClick={() => set('color', c.id)}
               title={c.label} aria-label={c.label} />
           ))}
         </div>
@@ -4466,6 +4483,16 @@ function ViewIt({user, toast, viewChildId, setViewChild, childStore, goTab}){
 }
 
 /* ============ SETTINGS ============ */
+// Each palette sets the four section accents and the nine block colours, so
+// picking one repaints the calendars as well as the tabs.
+const BLOCK_SETS = {
+  default:  ['#5350E8','#8A5CF6','#0F9E68','#E09A12','#E03F7C','#2F80ED','#14B8A6','#EF6C3D','#6B7280'],
+  fauna:    ['#2A3723','#4A5D3A','#7B8B5E','#B9BBA8','#DCBC98','#A68A64','#5E6B4F','#8C7851','#3F4A38'],
+  pastel:   ['#A8B5C4','#C4A8B5','#B5C4A8','#D2B6AB','#9BA9AA','#C9B8D6','#AEC6CF','#D6C9B8','#B0B1B6'],
+  academia: ['#5E1C1F','#7A3B2E','#BB8E76','#B29E93','#4A3B32','#8C5A3C','#6B4A3A','#A8825C','#3A2C24'],
+  mono:     ['#454B66','#5E6580','#7A7F99','#8A6478','#6B5B73','#9AA0B5','#5A6478','#7D8496','#404553'],
+};
+
 const ACCENT_PRESETS = [
   {id:'default',  label:'Default',       c:{brag:'#E09A12', list:'#0F9E68', organize:'#5350E8', lock:'#E03F7C'}},
   {id:'fauna',    label:'Fauna',         c:{brag:'#DCBC98', list:'#2A3723', organize:'#B9BBA8', lock:'#0C0A08'}},
@@ -5000,9 +5027,13 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
         return (
           <>
             <Section title="Tab colours" hint="Each section keeps its own colour across the app.">
+              <p style={{fontSize:12.5, color:'var(--ink35)', margin:'0 0 10px', lineHeight:1.5}}>
+                A palette sets the tab colours and the block colours on every calendar.
+              </p>
               <div className="row" style={{gap:9, flexWrap:'wrap', marginBottom:16}}>
                 {ACCENT_PRESETS.map(p => (
-                  <button key={p.id} className="palette" onClick={() => setSettings({...settings, accents:p.c})}>
+                  <button key={p.id} className={'palette' + ((settings.blockSet || 'default') === p.id ? ' on' : '')}
+                    onClick={() => setSettings({...settings, accents:p.c, blockSet:p.id, blockColors:null})}>
                     <span className="swatches">
                       {['brag','list','organize','lock'].map(k => <i key={k} style={{background:p.c[k]}} />)}
                     </span>
@@ -5019,7 +5050,7 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
                   </label>
                 ))}
                 <button className="btn sm" style={{marginTop:10}}
-                  onClick={() => setSettings({...settings, accents:null})}>Reset to default</button>
+                  onClick={() => setSettings({...settings, accents:null, blockSet:'default', blockColors:null})}>Reset to default</button>
               </div>
             </Section>
 
@@ -6458,6 +6489,16 @@ function App({user, onSignOut}){
 
   // Coming back to a tab that slept: make sure we are not showing a stale copy.
   // custom colours live on <html> so modals and the lock screen get them too
+  // block colours for every calendar, driven by the chosen palette
+  useEffect(() => {
+    const root = document.documentElement;
+    const setName = settings.blockSet || 'default';
+    const hexes = BLOCK_SETS[setName] || BLOCK_SETS.default;
+    BLOCK_COLORS.forEach((c, i) => {
+      root.style.setProperty(`--bc-${c.id}`, (settings.blockColors && settings.blockColors[c.id]) || hexes[i] || c.hex);
+    });
+  }, [settings.blockSet, settings.blockColors]);
+
   useEffect(() => {
     const root = document.documentElement;
     if(settings.bg) root.style.setProperty('--paper', settings.bg);
