@@ -137,11 +137,15 @@
   .field textarea{resize:vertical;min-height:70px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
   /* icons only, one row — the labels made this section scroll */
-  .erow{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
-  .echip{display:grid;place-items:center;height:44px;border:1.5px solid var(--line);
-    background:var(--card);border-radius:12px;padding:0;transition:.14s}
-  .echip:hover{border-color:var(--accent)}
-  .echip.on{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 2px var(--accent-soft)}
+  .erow{display:flex;align-items:center;gap:4px;background:var(--soft);border:1px solid var(--line);
+    border-radius:99px;padding:4px;width:100%}
+  .echip{flex:1 1 0;min-width:0;display:grid;place-items:center;height:40px;border:0;
+    background:transparent;border-radius:99px;padding:0;transition:.16s}
+  .echip svg,.echip span{pointer-events:none}
+  .echip:hover{background:rgba(0,0,0,.05)}
+  .echip.on{background:var(--accent);box-shadow:0 2px 8px -2px var(--accent)}
+  .echip.on svg path{fill:#fff}
+  .echip.on span{color:#fff;opacity:1}
   .navdate{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:11px;padding:2px;background:var(--card)}
   .navdate button{border:0;background:transparent;padding:6px 10px;border-radius:8px;color:var(--ink60);font-size:15px;line-height:1}
   .navdate button:hover{background:#F2F3F8;color:var(--ink)}
@@ -314,7 +318,6 @@
   .energy.near{background:#FDF3E6;color:#9A6212;border-color:#F0DEB0}
   .energy.over{background:#FFF1F5;color:#B92A61;border-color:#F3CEDA}
   .batt{flex:none}
-  .echip{display:inline-flex;align-items:center;gap:5px}
   .blockenergy{display:inline-flex;align-items:center;gap:3px;margin-left:7px;font-weight:600;vertical-align:-3px}
   .cellbatt.low{color:#0F9E68} .cellbatt.near{color:#D98A16} .cellbatt.over{color:#E03F7C}
   .daycol h4 .spread{align-items:center;gap:6px}
