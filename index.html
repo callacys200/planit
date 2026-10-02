@@ -3525,9 +3525,25 @@ function Auth(){
   const withGoogle = async () => {
     setBusy(true); setErr('');
     try{
-      const cred = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-      if(!(await hasUsername(cred.user.uid))){
-        setUsername(suggestUsername(cred.user));
+      let user;
+      const native = NativeAuth();
+      if(native){
+        // In the app, Google runs through native iOS code — popups don't work
+        // in a web view. The token it returns is handed to the web SDK so the
+        // rest of PlanIt sees a normal signed-in user.
+        const res = await native.signInWithGoogle();
+        const idToken = res && res.credential && res.credential.idToken;
+        const accessToken = res && res.credential && res.credential.accessToken;
+        if(!idToken && !accessToken) throw new Error('Google sign-in was cancelled');
+        const credential = firebase.auth.GoogleAuthProvider.credential(idToken, accessToken);
+        const out = await auth.signInWithCredential(credential);
+        user = out.user;
+      } else {
+        const out = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+        user = out.user;
+      }
+      if(!(await hasUsername(user.uid))){
+        setUsername(suggestUsername(user));
         setStep('username');
       }
     }catch(e){ const m = fbErr(e); if(m) setErr(m); }
@@ -3659,7 +3675,7 @@ function Auth(){
                   </button>
                   <button className="btn" style={{width:'100%',justifyContent:'center',marginTop:10}}
                     onClick={() => { setMode('in'); setStep('form'); }}>Log in</button>
-                  {!isNativeApp() && <>
+                  {(!isNativeApp() || NativeAuth()) && <>
                     <div className="or"><span>OR</span></div>
                     <button className="gbtn" disabled={busy} onClick={withGoogle}><GMark /> Continue with Google</button>
                   </>}
@@ -3719,7 +3735,7 @@ function Auth(){
                 <>
                   <h2>Create your account</h2>
                   <p className="csub">Free, and it takes about a minute</p>
-                  {!isNativeApp() && <>
+                  {(!isNativeApp() || NativeAuth()) && <>
                     <button className="gbtn" disabled={busy} onClick={withGoogle}><GMark /> Continue with Google</button>
                     <div className="or"><span>OR</span></div>
                   </>}
@@ -3754,7 +3770,7 @@ function Auth(){
               {step === 'form' && mode === 'in' && (
                 <>
                   <h2>Log in to PlanIt</h2>
-                  {!isNativeApp() && <>
+                  {(!isNativeApp() || NativeAuth()) && <>
                     <button className="gbtn" disabled={busy} onClick={withGoogle}><GMark /> Continue with Google</button>
                     <div className="or"><span>OR</span></div>
                   </>}
@@ -3876,6 +3892,9 @@ const setHaptics = () => {};
 // Google's popup sign-in cannot work inside a native web view: iOS reserves
 // http and https, so the app runs on capacitor://, which Firebase rejects.
 // Hiding the button in the app is honest; leaving it would just fail.
+const NativeAuth = () => (window.Capacitor && window.Capacitor.Plugins
+  && window.Capacitor.Plugins.FirebaseAuthentication) || null;
+
 const isNativeApp = () => !!(window.Capacitor && window.Capacitor.isNativePlatform
   && window.Capacitor.isNativePlatform());
 
