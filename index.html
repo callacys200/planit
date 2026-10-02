@@ -3659,8 +3659,10 @@ function Auth(){
                   </button>
                   <button className="btn" style={{width:'100%',justifyContent:'center',marginTop:10}}
                     onClick={() => { setMode('in'); setStep('form'); }}>Log in</button>
-                  <div className="or"><span>OR</span></div>
-                  <button className="gbtn" disabled={busy} onClick={withGoogle}><GMark /> Continue with Google</button>
+                  {!isNativeApp() && <>
+                    <div className="or"><span>OR</span></div>
+                    <button className="gbtn" disabled={busy} onClick={withGoogle}><GMark /> Continue with Google</button>
+                  </>}
                   <Err />
                   <p className="fineprint" style={{marginTop:18}}>
                     Signing up takes a minute: confirm your email, pick a username, then tell us whether
@@ -3717,8 +3719,10 @@ function Auth(){
                 <>
                   <h2>Create your account</h2>
                   <p className="csub">Free, and it takes about a minute</p>
-                  <button className="gbtn" disabled={busy} onClick={withGoogle}><GMark /> Continue with Google</button>
-                  <div className="or"><span>OR</span></div>
+                  {!isNativeApp() && <>
+                    <button className="gbtn" disabled={busy} onClick={withGoogle}><GMark /> Continue with Google</button>
+                    <div className="or"><span>OR</span></div>
+                  </>}
                   <label className="flabel">Username</label>
                   <input className="finput" value={username} onChange={e => setUsername(e.target.value)}
                     placeholder="Enter your username here" autoComplete="username" />
@@ -3750,8 +3754,10 @@ function Auth(){
               {step === 'form' && mode === 'in' && (
                 <>
                   <h2>Log in to PlanIt</h2>
-                  <button className="gbtn" disabled={busy} onClick={withGoogle}><GMark /> Continue with Google</button>
-                  <div className="or"><span>OR</span></div>
+                  {!isNativeApp() && <>
+                    <button className="gbtn" disabled={busy} onClick={withGoogle}><GMark /> Continue with Google</button>
+                    <div className="or"><span>OR</span></div>
+                  </>}
                   <label className="flabel">Email address</label>
                   <input className="finput" type="email" value={email} onChange={e => setEmail(e.target.value)}
                     placeholder="Enter your email here" autoComplete="email" />
@@ -3866,6 +3872,12 @@ const ICE = () => ({
 // These stubs keep the shared call sites harmless.
 const buzz = () => {};
 const setHaptics = () => {};
+
+// Google's popup sign-in cannot work inside a native web view: iOS reserves
+// http and https, so the app runs on capacitor://, which Firebase rejects.
+// Hiding the button in the app is honest; leaving it would just fail.
+const isNativeApp = () => !!(window.Capacitor && window.Capacitor.isNativePlatform
+  && window.Capacitor.isNativePlatform());
 
 const Blocker = () => null;
 const blockerReady = () => false;
