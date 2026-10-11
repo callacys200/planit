@@ -562,8 +562,8 @@
     border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card);z-index:10}
   .tn-brand{display:flex;align-items:center;gap:11px}
   .tn-brand b{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:26px;letter-spacing:-.03em}
-  .beta{font-family:"DM Mono",monospace;font-size:10.5px;padding:2px 7px;border-radius:3px;
-    border:1px solid var(--line);color:var(--ink35);font-weight:400;text-transform:lowercase}
+  .beta{font-family:"DM Mono",monospace;font-size:11px;color:var(--ink35);
+    font-weight:400;text-transform:lowercase;letter-spacing:.01em;align-self:center}
   .tn-actions{display:flex;gap:6px}
   .tn-link{border:0;background:transparent;padding:8px 14px;border-radius:3px;font-weight:600;font-size:14px;color:var(--ink60)}
   .tn-link:hover{background:var(--soft);color:var(--ink)}
@@ -2942,13 +2942,34 @@ const countFeed = (events, feedId) =>
   (events || []).filter(e => isCanvas(e) && feedOf(e) === feedId).length;
 
 async function fetchCanvas(url){
-  const res = await fetch(canvasEndpoint(), {
-    method:'POST',
-    headers:{'content-type':'application/json'},
-    body:JSON.stringify({url})
-  });
-  const body = await res.text();
-  if(!res.ok) throw new Error(body || 'Could not read that feed.');
+  let res, body;
+  try{
+    res = await fetch(canvasEndpoint(), {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({url})
+    });
+    body = await res.text();
+  }catch(e){
+    throw new Error("Could not reach PlanIt's Canvas helper. Check your connection and try again.");
+  }
+
+  // If the helper is missing, the host answers with its own 404 page. Showing
+  // that raw dumps a screenful of HTML into the error box, so it is named for
+  // what it is: the site is deployed but the function beside it is not.
+  const looksLikePage = /^\s*<(!doctype|html)/i.test(body || '');
+  if(res.status === 404 || looksLikePage){
+    throw new Error(
+      'The Canvas helper is not on the server yet. It lives at ' +
+      'netlify/functions/canvas-feed.js and has to be deployed before a feed can be read.');
+  }
+  if(!res.ok){
+    const msg = (body || '').trim();
+    throw new Error(msg && msg.length < 300 ? msg : 'Could not read that feed.');
+  }
+  if(!/BEGIN:VCALENDAR/i.test(body || '')){
+    throw new Error('That address did not return a calendar.');
+  }
   return parseICS(body);
 }
 
@@ -4475,6 +4496,9 @@ const GMark = () => (
 
 // Your logo file, sitting next to index.html in the repo. If it's missing or
 // fails to load, the drawn mark below is used instead so nothing looks broken.
+// Bumped every time a file is handed over, so a build can be identified
+// without printing a version number next to the wordmark.
+const BUILD = 'b7725';
 const LOGO_SRC = 'logo.png';
 // The homepage photograph, graded to the palette. Two files rather than one
 // CSS filter, because a filter that works on cream washes out on charcoal.
@@ -4817,10 +4841,10 @@ function Auth({initialMode = null, onHome}){
       <header className="topnav">
         {onHome
           ? <button className="tn-brand tn-home" onClick={onHome} title="Back to the homepage">
-              <Mark size={38} /><b>PlanIt</b><span className="beta">beta b7723</span>
+              <Mark size={38} /><b>PlanIt</b><span className="beta" title={`beta ${BUILD}`}>beta</span>
             </button>
           : <div className="tn-brand">
-              <Mark size={38} /><b>PlanIt</b><span className="beta">beta b7723</span>
+              <Mark size={38} /><b>PlanIt</b><span className="beta" title={`beta ${BUILD}`}>beta</span>
             </div>}
         <nav className="tn-actions">
           <button className={'tn-link' + (mode === 'in' ? ' on' : '')} onClick={() => { setMode('in'); setStep('form'); }}>Log in</button>
@@ -10133,6 +10157,7 @@ function Root(){
   </>;
 }
 
+try { console.log('PlanIt ' + BUILD); } catch(e){}
 ReactDOM.createRoot(document.getElementById('root')).render(<Boundary><Root /></Boundary>);
 </script>
 </body>
