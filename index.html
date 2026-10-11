@@ -310,6 +310,12 @@
   .ev{display:flex;align-items:center;gap:5px;margin-top:4px;font-size:11.5px;line-height:1.25}
   .ev .dot{width:7px;height:7px;border-radius:99px;flex:none}
   .ev .evt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* ticked off: still there, visibly behind you */
+  .ev .tick{width:9px;height:9px;border-radius:0;background:none;color:var(--ink35)}
+  .ev.done{opacity:.6}
+  .ev.done .evt{text-decoration:line-through;color:var(--ink35)}
+  .pill.done{opacity:.6}
+  .pill.done b{text-decoration:line-through;color:var(--ink35)}
   .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink60)}
   .legend i{width:9px;height:9px;border-radius:99px;display:inline-block;margin-right:5px}
 
@@ -1850,6 +1856,15 @@ const EV_TYPES = [
 const evColor = t => (EV_TYPES.find(e => e.id === t) || EV_TYPES[4]).color;
 const evLabel = t => (EV_TYPES.find(e => e.id === t) || EV_TYPES[4]).label;
 
+/* On the month grid a date is a coloured dot until it is ticked off, and a
+   tick afterwards. The dot carries the kind; once it is done the kind matters
+   less than the fact that it is behind you. */
+const EvMark = ({type, done}) => done
+  ? <svg className="dot tick" width="9" height="9" viewBox="0 0 12 12" aria-hidden="true">
+      <path d="M2 6.4l2.6 2.6L10 3.4" stroke="currentColor" strokeWidth="2.6"
+        fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  : <span className="dot" style={{background:evColor(type)}} />;
+
 /* ============ storage ============
    Tries the artifact storage API first, then falls back to localStorage so the
    file keeps working when you open or host it yourself. */
@@ -2691,11 +2706,13 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
               <div className="inner">
                 <div className="daypills">
                 {evs.map(e => (
-                  <div key={e.id} className="pill draggable" onDoubleClick={() => setEditEv(e)}
+                  <div key={e.id} className={'pill draggable' + (isDone(e, dk) ? ' done' : '')}
+                    onDoubleClick={() => setEditEv(e)}
                     title="Double-click to edit"
                     style={{borderLeftColor:evColor(e.type), background:'var(--soft)'}}>
                     <b style={{fontWeight:600}}>{e.title}</b>
-                    <div style={{color:'var(--ink35)',fontSize:10.5}}>{evLabel(e.type)}</div>
+                    <div style={{color:'var(--ink35)',fontSize:10.5}}>
+                      {isDone(e, dk) ? 'Done' : evLabel(e.type)}</div>
                   </div>
                 ))}
                 {blocks.slice(0,4).map(t => (
@@ -2755,21 +2772,24 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
           <div className="eyebrow" style={{marginBottom:9}}>Deadlines &amp; meetings this week</div>
           {weekEvents.length === 0
             ? <Empty title="Nothing on the calendar yet" hint="Add a due date, test, or meeting to see it here." />
-            : weekEvents.map(e => (
-              <div key={e.id + e.on} className="todo" style={{alignItems:'center'}}
-                onDoubleClick={ev2 => { if(!ev2.target.closest('button')) setEditEv(e); }}
-                title="Double-click to edit">
-                <span style={{width:9,height:9,borderRadius:99,background:evColor(e.type),flex:'none'}} />
-                <div className="txt">
-                  <b>{e.title}</b>
-                  <div className="meta">
-                    {evLabel(e.type)} · {fmtDay(parseISO(e.on))}
-                    {isRepeat(e) ? ` · ${repeatText(e)}` : ''}{e.note ? ` · ${e.note}` : ''}
+            : weekEvents.map(e => {
+              const done = isDone(e, e.on);
+              return (
+                <div key={e.id + e.on} className={'todo' + (done ? ' done' : '')} style={{alignItems:'center'}}
+                  onDoubleClick={ev2 => { if(!ev2.target.closest('button')) setEditEv(e); }}
+                  title="Double-click to edit">
+                  <Check on={done} onClick={() => updateEvent(e.id, toggleDone(e, e.on))} />
+                  <div className="txt">
+                    <b>{e.title}</b>
+                    <div className="meta">
+                      {evLabel(e.type)} · {fmtDay(parseISO(e.on))}
+                      {isRepeat(e) ? ` · ${repeatText(e)}` : ''}{e.note ? ` · ${e.note}` : ''}
+                    </div>
                   </div>
+                  <div className="todo-actions"><XBtn onClick={() => removeEvent(e.id)} label="Remove" /></div>
                 </div>
-                <div className="todo-actions"><XBtn onClick={() => removeEvent(e.id)} label="Remove" /></div>
-              </div>
-            ))}
+              );
+            })}
         </div>
         <div>
           <div className="eyebrow" style={{marginBottom:9}}>Week goals, from List It</div>
@@ -2967,7 +2987,7 @@ function mergeFeed(events, feedId, fetched){
     .forEach(e => { old[e.cid] = e; });
   const next = fetched.map(f => {
     const prev = old[f.cid];
-    return {
+    const row = {
       id: (prev && prev.id) || uid(),
       source: 'canvas',
       feed: feedId,
@@ -2976,8 +2996,14 @@ function mergeFeed(events, feedId, fetched){
       date: f.date,
       type: (prev && prev.type) || f.type,     // keep a type they changed
       note: f.note || '',
-      time: f.time || null
+      time: f.time || null,
+      // Ticking an assignment off is the student's own work, not the feed's,
+      // so it has to survive every later check or the ticks vanish overnight.
+      done: !!(prev && prev.done)
     };
+    // only carried when it exists: Firestore refuses a field set to undefined
+    if(prev && prev.doneDates) row.doneDates = prev.doneDates;
+    return row;
   });
   return {
     events: [...others, ...next],
@@ -3467,9 +3493,10 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
                 })()}
               </div>
               {list.slice(0,3).map(e => (
-                <div className="ev draggable" key={e.id} onPointerDown={ev2 => grabEvent(ev2, e)}
-                  title="Drag to another day">
-                  <span className="dot" style={{background:evColor(e.type)}} />
+                <div className={'ev draggable' + (isDone(e, dk) ? ' done' : '')} key={e.id}
+                  onPointerDown={ev2 => grabEvent(ev2, e)}
+                  title="Drag to another day, or open the day to tick it off">
+                  <EvMark type={e.type} done={isDone(e, dk)} />
                   <span className="evt">{e.title}</span>
                 </div>
               ))}
@@ -3525,16 +3552,29 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
           </button>
           {(byDay[open] || []).length === 0
             ? <Empty title="Nothing marked on this day" hint="Add a test, deadline, birthday, or meeting." />
-            : (byDay[open] || []).map(e => (
-              <div key={e.id} className="todo" style={{alignItems:'center'}}>
-                <span style={{width:9,height:9,borderRadius:99,background:evColor(e.type),flex:'none'}} />
-                <div className="txt"><b>{e.title}</b><div className="meta">{evLabel(e.type)}{e.note ? ` · ${e.note}` : ''}</div></div>
-                <div className="todo-actions">
-                  <button className="btn sm" onClick={() => { setEditing(e); setOpen(null); }}>Edit</button>
-                  <XBtn onClick={() => removeEvent(e.id)} label="Remove" />
+            : (byDay[open] || []).map(e => {
+              // A repeating date is ticked off for this day only, the same way a
+              // repeating task is, so last Friday's quiz stays done.
+              const done = isDone(e, open);
+              return (
+                <div key={e.id} className={'todo' + (done ? ' done' : '')} style={{alignItems:'center'}}>
+                  {updateEvent
+                    ? <Check on={done} onClick={() => updateEvent(e.id, toggleDone(e, open))} />
+                    : <span style={{width:9,height:9,borderRadius:99,background:evColor(e.type),flex:'none'}} />}
+                  <div className="txt">
+                    <b>{e.title}</b>
+                    <div className="meta">
+                      <span style={{color:evColor(e.type)}}>{evLabel(e.type)}</span>
+                      {e.note ? ` · ${e.note}` : ''}{done ? ' · done' : ''}
+                    </div>
+                  </div>
+                  <div className="todo-actions">
+                    <button className="btn sm" onClick={() => { setEditing(e); setOpen(null); }}>Edit</button>
+                    <XBtn onClick={() => removeEvent(e.id)} label="Remove" />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
         </Modal>
       )}
 
@@ -4694,7 +4734,7 @@ const GMark = () => (
 // fails to load, the drawn mark below is used instead so nothing looks broken.
 // Bumped every time a file is handed over, so a build can be identified
 // without printing a version number next to the wordmark.
-const BUILD = 'b7727';
+const BUILD = 'b7728';
 const LOGO_SRC = 'logo.png';
 // The homepage photograph, graded to the palette. Two files rather than one
 // CSS filter, because a filter that works on cream washes out on charcoal.
