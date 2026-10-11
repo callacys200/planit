@@ -828,6 +828,17 @@
   .cvtitle small{display:block;font-size:12.5px;color:var(--ink35);margin-top:1px}
   .cvchev{flex:none;color:var(--ink35);display:grid;place-items:center}
   .cvbody{border-top:1px solid var(--line);padding:15px 14px 16px}
+  .cvlist{list-style:none;margin:0 0 14px;padding:0;border:1px solid var(--line);border-radius:3px}
+  .cvlist li{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:11px 12px;border-bottom:1px solid var(--line)}
+  .cvlist li:last-child{border-bottom:0}
+  .cvinfo{flex:1;min-width:0}
+  .cvinfo b{display:block;font-size:13.5px;font-weight:600;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .cvinfo small{display:block;font-size:11.5px;color:var(--ink35);margin-top:1px}
+  .cvbtns{display:flex;gap:7px;flex:none}
+  .cvadd{border-top:1px solid var(--line);padding-top:14px;margin-top:2px}
+  .cvlist + .cvadd{margin-top:0}
   .cvsteps{margin:0 0 14px;font-size:13px;color:var(--ink60);line-height:1.6;max-width:62ch}
   .cvsteps b{color:var(--ink)}
   .cvfine{margin:12px 0 0;font-size:12px;color:var(--ink35);line-height:1.55;max-width:62ch}
@@ -2871,15 +2882,41 @@ function parseICS(text){
    twice updates in place instead of doubling everything up, and a Canvas item
    that has been deleted upstream goes away. Anything the student typed
    themselves is left completely alone. */
-function mergeCanvas(events, fetched){
-  const mine = (events || []).filter(e => e.source !== 'canvas');
+/* Several feeds can be connected at once: a school Canvas, a second campus, a
+   club's calendar. Each imported date remembers which feed it came from, so one
+   feed can be synced or removed without disturbing the others. Dates saved
+   before feeds existed have no `feed` and belong to the first one. */
+const LEGACY_FEED = 'f0';
+const feedOf = e => e.feed || LEGACY_FEED;
+const isCanvas = e => e && e.source === 'canvas';
+
+// Reads whichever shape the planner was saved in. The single-feed settings.canvas
+// from an older build is presented as one feed rather than migrated, so an older
+// build can still open the same save.
+const feedsOf = st => {
+  const list = (st && st.canvasFeeds) || null;
+  if(list && list.length) return list;
+  const one = st && st.canvas;
+  if(one && one.url) return [{id:LEGACY_FEED, url:one.url, name:'', at:one.at, count:one.count}];
+  return [];
+};
+const feedLabel = f => {
+  if(f.name) return f.name;
+  try { return new URL(f.url).hostname.replace(/^www\./, ''); }
+  catch(e){ return 'Canvas'; }
+};
+
+function mergeFeed(events, feedId, fetched){
+  const others = (events || []).filter(e => !isCanvas(e) || feedOf(e) !== feedId);
   const old = {};
-  (events || []).filter(e => e.source === 'canvas').forEach(e => { old[e.cid] = e; });
+  (events || []).filter(e => isCanvas(e) && feedOf(e) === feedId)
+    .forEach(e => { old[e.cid] = e; });
   const next = fetched.map(f => {
     const prev = old[f.cid];
     return {
       id: (prev && prev.id) || uid(),
       source: 'canvas',
+      feed: feedId,
       cid: f.cid,
       title: f.title,
       date: f.date,
@@ -2889,12 +2926,20 @@ function mergeCanvas(events, fetched){
     };
   });
   return {
-    events: [...mine, ...next],
+    events: [...others, ...next],
     added: next.filter(n => !old[n.cid]).length,
     removed: Object.keys(old).filter(k => !fetched.some(f => f.cid === k)).length,
     total: next.length
   };
 }
+
+// Takes one feed's dates away and leaves every other feed, and everything the
+// student typed, exactly where it was.
+function dropFeed(events, feedId){
+  return (events || []).filter(e => !(isCanvas(e) && feedOf(e) === feedId));
+}
+const countFeed = (events, feedId) =>
+  (events || []).filter(e => isCanvas(e) && feedOf(e) === feedId).length;
 
 async function fetchCanvas(url){
   const res = await fetch(canvasEndpoint(), {
@@ -2911,37 +2956,53 @@ async function fetchCanvas(url){
    at it once. Both are deliberately quiet: this is useful to the students whose
    school uses Canvas and irrelevant to everyone else. */
 function CanvasPanel({settings, setSettings, events, setEvents, toast}){
-  const saved = settings.canvas || {};
-  const [url, setUrl] = useState(saved.url || '');
-  const [busy, setBusy] = useState(false);
+  const feeds = feedsOf(settings);
+  const [open, setOpen] = useState(feeds.length > 0);
+  const [adding, setAdding] = useState(feeds.length === 0);
+  const [url, setUrl] = useState('');
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState('');              // '' | 'add' | a feed id
   const [err, setErr] = useState('');
   const [note, setNote] = useState('');
-  const [open, setOpen] = useState(!!saved.url);
-  const count = (events || []).filter(e => e.source === 'canvas').length;
+  const total = (events || []).filter(isCanvas).length;
 
-  const sync = async (feed) => {
-    const target = (feed || url).trim();
-    if(!target) return setErr('Paste the feed address from Canvas first.');
-    setBusy(true); setErr(''); setNote('');
+  const saveFeeds = next => setSettings({...settings, canvasFeeds:next, canvas:null});
+
+  // One sync, used by both the add form and each feed's own button.
+  const pull = async (feed, feedUrl) => {
+    setBusy(feed ? feed.id : 'add'); setErr(''); setNote('');
     try{
-      const fetched = await fetchCanvas(target);
-      const out = mergeCanvas(events, fetched);
+      const fetched = await fetchCanvas(feedUrl);
+      const id = feed ? feed.id : 'f' + uid();
+      const out = mergeFeed(events, id, fetched);
       setEvents(out.events);
-      setSettings({...settings, canvas:{url:target, at:Date.now(), count:out.total}});
+      const row = {id, url:feedUrl, name:feed ? feed.name : name.trim(),
+                   at:Date.now(), count:out.total};
+      saveFeeds(feed ? feeds.map(f => f.id === id ? row : f) : [...feeds, row]);
       setNote(out.added || out.removed
-        ? `${out.total} from Canvas. ${out.added} new, ${out.removed} gone.`
-        : `Up to date. ${out.total} from Canvas.`);
+        ? `${feedLabel(row)}: ${out.total} dates. ${out.added} new, ${out.removed} gone.`
+        : `${feedLabel(row)}: up to date, ${out.total} dates.`);
+      if(!feed){ setUrl(''); setName(''); setAdding(false); }
       toast('Canvas synced');
     }catch(e){ setErr(e.message || 'Could not read that feed.'); }
-    setBusy(false);
+    setBusy('');
   };
 
-  const disconnect = () => {
-    if(!window.confirm('Remove the Canvas feed and the dates it added? Your own dates stay.')) return;
-    setEvents((events || []).filter(e => e.source !== 'canvas'));
-    setSettings({...settings, canvas:null});
-    setUrl(''); setNote(''); setErr(''); setOpen(false);
-    toast('Canvas removed');
+  const syncAll = async () => {
+    for(const f of feeds){ await pull(f, f.url); }
+  };
+
+  const remove = feed => {
+    const n = countFeed(events, feed.id);
+    if(!window.confirm(
+      `Remove ${feedLabel(feed)} and the ${n} ${n === 1 ? 'date' : 'dates'} it added? ` +
+      `Your own dates and any other feed stay.`)) return;
+    setEvents(dropFeed(events, feed.id));
+    const left = feeds.filter(f => f.id !== feed.id);
+    saveFeeds(left);
+    if(left.length === 0) setAdding(true);
+    setNote(''); setErr('');
+    toast('Feed removed');
   };
 
   return (
@@ -2950,8 +3011,8 @@ function CanvasPanel({settings, setSettings, events, setEvents, toast}){
         <span className="cvrule" />
         <span className="cvtitle">
           <b>Canvas deadlines</b>
-          <small>{saved.url
-            ? `${count} ${count === 1 ? 'date' : 'dates'} from Canvas${saved.at ? ', synced ' + agoText(saved.at) : ''}`
+          <small>{feeds.length
+            ? `${feeds.length} ${feeds.length === 1 ? 'feed' : 'feeds'}, ${total} ${total === 1 ? 'date' : 'dates'}`
             : 'Pull your assignment due dates straight onto this calendar'}</small>
         </span>
         <span className="cvchev" aria-hidden="true"><IconArrow dir={open ? 'up' : 'down'} /></span>
@@ -2959,27 +3020,77 @@ function CanvasPanel({settings, setSettings, events, setEvents, toast}){
 
       {open && (
         <div className="cvbody">
-          <p className="cvsteps">
-            In Canvas, open <b>Calendar</b>, press <b>Calendar Feed</b> at the bottom right, and copy
-            the address. It is read only, so PlanIt can see your due dates and cannot change anything
-            in Canvas.
-          </p>
-          <label className="flabel" htmlFor="cvurl">Calendar feed address</label>
-          <input id="cvurl" className="finput" value={url} onChange={e => setUrl(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && sync()} spellCheck="false"
-            placeholder="https://yourschool.instructure.com/feeds/calendars/..." />
+          {feeds.length > 0 && (
+            <ul className="cvlist">
+              {feeds.map(f => {
+                const n = countFeed(events, f.id);
+                return (
+                  <li key={f.id}>
+                    <span className="cvinfo">
+                      <b>{feedLabel(f)}</b>
+                      <small>
+                        {n} {n === 1 ? 'date' : 'dates'}
+                        {f.at ? `, synced ${agoText(f.at)}` : ''}
+                      </small>
+                    </span>
+                    <span className="cvbtns">
+                      <button className="btn sm" disabled={!!busy} onClick={() => pull(f, f.url)}>
+                        {busy === f.id ? 'Reading…' : 'Sync'}
+                      </button>
+                      <button className="btn sm danger" disabled={!!busy} onClick={() => remove(f)}>
+                        Remove
+                      </button>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
           {err && <div className="formerr">{err}</div>}
           {note && <div className="formnote">{note}</div>}
-          <div className="row" style={{gap:8, flexWrap:'wrap'}}>
-            <button className="btn primary" disabled={busy} onClick={() => sync()}>
-              {busy ? 'Reading Canvas…' : saved.url ? 'Sync now' : 'Connect Canvas'}
-            </button>
-            {saved.url && <button className="btn danger" disabled={busy} onClick={disconnect}>Remove</button>}
-          </div>
+
+          {adding ? (
+            <div className="cvadd">
+              <p className="cvsteps">
+                In Canvas, open <b>Calendar</b>, press <b>Calendar Feed</b> at the bottom right, and
+                copy the address. It is read only, so PlanIt can see your due dates and cannot change
+                anything in Canvas.
+              </p>
+              <label className="flabel" htmlFor="cvurl">Calendar feed address</label>
+              <input id="cvurl" className="finput" value={url} onChange={e => setUrl(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && url.trim() && pull(null, url.trim())}
+                spellCheck="false"
+                placeholder="https://yourschool.instructure.com/feeds/calendars/..." />
+              <label className="flabel" htmlFor="cvname">Name for this feed, if you want one</label>
+              <input id="cvname" className="finput" value={name} onChange={e => setName(e.target.value)}
+                placeholder="School, dual enrolment, robotics…" maxLength={32} />
+              <div className="row" style={{gap:8, flexWrap:'wrap'}}>
+                <button className="btn primary" disabled={!!busy || !url.trim()}
+                  onClick={() => pull(null, url.trim())}>
+                  {busy === 'add' ? 'Reading Canvas…' : 'Connect this feed'}
+                </button>
+                {feeds.length > 0 && (
+                  <button className="btn" disabled={!!busy}
+                    onClick={() => { setAdding(false); setErr(''); }}>Cancel</button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="row" style={{gap:8, flexWrap:'wrap'}}>
+              <button className="btn" disabled={!!busy} onClick={() => { setAdding(true); setNote(''); }}>
+                Add another feed
+              </button>
+              {feeds.length > 1 && (
+                <button className="btn" disabled={!!busy} onClick={syncAll}>Sync all</button>
+              )}
+            </div>
+          )}
+
           <p className="cvfine">
             Canvas dates arrive as deadlines and can be recoloured or retyped like any other. Syncing
-            again updates them in place and takes away anything your teacher deleted. Nothing you
-            typed yourself is touched.
+            a feed again updates its dates in place and takes away anything your teacher deleted.
+            Removing a feed only takes away that feed's dates. Nothing you typed yourself is touched.
           </p>
         </div>
       )}
@@ -3011,6 +3122,10 @@ function CanvasNotice({onOpen, onClose}){
       </p>
       <p style={{color:'var(--ink60)', fontSize:14, lineHeight:1.6}}>
         It is read only. PlanIt can see your due dates and cannot change anything in Canvas.
+      </p>
+      <p style={{color:'var(--ink60)', fontSize:14, lineHeight:1.6}}>
+        You can connect more than one, so a second campus or a club calendar can sit alongside
+        your school's, and remove any of them on its own.
       </p>
       <div className="gnote">
         <b>Where to find it later</b>
@@ -4702,10 +4817,10 @@ function Auth({initialMode = null, onHome}){
       <header className="topnav">
         {onHome
           ? <button className="tn-brand tn-home" onClick={onHome} title="Back to the homepage">
-              <Mark size={38} /><b>PlanIt</b><span className="beta">beta b7722</span>
+              <Mark size={38} /><b>PlanIt</b><span className="beta">beta b7723</span>
             </button>
           : <div className="tn-brand">
-              <Mark size={38} /><b>PlanIt</b><span className="beta">beta b7722</span>
+              <Mark size={38} /><b>PlanIt</b><span className="beta">beta b7723</span>
             </div>}
         <nav className="tn-actions">
           <button className={'tn-link' + (mode === 'in' ? ' on' : '')} onClick={() => { setMode('in'); setStep('form'); }}>Log in</button>
@@ -7778,7 +7893,7 @@ function App({user, onSignOut}){
   useEffect(() => {
     if(!ready || isParent || !tourDone) return;
     const st = store.settings || DEFAULT_SETTINGS;
-    if(st.canvasSeen || (st.canvas && st.canvas.url)) return;
+    if(st.canvasSeen || feedsOf(st).length) return;
     const t = setTimeout(() => setCanvasTip(true), 900);
     return () => clearTimeout(t);
   }, [ready, isParent, tourDone]);
