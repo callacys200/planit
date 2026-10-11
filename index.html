@@ -292,7 +292,10 @@
     color:var(--accent-ink);font-size:12.5px;font-weight:600;text-align:center}
   .tray-item{display:flex;gap:8px;align-items:flex-start;padding:9px 10px;border:1px solid var(--line);border-radius:3px;margin-bottom:8px;background:var(--soft);cursor:grab;touch-action:pan-y}
   .tray-item:hover{border-color:var(--ink35);background:var(--card)}
-  .ghost{position:fixed;z-index:90;pointer-events:none;background:var(--accent);color:var(--accent-ink);padding:7px 11px;border-radius:3px;font-size:13px;font-weight:600;opacity:.96}
+  /* The label that follows the pointer while a task is being dragged. It must
+     not be called .ghost: that also matches .btn.ghost, which would hand every
+     Cancel and Close button position:fixed and pointer-events:none. */
+  .draglabel{position:fixed;z-index:90;pointer-events:none;background:var(--accent);color:var(--accent-ink);padding:7px 11px;border-radius:3px;font-size:13px;font-weight:600;opacity:.96}
 
   /* ---------- month ---------- */
   .month{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--line);gap:1px}
@@ -712,6 +715,9 @@
   .rolecard.on{border-color:var(--org);box-shadow:0 0 0 3px var(--accent-soft)}
   .rolecard b{display:block;font-size:15px}
   .rolecard small{display:block;color:var(--ink35);font-size:12.5px;margin-top:2px;line-height:1.45}
+  /* The scope question that appears once the baseline stepper has been moved. */
+  .basescope{margin-top:16px;padding-top:15px;border-top:1px dashed var(--line)}
+  .basescope .rolecard{padding:12px 13px}
   /* ---- theme picker: a stack of rows, each showing its own real colours ---- */
   .themelist{display:grid;gap:0;border:1px solid var(--line);border-radius:3px;overflow:hidden}
   .themerow{display:flex;align-items:center;gap:13px;width:100%;text-align:left;border:0;
@@ -817,7 +823,7 @@
   .legalrow:last-child{border-bottom:0}
   .legalrow b{font-size:14px}
   .legalrow small{display:block;color:var(--ink35);font-size:12px;margin-top:2px}
-  /* ---- Canvas panel, under the monthly calendar ---- */
+  /* ---- calendar feed panel, under the monthly calendar ---- */
   .cvpanel{border:1px solid var(--line);border-radius:3px;background:var(--card);overflow:hidden}
   .cvhead{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;
     background:transparent;padding:13px 14px}
@@ -839,8 +845,25 @@
   .cvbtns{display:flex;gap:7px;flex:none}
   .cvadd{border-top:1px solid var(--line);padding-top:14px;margin-top:2px}
   .cvlist + .cvadd{margin-top:0}
+  /* The feeds keep themselves current, so this line reports; it does not ask. */
+  .cvstatus{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 14px}
+  .cvstate{flex:1;min-width:180px;font-size:12.5px;color:var(--ink35)}
+  .cvdot{flex:none;width:7px;height:7px;border-radius:99px;background:var(--line)}
+  .cvdot.on{background:var(--accent);animation:cvpulse 1.1s ease-in-out infinite}
+  @keyframes cvpulse{0%,100%{opacity:.35}50%{opacity:1}}
+  @media (prefers-reduced-motion: reduce){ .cvdot.on{animation:none;opacity:1} }
   .cvsteps{margin:0 0 14px;font-size:13px;color:var(--ink60);line-height:1.6;max-width:62ch}
   .cvsteps b{color:var(--ink)}
+  /* where to find a feed: the three places students actually have one */
+  .cvwhere{margin:0 0 16px;padding:0;max-width:62ch;
+    display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:baseline}
+  .cvwhere dt{font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap}
+  .cvwhere dd{margin:0;font-size:12.5px;color:var(--ink35);line-height:1.5}
+  .cvwhere dd b{color:var(--ink60);font-weight:600}
+  @media(max-width:520px){
+    .cvwhere{grid-template-columns:1fr;gap:1px}
+    .cvwhere dd{margin-bottom:9px}
+  }
   .cvfine{margin:12px 0 0;font-size:12px;color:var(--ink35);line-height:1.55;max-width:62ch}
 
   .legaldoc{font-size:13.5px;line-height:1.65;color:var(--ink60)}
@@ -2326,7 +2349,7 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
         </div>
       </div>
 
-      {ghost && <div className="ghost" style={{left:ghost.x+12, top:ghost.y-14}}>{ghost.label}</div>}
+      {ghost && <div className="draglabel" style={{left:ghost.x+12, top:ghost.y-14}}>{ghost.label}</div>}
 
       {dayEdit && <DayEditor day={day} onClose={() => setDayEdit(false)}
         onSave={d => { setDay(d); setDayEdit(false); toast('Day updated'); }} />}
@@ -2724,7 +2747,7 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
           })}
       </div>
 
-      {ghost && <div className="ghost" style={{left:ghost.x+12, top:ghost.y-14}}>{ghost.label}</div>}
+      {ghost && <div className="draglabel" style={{left:ghost.x+12, top:ghost.y-14}}>{ghost.label}</div>}
 
       <div className="divider" style={{margin:'22px 0 18px'}} />
       <div className="wkbottom">
@@ -2777,12 +2800,16 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
   );
 }
 
-/* ---- Canvas calendar feed ----
-   Canvas publishes a read-only .ics feed per student (Calendar -> Calendar
-   Feed). Assignments arrive as events whose start is the due time, so each one
-   becomes a deadline on the monthly calendar. The feed is fetched through a
-   small Netlify function because Canvas sends no CORS headers; see
-   netlify/functions/canvas-feed.js. */
+/* ---- calendar feeds ----
+   Any site that publishes a read-only iCalendar (.ics) feed can be read:
+   Canvas (Calendar -> Calendar Feed), a Google Calendar a teacher shares, a
+   school sports calendar, an SAT or AP prep course's schedule. Each event
+   lands on the monthly calendar.
+
+   The fetch goes through a small Netlify function, because almost none of
+   these sites send CORS headers, so a browser cannot read them directly. See
+   netlify/functions/canvas-feed.mjs, which keeps its original name because
+   the shipped iOS build already points at that address. */
 
 // Resolved when it is called, not when the file loads: isNativeApp is defined
 // further down, and in the app a relative path would point at the bundle
@@ -2829,6 +2856,22 @@ function icsDate(name, value){
   };
 }
 
+/* Works out what kind of entry an imported event is.
+
+   A due date has no length: Canvas and most assignment feeds either leave out
+   DTEND or set it equal to DTSTART. Something with a real span is a thing you
+   turn up to, so it reads as an event rather than a deadline. A summary saying
+   test, quiz or exam beats both, because that is the one students most want
+   to see coming. */
+function icsType(summary, start, end){
+  if(/\b(test|quiz|exam|midterm|final|finals)\b/i.test(summary || '')) return 'test';
+  if(start && end && !start.allDay && !end.allDay){
+    const span = (end.date + 'T' + (end.time || '00:00')) !== (start.date + 'T' + (start.time || '00:00'));
+    if(span) return 'other';
+  }
+  return 'deadline';
+}
+
 /* Returns one entry per event, already in the shape the monthly calendar
    stores: {cid, title, date, time, note, type}. Anything without a usable
    date or title is dropped rather than guessed at. */
@@ -2848,7 +2891,7 @@ function parseICS(text){
           date: cur.start.date,
           time: cur.start.allDay ? null : cur.start.time,
           note: (cur.course || '').slice(0, 80),
-          type: 'deadline'
+          type: icsType(cur.summary, cur.start, cur.end)
         });
       }
       cur = null; continue;
@@ -2862,6 +2905,7 @@ function parseICS(text){
     if(name === 'UID')          cur.uid = value.trim().slice(0, 160);
     else if(name === 'SUMMARY') cur.summary = icsText(value);
     else if(name === 'DTSTART') cur.start = icsDate(name, value);
+    else if(name === 'DTEND')   cur.end = icsDate(name, value);
     else if(name === 'LOCATION' && !cur.course) cur.course = icsText(value);
     else if(name === 'DESCRIPTION' && !cur.course){
       // Canvas puts the course name in brackets at the end of the summary on
@@ -2870,7 +2914,7 @@ function parseICS(text){
       if(m) cur.course = m[1];
     }
   }
-  // a Canvas summary often ends with "[Course name]"
+  // a Canvas summary often ends with "[Course name]", so it becomes the note
   out.forEach(e => {
     const m = /^(.*?)\s*\[([^\]]{2,60})\]$/.exec(e.title);
     if(m){ e.title = m[1].trim(); if(!e.note) e.note = m[2].trim(); }
@@ -2883,9 +2927,11 @@ function parseICS(text){
    that has been deleted upstream goes away. Anything the student typed
    themselves is left completely alone. */
 /* Several feeds can be connected at once: a school Canvas, a second campus, a
-   club's calendar. Each imported date remembers which feed it came from, so one
-   feed can be synced or removed without disturbing the others. Dates saved
-   before feeds existed have no `feed` and belong to the first one. */
+   club's calendar, an SAT course. Each imported date remembers which feed it
+   came from, so one feed can be synced or removed without disturbing the
+   others. Dates saved before feeds existed have no `feed` and belong to the
+   first one. The stored shape still says canvas throughout, so a planner saved
+   by an older build opens unchanged. */
 const LEGACY_FEED = 'f0';
 const feedOf = e => e.feed || LEGACY_FEED;
 const isCanvas = e => e && e.source === 'canvas';
@@ -2900,10 +2946,18 @@ const feedsOf = st => {
   if(one && one.url) return [{id:LEGACY_FEED, url:one.url, name:'', at:one.at, count:one.count}];
   return [];
 };
+// Unnamed feeds are called after the site they came from, which is usually
+// enough to tell two of them apart at a glance.
 const feedLabel = f => {
   if(f.name) return f.name;
-  try { return new URL(f.url).hostname.replace(/^www\./, ''); }
-  catch(e){ return 'Canvas'; }
+  try {
+    const h = new URL(f.url).hostname.replace(/^www\./, '');
+    if(/\.instructure\.com$/i.test(h)) return h.replace(/\.instructure\.com$/i, '') + ' (Canvas)';
+    if(/^calendar\.google\.com$/i.test(h)) return 'Google Calendar';
+    if(/(^|\.)outlook\.(office|live)\.com$/i.test(h)) return 'Outlook';
+    return h;
+  }
+  catch(e){ return 'Calendar'; }
 };
 
 function mergeFeed(events, feedId, fetched){
@@ -2951,17 +3005,20 @@ async function fetchCanvas(url){
     });
     body = await res.text();
   }catch(e){
-    throw new Error("Could not reach PlanIt's Canvas helper. Check your connection and try again.");
+    throw new Error("Could not reach PlanIt's calendar helper. Check your connection and try again.");
   }
 
   // If the helper is missing, the host answers with its own 404 page. Showing
   // that raw dumps a screenful of HTML into the error box, so it is named for
   // what it is: the site is deployed but the function beside it is not.
   const looksLikePage = /^\s*<(!doctype|html)/i.test(body || '');
-  if(res.status === 404 || looksLikePage){
+  if(res.status === 404 && looksLikePage){
     throw new Error(
-      'The Canvas helper is not on the server yet. It lives at ' +
-      'netlify/functions/canvas-feed.js and has to be deployed before a feed can be read.');
+      'The calendar helper is not on the server yet. It lives at ' +
+      'netlify/functions/canvas-feed.mjs and has to be deployed before a feed can be read.');
+  }
+  if(looksLikePage){
+    throw new Error('The calendar helper answered with a web page instead of a calendar.');
   }
   if(!res.ok){
     const msg = (body || '').trim();
@@ -2973,44 +3030,157 @@ async function fetchCanvas(url){
   return parseICS(body);
 }
 
+/* ---- keeping feeds current on their own ----
+
+   A feed is a subscription, not an import, so pressing a button to collect
+   your own homework is work the planner should be doing. Every connected feed
+   is checked when the planner opens, when you come back to the tab, when the
+   connection returns, and twice an hour while it is open.
+
+   Two things keep that from being expensive. Checks are throttled per feed
+   against a clock kept on this device, so opening the planner four times in an
+   hour is still one check. And the planner is only written to when a date
+   actually changed, so a quiet feed costs one request and no upload. */
+const FEED_MAX_AGE = 30 * 60 * 1000;        // how stale a feed may get
+const FEED_EVERY   = 30 * 60 * 1000;        // how often to look while open
+const CHECK_KEY    = 'planit:feedcheck:v1';
+
+// When each feed was last looked at. Device local on purpose: it is a throttle,
+// not planner data, and it must not travel between devices or cause an upload.
+const readChecks = () => {
+  try { return JSON.parse(localStorage.getItem(CHECK_KEY) || '{}') || {}; }
+  catch(e){ return {}; }
+};
+const writeChecks = m => { try { localStorage.setItem(CHECK_KEY, JSON.stringify(m)); } catch(e){} };
+
+// What one feed's dates amount to right now. Two identical signatures mean
+// there is nothing worth saving.
+const feedSig = rows => rows
+  .map(e => [e.cid, e.title, e.date, e.time || '', e.note || '', e.type || ''].join('\u0001'))
+  .sort()
+  .join('\u0002');
+
+function useFeedSync({settings, setSettings, events, setEvents, enabled}){
+  const [busy, setBusy] = useState(false);
+  const [at, setAt] = useState(null);
+  const [err, setErr] = useState('');
+  const running = useRef(false);
+  // The running check reads the newest planner rather than the one it started
+  // with. The setters live here too: App rebuilds them every render, and
+  // depending on their identity would restart the timer on every keystroke.
+  const now = useRef(null);
+  now.current = {settings, events, setSettings, setEvents};
+
+  const run = useCallback(async force => {
+    if(!enabled || running.current) return;
+    const feeds = feedsOf(now.current.settings);
+    if(!feeds.length) return;
+    if(typeof navigator !== 'undefined' && navigator.onLine === false) return;
+
+    const checks = readChecks();
+    const stale = f => !checks[f.id] || Date.now() - checks[f.id] > FEED_MAX_AGE;
+    const due = force ? feeds : feeds.filter(stale);
+    if(!due.length) return;
+
+    running.current = true;
+    setBusy(true); setErr('');
+
+    let rows = now.current.events || [];
+    let list = feeds;
+    let changed = false, trouble = '';
+
+    for(const f of due){
+      try{
+        const fetched = await fetchCanvas(f.url);
+        const before = feedSig(rows.filter(e => isCanvas(e) && feedOf(e) === f.id));
+        const out = mergeFeed(rows, f.id, fetched);
+        const after = feedSig(out.events.filter(e => isCanvas(e) && feedOf(e) === f.id));
+        if(before !== after){
+          rows = out.events;
+          list = list.map(x => x.id === f.id ? {...x, at:Date.now(), count:out.total} : x);
+          changed = true;
+        }
+        checks[f.id] = Date.now();
+      }catch(e){
+        // One unreachable feed must not stop the others, and a feed that is
+        // merely offline should be tried again soon rather than in half an hour.
+        trouble = e.message || 'Could not read that feed.';
+      }
+    }
+
+    writeChecks(checks);
+    if(changed){
+      now.current.setEvents(rows);
+      now.current.setSettings({...(now.current.settings || {}), canvasFeeds:list, canvas:null});
+    }
+    running.current = false;
+    setBusy(false); setAt(Date.now()); setErr(trouble);
+  }, [enabled]);
+
+  useEffect(() => {
+    if(!enabled) return;
+    let alive = true;
+    const tick = () => { if(alive) run(false); };
+    const onVisible = () => { if(document.visibilityState === 'visible') tick(); };
+    const t = setTimeout(tick, 1200);                 // let the planner settle first
+    const i = setInterval(tick, FEED_EVERY);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('online', tick);
+    return () => {
+      alive = false;
+      clearTimeout(t); clearInterval(i);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('online', tick);
+    };
+  }, [enabled, run]);
+
+  // The panel shows the device's clock, which is the honest answer to "when did
+  // you last look", rather than when a date last changed.
+  const lastCheck = useMemo(() => {
+    const m = readChecks();
+    const times = feedsOf(settings).map(f => m[f.id]).filter(Boolean);
+    return times.length ? Math.max(...times) : null;
+  }, [settings, at, busy]);
+
+  return {busy, err, lastCheck, check: () => run(true)};
+}
+
 /* The panel that lives under the monthly calendar, and the notice that points
-   at it once. Both are deliberately quiet: this is useful to the students whose
-   school uses Canvas and irrelevant to everyone else. */
-function CanvasPanel({settings, setSettings, events, setEvents, toast}){
+   at it once. Both are deliberately quiet: useful to the students whose school
+   or course publishes a calendar, irrelevant to everyone else. */
+function CanvasPanel({settings, setSettings, events, setEvents, toast, sync}){
   const feeds = feedsOf(settings);
   const [open, setOpen] = useState(feeds.length > 0);
   const [adding, setAdding] = useState(feeds.length === 0);
   const [url, setUrl] = useState('');
   const [name, setName] = useState('');
-  const [busy, setBusy] = useState('');              // '' | 'add' | a feed id
+  const [busy, setBusy] = useState('');              // '' | 'add'
   const [err, setErr] = useState('');
   const [note, setNote] = useState('');
   const total = (events || []).filter(isCanvas).length;
+  const checking = busy === 'add' || (sync && sync.busy);
 
   const saveFeeds = next => setSettings({...settings, canvasFeeds:next, canvas:null});
 
-  // One sync, used by both the add form and each feed's own button.
-  const pull = async (feed, feedUrl) => {
-    setBusy(feed ? feed.id : 'add'); setErr(''); setNote('');
+  // Connecting a new feed is the one read the panel does itself: there is no
+  // feed to keep current until this has worked once. Everything after it is
+  // handled by useFeedSync.
+  const connect = async feedUrl => {
+    setBusy('add'); setErr(''); setNote('');
     try{
       const fetched = await fetchCanvas(feedUrl);
-      const id = feed ? feed.id : 'f' + uid();
+      const id = 'f' + uid();
       const out = mergeFeed(events, id, fetched);
       setEvents(out.events);
-      const row = {id, url:feedUrl, name:feed ? feed.name : name.trim(),
-                   at:Date.now(), count:out.total};
-      saveFeeds(feed ? feeds.map(f => f.id === id ? row : f) : [...feeds, row]);
-      setNote(out.added || out.removed
-        ? `${feedLabel(row)}: ${out.total} dates. ${out.added} new, ${out.removed} gone.`
-        : `${feedLabel(row)}: up to date, ${out.total} dates.`);
-      if(!feed){ setUrl(''); setName(''); setAdding(false); }
-      toast('Canvas synced');
+      const row = {id, url:feedUrl, name:name.trim(), at:Date.now(), count:out.total};
+      saveFeeds([...feeds, row]);
+      const marks = readChecks(); marks[id] = Date.now(); writeChecks(marks);
+      setNote(`${feedLabel(row)} is connected. ${out.total} ${out.total === 1 ? 'date' : 'dates'}, ` +
+              `and it will keep itself up to date from now on.`);
+      setUrl(''); setName(''); setAdding(false);
+      toast('Feed connected');
     }catch(e){ setErr(e.message || 'Could not read that feed.'); }
     setBusy('');
-  };
-
-  const syncAll = async () => {
-    for(const f of feeds){ await pull(f, f.url); }
   };
 
   const remove = feed => {
@@ -3031,10 +3201,10 @@ function CanvasPanel({settings, setSettings, events, setEvents, toast}){
       <button className="cvhead" onClick={() => setOpen(v => !v)} aria-expanded={open}>
         <span className="cvrule" />
         <span className="cvtitle">
-          <b>Canvas deadlines</b>
+          <b>Calendar feeds</b>
           <small>{feeds.length
             ? `${feeds.length} ${feeds.length === 1 ? 'feed' : 'feeds'}, ${total} ${total === 1 ? 'date' : 'dates'}`
-            : 'Pull your assignment due dates straight onto this calendar'}</small>
+            : 'Pull due dates from Canvas, a shared calendar or a course site onto this calendar'}</small>
         </span>
         <span className="cvchev" aria-hidden="true"><IconArrow dir={open ? 'up' : 'down'} /></span>
       </button>
@@ -3051,14 +3221,11 @@ function CanvasPanel({settings, setSettings, events, setEvents, toast}){
                       <b>{feedLabel(f)}</b>
                       <small>
                         {n} {n === 1 ? 'date' : 'dates'}
-                        {f.at ? `, synced ${agoText(f.at)}` : ''}
+                        {f.at ? `, last changed ${agoText(f.at)}` : ''}
                       </small>
                     </span>
                     <span className="cvbtns">
-                      <button className="btn sm" disabled={!!busy} onClick={() => pull(f, f.url)}>
-                        {busy === f.id ? 'Reading…' : 'Sync'}
-                      </button>
-                      <button className="btn sm danger" disabled={!!busy} onClick={() => remove(f)}>
+                      <button className="btn sm danger" disabled={checking} onClick={() => remove(f)}>
                         Remove
                       </button>
                     </span>
@@ -3068,28 +3235,54 @@ function CanvasPanel({settings, setSettings, events, setEvents, toast}){
             </ul>
           )}
 
-          {err && <div className="formerr">{err}</div>}
+          {/* The feeds look after themselves, so this reports rather than asks. */}
+          {feeds.length > 0 && (
+            <div className="cvstatus">
+              <span className={'cvdot' + (checking ? ' on' : '')} aria-hidden="true" />
+              <span className="cvstate">
+                {checking
+                  ? 'Checking for new dates…'
+                  : sync && sync.lastCheck
+                    ? `Checked ${agoText(sync.lastCheck)}. These update on their own.`
+                    : 'These update on their own.'}
+              </span>
+              {sync && !checking && (
+                <button className="btn sm ghost" onClick={sync.check}>Check now</button>
+              )}
+            </div>
+          )}
+
+          {(err || (sync && sync.err)) && <div className="formerr">{err || sync.err}</div>}
           {note && <div className="formnote">{note}</div>}
 
           {adding ? (
             <div className="cvadd">
               <p className="cvsteps">
-                In Canvas, open <b>Calendar</b>, press <b>Calendar Feed</b> at the bottom right, and
-                copy the address. It is read only, so PlanIt can see your due dates and cannot change
-                anything in Canvas.
+                Any site that publishes a calendar feed works. The address usually ends in
+                <b> .ics</b>, and the link to it says iCal, ICS, Subscribe or Calendar Feed. Every
+                feed is read only: PlanIt sees the dates and can never change anything at the other
+                end.
               </p>
+              <dl className="cvwhere">
+                <dt>Canvas</dt>
+                <dd>Calendar, then <b>Calendar Feed</b> at the bottom right.</dd>
+                <dt>Google Calendar</dt>
+                <dd>Settings for that calendar, then <b>Secret address in iCal format</b>.</dd>
+                <dt>A course or club site</dt>
+                <dd>Look for an iCal or Subscribe link. SAT and AP prep schedules usually have one.</dd>
+              </dl>
               <label className="flabel" htmlFor="cvurl">Calendar feed address</label>
               <input id="cvurl" className="finput" value={url} onChange={e => setUrl(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && url.trim() && pull(null, url.trim())}
-                spellCheck="false"
-                placeholder="https://yourschool.instructure.com/feeds/calendars/..." />
+                onKeyDown={e => e.key === 'Enter' && url.trim() && connect(url.trim())}
+                spellCheck="false" inputMode="url"
+                placeholder="https://… ending in .ics" />
               <label className="flabel" htmlFor="cvname">Name for this feed, if you want one</label>
               <input id="cvname" className="finput" value={name} onChange={e => setName(e.target.value)}
-                placeholder="School, dual enrolment, robotics…" maxLength={32} />
+                placeholder="School, SAT prep, robotics…" maxLength={32} />
               <div className="row" style={{gap:8, flexWrap:'wrap'}}>
                 <button className="btn primary" disabled={!!busy || !url.trim()}
-                  onClick={() => pull(null, url.trim())}>
-                  {busy === 'add' ? 'Reading Canvas…' : 'Connect this feed'}
+                  onClick={() => connect(url.trim())}>
+                  {busy === 'add' ? 'Reading the feed…' : 'Connect this feed'}
                 </button>
                 {feeds.length > 0 && (
                   <button className="btn" disabled={!!busy}
@@ -3099,19 +3292,19 @@ function CanvasPanel({settings, setSettings, events, setEvents, toast}){
             </div>
           ) : (
             <div className="row" style={{gap:8, flexWrap:'wrap'}}>
-              <button className="btn" disabled={!!busy} onClick={() => { setAdding(true); setNote(''); }}>
+              <button className="btn" disabled={checking} onClick={() => { setAdding(true); setNote(''); }}>
                 Add another feed
               </button>
-              {feeds.length > 1 && (
-                <button className="btn" disabled={!!busy} onClick={syncAll}>Sync all</button>
-              )}
             </div>
           )}
 
           <p className="cvfine">
-            Canvas dates arrive as deadlines and can be recoloured or retyped like any other. Syncing
-            a feed again updates its dates in place and takes away anything your teacher deleted.
-            Removing a feed only takes away that feed's dates. Nothing you typed yourself is touched.
+            Due dates arrive as deadlines, anything that runs for a stretch of time arrives as an
+            event, and anything with test, quiz or exam in the name arrives as a test. All of them
+            can be recoloured or retyped like any other date, and the change survives every later
+            check. A connected feed is checked when you open PlanIt and twice an hour while it is
+            open: new dates appear, dates your teacher deleted go away, and nothing you typed
+            yourself is ever touched. Removing a feed takes away only that feed's dates.
           </p>
         </div>
       )}
@@ -3132,21 +3325,23 @@ const agoText = at => {
 
 function CanvasNotice({onOpen, onClose}){
   return (
-    <Modal title="Does your school use Canvas?" onClose={onClose}
+    <Modal title="Bring your due dates in" onClose={onClose}
       footer={<>
         <button className="btn ghost" onClick={onClose}>Not now</button>
         <button className="btn primary" onClick={onOpen}>Show me <IconArrow /></button>
       </>}>
       <p style={{marginTop:0, color:'var(--ink60)', fontSize:14, lineHeight:1.6}}>
-        PlanIt can read your Canvas calendar feed and put every assignment due date straight onto
-        your monthly calendar, so you are not copying them across by hand.
+        If your school or your course publishes a calendar, PlanIt can read it and put every due
+        date straight onto your monthly calendar, so you are not copying them across by hand.
       </p>
       <p style={{color:'var(--ink60)', fontSize:14, lineHeight:1.6}}>
-        It is read only. PlanIt can see your due dates and cannot change anything in Canvas.
+        Canvas, a Google Calendar a teacher shares, a club's schedule, an SAT or AP prep course.
+        Anything with an iCal or Calendar Feed link.
       </p>
       <p style={{color:'var(--ink60)', fontSize:14, lineHeight:1.6}}>
-        You can connect more than one, so a second campus or a club calendar can sit alongside
-        your school's, and remove any of them on its own.
+        Connect it once and it keeps itself current, so new assignments turn up without you doing
+        anything. You can connect as many as you like and remove any of them on its own. Every feed
+        is read only: PlanIt sees the dates and cannot change anything at the other end.
       </p>
       <div className="gnote">
         <b>Where to find it later</b>
@@ -3158,7 +3353,8 @@ function CanvasNotice({onOpen, onClose}){
 
 /* ============ ORGANIZE IT: monthly ============ */
 function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, setEvents,
-  setDaily, toast, tasks, update, remove, energyBase, baseFor, settings, setSettings, canvasOpen}){
+  setDaily, toast, tasks, update, remove, energyBase, baseFor, settings, setSettings, canvasOpen,
+  feedSync}){
   const first = new Date(date.getFullYear(), date.getMonth(), 1);
   const gridStart = startOfWeek(first);
   const cells = Array.from({length:42}, (_,i) => addDays(gridStart,i));
@@ -3283,7 +3479,7 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
         })}
       </div>
 
-      {ghost && <div className="ghost" style={{left:ghost.x+12, top:ghost.y-14}}>{ghost.label}</div>}
+      {ghost && <div className="draglabel" style={{left:ghost.x+12, top:ghost.y-14}}>{ghost.label}</div>}
 
       <div className="legend" style={{marginTop:14}}>
         {EV_TYPES.map(t => <span key={t.id}><i style={{background:t.color}} />{t.label}</span>)}
@@ -3311,7 +3507,7 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
         <>
           <div className="divider" style={{margin:'26px 0 0'}} />
           <div ref={canvasOpen} style={{maxWidth:640, marginTop:18}}>
-            <CanvasPanel settings={settings} setSettings={setSettings}
+            <CanvasPanel sync={feedSync} settings={settings} setSettings={setSettings}
               events={events} setEvents={setEvents} toast={toast} />
           </div>
         </>
@@ -4498,7 +4694,7 @@ const GMark = () => (
 // fails to load, the drawn mark below is used instead so nothing looks broken.
 // Bumped every time a file is handed over, so a build can be identified
 // without printing a version number next to the wordmark.
-const BUILD = 'b7725';
+const BUILD = 'b7727';
 const LOGO_SRC = 'logo.png';
 // The homepage photograph, graded to the palette. Two files rather than one
 // CSS filter, because a filter that works on cream washes out on charcoal.
@@ -6466,13 +6662,20 @@ async function changeUsername(newName, user, oldName){
   await withTimeout(batch.commit(), 10000);
 }
 
-function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksChange, sync, onSyncNow, streakInfo, canRestore, onUseFreeze}){
+function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksChange, sync, onSyncNow, streakInfo, canRestore, onUseFreeze, energyBase, applyBase}){
   const auth = initFirebase();
   const [profile, setProfile] = useState(null);
   const [err, setErr] = useState('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [legal, setLegal] = useState(null);
+
+  // The baseline is edited as a draft. Nothing is saved until the student says
+  // which days the new number applies to, because changing it everywhere
+  // quietly rewrites how every past day was judged.
+  const effBase = energyBase || settings.energyBase || DEFAULT_BASE;
+  const [baseDraft, setBaseDraft] = useState(effBase);
+  useEffect(() => { setBaseDraft(effBase); }, [effBase]);
 
   useEffect(() => { (async () => {
     try{
@@ -6676,12 +6879,38 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
           <div className="card">
             <div className="spread" style={{marginBottom:12}}>
               <span style={{fontSize:13.5}}>Your daily baseline</span>
-              <b className="mono" style={{fontSize:20}}>{settings.energyBase || DEFAULT_BASE}</b>
+              <b className="mono" style={{fontSize:20}}>{effBase}</b>
             </div>
             {user.role === 'parent'
-              ? <div className="mono" style={{fontSize:22, fontWeight:600}}>{settings.energyBase || DEFAULT_BASE}</div>
-              : <EnergyStepper value={settings.energyBase || DEFAULT_BASE}
-                  onChange={v => setSettings({...settings, energyBase:v})} />}
+              ? <div className="mono" style={{fontSize:22, fontWeight:600}}>{effBase}</div>
+              : <EnergyStepper value={baseDraft} onChange={setBaseDraft} />}
+
+            {user.role !== 'parent' && baseDraft !== effBase && (
+              <div className="basescope">
+                <div className="eyebrow" style={{marginBottom:9}}>
+                  Change {effBase} to {baseDraft} for
+                </div>
+                <button className="rolecard" onClick={() => {
+                  if(applyBase) applyBase(baseDraft, 'future');
+                  else setSettings({...settings, energyBase:baseDraft});
+                  toast('Baseline is ' + baseDraft + ' from today on');
+                }}>
+                  <span><b>Today and future days</b>
+                    <small>Days before today keep the number they were judged against.</small></span>
+                </button>
+                <button className="rolecard" onClick={() => {
+                  if(applyBase) applyBase(baseDraft, 'all');
+                  else setSettings({...settings, energyBase:baseDraft});
+                  toast('Baseline is ' + baseDraft + ' on every day');
+                }}>
+                  <span><b>Every day, past included</b>
+                    <small>Rewrites the baseline everywhere and clears earlier changes.</small></span>
+                </button>
+                <button className="btn sm ghost" style={{marginTop:2}}
+                  onClick={() => setBaseDraft(effBase)}>Leave it at {effBase}</button>
+              </div>
+            )}
+
             <div style={{fontSize:12.5, color:'var(--ink35)', marginTop:10, lineHeight:1.55}}>
               Tasks cost between −1 and 3. Your day turns orange within 5 of this number and red past that,
               which is the signal you've planned more than you can carry.
@@ -7933,11 +8162,15 @@ function App({user, onSignOut}){
     return base;
   };
   const energyBase = baseFor(iso(date));
-  const applyBase = (v, scope) => {
+  // fromDay lets Settings change the baseline from today, while the energy pill
+  // in Daily changes it from whichever day is on screen.
+  const applyBase = (v, scope, fromDay) => {
     const st = store.settings || DEFAULT_SETTINGS;
-    const dk = iso(date);
+    const dk = fromDay || iso(date);
     if(scope === 'future'){
-      const rest = ((st.energyChanges || []).filter(c => c.from !== dk));
+      // Changes dated on or after this day go, so "from here on" really does
+      // mean every day forward rather than until the next old change.
+      const rest = ((st.energyChanges || []).filter(c => c.from < dk));
       const next = [...rest, {from:dk, base:v}].sort((a,b) => a.from.localeCompare(b.from));
       setSettings({...st, energyChanges:next});
     } else {
@@ -8502,6 +8735,14 @@ function App({user, onSignOut}){
   const setEvents = guard(_setEvents);
   const addEc = guard(_addEc), updateEc = guard(_updateEc), removeEc = guard(_removeEc);
 
+  // Connected feeds keep themselves current. This lives up here rather than in
+  // the panel so it runs whether or not Organize It is the tab you are on, and
+  // it is off for a parent, who is looking at someone else's planner.
+  const feedSync = useFeedSync({
+    settings, setSettings, events:store.events, setEvents,
+    enabled: ready && !isParent
+  });
+
   const meta = TABS.find(t => t.id === tab);
   const accentHex = sectionHex(settings, tab);
 
@@ -8637,7 +8878,8 @@ function App({user, onSignOut}){
             <Monthly date={date} setDate={setDate} events={view.events} addEvent={addEvent} updateEvent={updateEvent}
               removeEvent={removeEvent} setEvents={isParent ? null : setEvents} setDaily={goDaily} toast={toast} tasks={view.tasks}
               update={updateTask} remove={removeTask} energyBase={energyBase} baseFor={baseFor}
-              settings={settings} setSettings={setSettings} canvasOpen={canvasRef} />}
+              settings={settings} setSettings={setSettings} canvasOpen={canvasRef}
+              feedSync={feedSync} />}
 
           {tab === 'list' &&
             <ListIt sub={sub.list} date={date} setDate={setDate} tasks={view.tasks} add={addTask} update={updateTask} remove={removeTask}
@@ -8661,6 +8903,8 @@ function App({user, onSignOut}){
             <Settings sub={sub.settings} user={user} onSignOut={onSignOut} settings={settings}
               setSettings={setSettings} toast={toast} onLinksChange={refreshLinks}
               streakInfo={sk} canRestore={canRestore} onUseFreeze={useFreeze}
+              energyBase={baseFor(iso(new Date()))}
+              applyBase={(v, scope) => applyBase(v, scope, iso(new Date()))}
               sync={sync} onSyncNow={() => {
                 setSync({state:'saving'});
                 pushPlanner(user.id, store)
@@ -9684,7 +9928,7 @@ const FAQ = [
   {q:'Can my parents see everything?',
    a:"Only if you accept their request, and only to look. They see your schedule, what you have ticked off and your study minutes. They cannot edit anything, and they never see your private notes in Brag It."},
   {q:'Does it work with Canvas?',
-   a:"If your school uses Canvas, paste your calendar feed into Organize It and your assignment due dates land on the monthly calendar. It is read only, so PlanIt cannot change anything in Canvas."},
+   a:"Yes, and with anything else that publishes a calendar feed: a Google Calendar a teacher shares, a club's schedule, an SAT or AP prep course. Paste the feed address into Organize It, Monthly, and the dates land on your calendar. After that it keeps itself current on its own, so new assignments turn up without you asking. You can connect several at once, and every feed is read only, so PlanIt cannot change anything at the other end."},
   {q:'Something is broken. Who do I tell?',
    a:"Settings, then Report a bug. It comes straight to us. Or email us at the address below."},
 ];
