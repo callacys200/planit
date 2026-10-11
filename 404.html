@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Page not found &middot; PlanIt</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" href="/favicon.png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+/* The planner remembers which theme you chose in one small key. Reading it here
+   means a mistyped address lands in your own colours instead of flashing cream
+   at someone who uses the dark theme. */
+(function(){
+  var T = {
+    terracotta:['#F9F6F0','#171C22'], sage:['#F5F6EF','#171B17'],
+    iris:['#F4F3F9','#171724'],       rosewood:['#FAF3F2','#1D1618'],
+    coastal:['#F2F7FA','#121A1F'],    matcha:['#F5F3EB','#1A1A17'],
+    graphite:['#F3F1EC','#15161A']
+  };
+  try{
+    var a = JSON.parse(localStorage.getItem('planit:appearance:v1') || '{}');
+    var dark = a.mode === 'dark' || ((a.mode === 'system' || !a.mode) &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var r = document.documentElement;
+    r.setAttribute('data-theme', dark ? 'dark' : 'light');
+    r.style.colorScheme = dark ? 'dark' : 'light';
+    var paper = (T[a.palette] || T.terracotta)[dark ? 1 : 0];
+    r.style.setProperty('--paper', paper);
+    var m = document.createElement('meta');
+    m.name = 'theme-color'; m.content = paper;
+    document.head.appendChild(m);
+  }catch(e){}
+})();
+</script>
+<style>
+  :root{
+    --paper:#F9F6F0; --card:#FFFDF9; --soft:#F3EEE4;
+    --ink:#1F2B38; --ink60:#3C4A59; --ink35:#576574;
+    --line:#CABBA5; --accent:#C14D33;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#171C22; --card:#2C3845; --soft:#212A33;
+      --ink:#F7F6F2; --ink60:#CEC6B8; --ink35:#A9A08F;
+      --line:#405161; --accent:#ED846C;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#171C22; --card:#2C3845; --soft:#212A33;
+    --ink:#F7F6F2; --ink60:#CEC6B8; --ink35:#A9A08F;
+    --line:#405161; --accent:#ED846C;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:"Hanken Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size:15px; line-height:1.6;
+    display:grid; place-items:center; padding:32px 16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  main{width:100%; max-width:430px}
+
+  .mark{
+    display:inline-flex; align-items:baseline; gap:8px;
+    font-family:"Bricolage Grotesque", sans-serif; font-weight:800;
+    font-size:21px; letter-spacing:-.03em; color:var(--ink);
+    text-decoration:none; margin-bottom:22px;
+  }
+  .mark span{
+    font-family:"DM Mono", ui-monospace, monospace; font-weight:400;
+    font-size:11px; letter-spacing:.06em; text-transform:lowercase; color:var(--ink35);
+  }
+
+  /* One torn-off planner line: the thing you asked for, struck through. */
+  .slip{
+    background:var(--card); border:1px solid var(--line); border-radius:3px;
+    padding:26px 24px 24px; position:relative;
+  }
+  .slip::before{
+    content:""; position:absolute; left:0; top:18px; bottom:18px; width:3px;
+    border-radius:0 2px 2px 0; background:var(--accent);
+  }
+  .code{
+    font-family:"DM Mono", ui-monospace, monospace; font-size:11.5px;
+    letter-spacing:.09em; color:var(--ink35); margin:0 0 14px;
+  }
+  h1{
+    font-family:"Bricolage Grotesque", sans-serif; font-weight:800;
+    font-variation-settings:"wdth" 88; font-size:27px; line-height:1.18;
+    letter-spacing:-.025em; margin:0 0 4px; color:var(--ink);
+  }
+  .struck{
+    position:relative; display:inline-block; color:var(--ink35);
+  }
+  .struck::after{
+    content:""; position:absolute; left:-2px; right:-2px; top:56%; height:2px;
+    background:var(--accent); border-radius:2px; transform:rotate(-1.1deg);
+  }
+  p{margin:14px 0 0; color:var(--ink60); max-width:36ch}
+  .where{
+    margin-top:18px; padding-top:16px; border-top:1px dashed var(--line);
+    font-size:13px; color:var(--ink35);
+  }
+  .where code{
+    font-family:"DM Mono", ui-monospace, monospace; font-size:12px;
+    color:var(--ink60); background:var(--soft); padding:2px 6px; border-radius:3px;
+    word-break:break-all;
+  }
+  .go{
+    display:inline-flex; align-items:center; gap:9px; margin-top:22px;
+    padding:10px 20px; border-radius:999px; border:1px solid var(--ink);
+    background:var(--ink); color:var(--paper);
+    font-family:inherit; font-size:14px; font-weight:600; text-decoration:none;
+    transition:transform .14s ease, opacity .14s ease;
+  }
+  .go:hover{transform:translateY(-1px); opacity:.92}
+  .go:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+  .go svg{flex:none}
+  .alt{
+    margin-top:16px; font-size:13px; color:var(--ink35);
+  }
+  .alt a{color:var(--ink60); text-decoration:underline; text-underline-offset:3px}
+  .alt a:hover{color:var(--ink)}
+  @media (prefers-reduced-motion: reduce){
+    .go{transition:none}
+    .go:hover{transform:none}
+  }
+  @media (max-width:420px){
+    h1{font-size:23px}
+    .slip{padding:22px 18px 20px}
+  }
+</style>
+</head>
+<body>
+<main>
+  <a class="mark" href="/">PlanIt<span>planitforever.com</span></a>
+
+  <div class="slip">
+    <p class="code">404</p>
+    <h1>Find <span class="struck">this page</span></h1>
+    <p>Crossed off, because it is not here. The address may be mistyped, or whatever
+      used to be at it has moved.</p>
+    <div class="where">
+      You asked for <code id="asked">this address</code>
+    </div>
+    <a class="go" href="/">
+      Back to PlanIt
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" stroke="currentColor" stroke-width="1.6"
+          stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+    <p class="alt">Already have an account? <a href="/#/login">Sign in</a>.</p>
+  </div>
+</main>
+<script>
+  // Shown so you can see the typo rather than guess at it.
+  try{
+    var el = document.getElementById('asked');
+    var p = (location.pathname + location.search).slice(0, 120);
+    if(p && p !== '/') el.textContent = p;
+  }catch(e){}
+</script>
+</body>
+</html>
