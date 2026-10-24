@@ -31,9 +31,9 @@
   }catch(e){}
 })();
 </script>
-<link rel="icon" type="image/png" sizes="512x512" href="favicon.png?v=3">
-<link rel="shortcut icon" type="image/png" href="favicon.png?v=3">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3">
+<link rel="icon" type="image/png" sizes="512x512" href="favicon.png?v=4">
+<link rel="shortcut icon" type="image/png" href="favicon.png?v=4">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=4">
 <style>
 /* The host's badge, refused up front by the names it ships under. The script
    below is the part that catches whatever this misses. */
@@ -364,6 +364,13 @@
 
   /* ---------- modal ---------- */
   .scrim{position:fixed;inset:0;background:rgba(22,25,27,.52);display:flex;align-items:center;justify-content:center;padding:18px;z-index:80;animation:fade .16s ease}
+  /* a confirmation opened from inside a panel has to sit over it */
+  .scrim.over{z-index:95;background:rgba(22,25,27,.44)}
+  .confirmbox{max-width:390px}
+  .confirmbox h3{margin:0 0 10px;font-size:18px;letter-spacing:-.016em}
+  .confirmwhat{margin:0 0 8px;padding:10px 12px;background:var(--soft);border-radius:6px;
+    font-size:14px;font-weight:600;color:var(--ink);word-break:break-word}
+  .confirmnote{margin:0;font-size:13px;color:var(--ink60);line-height:1.6}
   @keyframes fade{from{opacity:0}}
   .modal{background:var(--card);border:1px solid var(--line);border-radius:5px;width:min(560px,100%);max-height:88vh;overflow:auto;animation:pop .18s cubic-bezier(.2,.8,.3,1)}
   @keyframes pop{from{transform:translateY(10px) scale(.98);opacity:.4}}
@@ -553,7 +560,7 @@
   .addwrap{flex:1;position:relative;display:flex;align-items:center}
   .addplus{position:absolute;left:13px;font-size:19px;line-height:1;font-weight:600;
     color:var(--accent);opacity:.75;pointer-events:none}
-  .addbar input{flex:1;padding:12px 14px 12px 34px;border:2px dashed var(--accent);border-radius:5px;
+  .addbar input{flex:1;padding:12px 44px 12px 34px;border:2px dashed var(--accent);border-radius:5px;
     background:var(--accent-soft);color:var(--ink);transition:.15s}
   .addbar input::placeholder{color:var(--ink60);opacity:.9}
   .addbar input:focus{background:var(--card);border-style:solid;outline:none;
@@ -591,9 +598,17 @@
   .counter.over{color:var(--rule)}
   .field > span.spread{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .ec .org{color:var(--ink60);font-size:13px;margin-top:1px}
-  .prio{display:inline-flex;gap:2.5px;align-items:center;flex:none}
-  .prio i{width:6px;height:13px;flex:none;border-radius:4px;background:var(--line);display:block}
-  .prio i.on{background:var(--brag)}
+  /* how much something matters: five circles, pressed to set it */
+  .balls{display:inline-flex;gap:5px;align-items:center;flex:none}
+  .balls .ball,.balls i{width:12px;height:12px;flex:none;padding:0;border-radius:50%;
+    display:block;box-sizing:border-box;border:1.5px solid var(--line);background:transparent}
+  .balls .ball{cursor:pointer;transition:background .13s ease, border-color .13s ease, transform .11s ease}
+  .balls .ball.on,.balls i.on{background:var(--brag);border-color:var(--brag)}
+  .balls .ball:hover{border-color:var(--brag);transform:scale(1.18)}
+  .balls .ball:focus-visible{outline:2px solid var(--brag);outline-offset:2px}
+  .balls.sm .ball,.balls.sm i{width:9px;height:9px;border-width:1.25px}
+  @media (hover:none){ .balls{gap:7px} .balls .ball{width:16px;height:16px} }
+  @media (prefers-reduced-motion: reduce){ .balls .ball{transition:none} .balls .ball:hover{transform:none} }
   .livedot{width:6px;height:6px;border-radius:99px;background:currentColor;display:block;flex:none}
   .avail.good{color:var(--list);display:flex;align-items:center;gap:5px}
   .navdate button svg{display:block}
@@ -628,10 +643,28 @@
   .timerbtns{display:grid;grid-auto-flow:column;grid-auto-columns:max-content;justify-content:center;
     align-items:center;gap:9px;margin-top:18px}
   .timerbtns > *{width:auto;min-width:0}
+  /* The focus screen is one screen and stays one screen. It used to scroll,
+     which on a phone meant rubber-banding past it to the white page underneath,
+     so the thing covering everything had daylight above and below it. It is
+     pinned to the real viewport height now, the page behind it is locked while
+     it is up, and anything that cannot fit is scaled down rather than scrolled
+     to. */
   .shield{position:fixed;inset:0;z-index:9999;background:#201718;color:#fff;display:flex;
-    align-items:flex-start;justify-content:center;padding:24px;text-align:center;isolation:isolate;
-    overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-  .shieldinner{margin:auto;display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:620px}
+    align-items:center;justify-content:center;padding:24px;text-align:center;isolation:isolate;
+    height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;touch-action:none}
+  .shieldinner{margin:auto;display:flex;flex-direction:column;align-items:center;gap:6px;
+    width:100%;max-width:620px;max-height:100%;overflow:hidden}
+  /* While it is up, nothing behind it moves and nothing behind it is white.
+     Hiding the overflow alone is not enough, since the page can still be
+     scrolled by anything that asks it to, so the body is taken out of the flow
+     and put back where it was afterwards. */
+  html.shielded,html.shielded body{overflow:hidden;overscroll-behavior:none;background:#201718}
+  html.shielded body{position:fixed;left:0;right:0;width:100%}
+  @media (max-height:640px){
+    .shield{padding:14px}
+    .shield .big{font-size:min(15vw,78px)}
+    .shield .sub{font-size:12.5px}
+  }
   .shield .big{font-family:"DM Mono",monospace;font-size:min(19vw,120px);font-weight:500;letter-spacing:-.04em;line-height:1}
   .shield .sub{color:var(--shield-dim,#BDB6B2);max-width:420px;font-size:14px}
   .listtoggle{position:fixed;top:18px;right:18px;border:1px solid rgba(255,255,255,.25);
@@ -996,6 +1029,20 @@
   .tabcount{position:absolute;top:9px;right:9px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;
     background:var(--rule);color:#fff;font-size:10.5px;font-weight:700;font-style:normal;display:grid;
     place-items:center;line-height:1}
+  .tabcount.menucount{top:-4px;right:-4px}
+  /* the strip that says something is new */
+  .newsstrip{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+    margin:0 0 2px;padding:11px 16px;border:0;border-bottom:1px solid var(--line);
+    background:var(--accent-soft);color:var(--ink);cursor:pointer;font:inherit}
+  .newsstrip:hover{background:var(--rule-soft)}
+  .newsdot{width:9px;height:9px;flex:none;border-radius:99px;background:var(--rule);
+    animation:newspulse 1.8s ease-in-out infinite}
+  @keyframes newspulse{50%{opacity:.35;transform:scale(.8)}}
+  @media (prefers-reduced-motion: reduce){ .newsdot{animation:none} }
+  .newsstrip-txt{flex:1;min-width:0}
+  .newsstrip-txt b{display:block;font-size:13.5px;letter-spacing:-.01em}
+  .newsstrip-txt span{display:block;font-size:11.5px;color:var(--ink35);margin-top:1px}
+  .newsstrip svg{flex:none;color:var(--ink35)}
   .reportgrid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:22px;align-items:start}
   @media (max-width:1000px){.reportgrid{grid-template-columns:1fr}}
   .chartrow{display:flex;align-items:flex-end;gap:10px;height:150px}
@@ -1013,6 +1060,99 @@
   .histbar{display:grid;grid-template-rows:1fr 16px;align-items:end;justify-items:center;gap:6px;flex:1}
   .histbar i{width:100%;max-width:26px;border-radius:4px 2px 2px 2px;background:var(--accent);opacity:.75;display:block}
   .histbar span{font-size:10.5px;color:var(--ink35)}
+  /* how you talk in a room, and the captions that come back */
+  .talkbox{padding:13px 14px;margin-bottom:13px;border:1px solid var(--line);
+    border-radius:9px;background:var(--soft)}
+  .talkbox .field{margin-bottom:0}
+  .talknote{margin:9px 0 0;font-size:12px;color:var(--ink60);line-height:1.6;max-width:56ch}
+  .talknote.warn{color:var(--rule)}
+  .talklive{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--rule);
+    font-family:"DM Mono",monospace}
+  .talklive i{width:7px;height:7px;border-radius:99px;background:var(--rule);
+    animation:newspulse 1.4s ease-in-out infinite}
+  @media (prefers-reduced-motion: reduce){ .talklive i{animation:none} }
+
+  .caplog{margin-top:13px;border:1px solid var(--line);border-radius:9px;background:var(--card);
+    overflow:hidden}
+  .caplog.compact{margin-top:13px}
+  .caphead{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:8px 11px}
+  .capname{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;
+    padding:0;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer}
+  .capcount{font-family:"DM Mono",monospace;font-size:10.5px;color:var(--accent-ink);
+    background:var(--accent);border-radius:99px;padding:1px 6px;font-weight:500}
+  .capclear{border:0;background:transparent;padding:0;font:inherit;font-size:12px;
+    color:var(--ink35);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+  .capclear:hover{color:var(--accent)}
+  .caplines{max-height:190px;overflow-y:auto;padding:4px 11px 11px;border-top:1px solid var(--line)}
+  .caplog.compact .caplines{max-height:150px}
+  .capempty{margin:8px 0 0;font-size:12px;color:var(--ink35);line-height:1.6}
+  .capline{margin:9px 0 0;font-size:13.5px;color:var(--ink);line-height:1.55}
+  .capline b{display:block;font-size:11px;color:var(--ink35);font-weight:600;margin-bottom:1px}
+  .capline.mine b{color:var(--accent)}
+
+  /* what you are on, and the way to give it longer */
+  .focusbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    margin:0 0 14px;padding:12px 15px;border-radius:10px;
+    border:1px solid color-mix(in srgb, var(--pc) 45%, transparent);
+    background:color-mix(in srgb, var(--pc) 9%, transparent);--pc:var(--accent)}
+  .focusbar.late{border-color:var(--pc);background:color-mix(in srgb, var(--pc) 15%, transparent)}
+  @supports not (color: color-mix(in srgb, red 50%, blue)){
+    .focusbar{border-color:var(--line);background:var(--soft)}
+    .focusbar.late{border-color:var(--pc)}
+  }
+  .focusmain{flex:1;min-width:180px}
+  .focusmain .eyebrow{margin:0 0 2px}
+  .focusmain b{display:block;font-size:15px;letter-spacing:-.014em;color:var(--ink)}
+  .focuswhen{display:block;font-size:11.5px;color:var(--ink35);margin-top:2px}
+  .focusacts{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .focusacts .finput{margin:0;padding:7px 9px;font-size:13px}
+  @media (max-width:520px){
+    .focusacts{width:100%}
+    .focusacts .btn{flex:1 1 auto;justify-content:center}
+  }
+
+  /* one thing at a time, above the list */
+  .nowbox{border:1px solid var(--accent);border-radius:10px;background:var(--card);
+    padding:15px 17px;margin-bottom:16px;box-shadow:0 1px 0 var(--accent-soft)}
+  .nowhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:7px}
+  .nowhead .eyebrow{margin:0}
+  .nowwhen{font-size:11px;padding:3px 9px}
+  .nowwhat{font-size:20px;line-height:1.25;letter-spacing:-.02em;margin:0 0 9px;color:var(--ink)}
+  .nowstep{margin:0 0 12px;font-size:13px;color:var(--ink60);line-height:1.5}
+  .nowbreak{display:block;margin:0 0 12px;padding:0;border:0;background:transparent;
+    font:inherit;font-size:12.5px;color:var(--ink35);text-decoration:underline;
+    text-underline-offset:3px;cursor:pointer;text-align:left}
+  .nowbreak:hover{color:var(--accent)}
+  .nowacts{display:flex;gap:8px;flex-wrap:wrap}
+  @media (max-width:480px){ .nowacts .btn{flex:1 1 auto;justify-content:center} }
+  /* How far away a scheduled thing is. --pc is the colour the person gave that
+     block, and the bands mix more of it in as the time approaches: a hint of it
+     hours out, the colour itself once the thing is happening. */
+  .whenpill{display:inline-block;margin-left:8px;font-family:"DM Mono",monospace;
+    font-size:10.5px;padding:1px 7px;border-radius:99px;border:1px solid var(--line);
+    color:var(--ink35);white-space:nowrap;--pc:var(--accent)}
+  .whenpill.far{color:var(--ink35);
+    border-color:color-mix(in srgb, var(--pc) 24%, transparent);
+    background:color-mix(in srgb, var(--pc) 5%, transparent)}
+  .whenpill.near{color:color-mix(in srgb, var(--pc) 72%, var(--ink35));
+    border-color:color-mix(in srgb, var(--pc) 46%, transparent);
+    background:color-mix(in srgb, var(--pc) 11%, transparent)}
+  .whenpill.soon{color:var(--pc);
+    border-color:color-mix(in srgb, var(--pc) 72%, transparent);
+    background:color-mix(in srgb, var(--pc) 17%, transparent)}
+  .whenpill.now{color:var(--accent-ink);background:var(--pc);border-color:var(--pc)}
+  .whenpill.past{color:var(--ink35);border-color:var(--line);opacity:.65}
+  /* where colours cannot be mixed, the same idea with plain transparency */
+  @supports not (color: color-mix(in srgb, red 50%, blue)){
+    .whenpill.far{color:var(--ink35);border-color:var(--line);opacity:.55}
+    .whenpill.near{color:var(--pc);border-color:var(--line);opacity:.78}
+    .whenpill.soon{color:var(--pc);border-color:var(--pc)}
+  }
+  .showrest{display:block;width:100%;margin-top:6px;padding:11px;border:1px dashed var(--line);
+    border-radius:8px;background:transparent;font:inherit;font-size:13px;color:var(--ink35);
+    cursor:pointer}
+  .showrest:hover{border-color:var(--accent);color:var(--accent)}
   .nowcard{display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid var(--line);
     border-radius:5px;background:var(--soft);margin-bottom:14px}
   .nowcard b{font-size:14px}
@@ -1100,6 +1240,25 @@
   .field .sugwrap{background:var(--soft);border-radius:5px}
   @media (prefers-reduced-motion: reduce){ .sugadd{opacity:.8} }
 
+  /* the microphone and the speaker, in the corner of a field */
+  .sugvoice{position:absolute;right:7px;bottom:7px;z-index:3;display:flex;gap:4px}
+  .sugwrap:not(.ta) .sugvoice{top:50%;bottom:auto;transform:translateY(-50%)}
+  .sugwrap:not(.ta) .sugtip{right:62px}
+  .sugwrap.ta .sugtip{right:62px}
+  .voicebtn{display:grid;place-items:center;width:26px;height:26px;flex:none;padding:0;
+    border:1px solid var(--line);border-radius:7px;background:var(--card);
+    color:var(--ink35);cursor:pointer;transition:color .14s ease, border-color .14s ease}
+  .voicebtn:hover{color:var(--accent);border-color:var(--accent)}
+  .voicebtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .voicebtn.on{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+  .voicebtn.mic.on{animation:micpulse 1.1s ease-in-out infinite}
+  @keyframes micpulse{50%{opacity:.62}}
+  @media (prefers-reduced-motion: reduce){ .voicebtn.mic.on{animation:none} }
+  @media (hover:none){ .voicebtn{width:30px;height:30px} }
+  .addvoice{position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:2}
+  .voicerow{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .voicenote{font-size:11.5px;color:var(--ink35);line-height:1.5}
+
   /* ---- the bragsheet ----
      One line per entry, read top to bottom. Weight carries the ordering: the
      number on the left is the only chrome, and everything else is text. */
@@ -1109,12 +1268,10 @@
   .sheetrow{display:flex;align-items:flex-start;gap:12px;padding:13px 2px;
     border-bottom:1px solid var(--line)}
   .sheetrow.done{opacity:.66}
-  .sheetprio{flex:none;display:flex;flex-direction:column;align-items:center;gap:0;width:26px;
-    font-family:"DM Mono",monospace}
-  .sheetprio button{border:0;background:transparent;padding:0;line-height:1;font-size:10px;
-    color:var(--ink35);height:14px}
-  .sheetprio button:hover{color:var(--accent)}
-  .sheetprio b{font-size:14px;font-weight:500;color:var(--ink60);line-height:1.2}
+  /* down the side of a bragsheet row, so the whole column reads at a glance */
+  .sheetprio{flex:none;display:flex;flex-direction:column;align-items:center;gap:5px;
+    width:16px;padding-top:3px}
+  .sheetprio .balls{flex-direction:column;gap:5px}
   .sheetmain{flex:1;min-width:0;display:block;text-align:left;border:0;background:transparent;padding:0}
   .sheetmain:hover .sheettop b{text-decoration:underline;text-underline-offset:3px}
   .sheettop{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
@@ -1239,6 +1396,29 @@
   .placerow{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
   .placerow .finput{margin:0;padding:8px 10px;font-size:13px;flex:0 1 128px;min-width:0}
   .placerow > span{font-size:12.5px;color:var(--ink35);flex:none}
+
+  /* teachers: one card per class, this year's on top */
+  .tlead{margin:6px 0 0;font-size:13px;color:var(--ink60);line-height:1.6;max-width:56ch}
+  .tcard{border:1px solid var(--line);border-radius:8px;background:var(--card);margin-bottom:10px;
+    overflow:hidden}
+  .tcard.open{border-color:var(--ink35)}
+  .tcard-top{display:flex;align-items:center;gap:11px;width:100%;padding:13px 14px;
+    border:0;background:transparent;text-align:left;color:var(--ink35);cursor:pointer}
+  .tcard-top:hover{background:var(--soft)}
+  .tcard-dot{width:11px;height:11px;flex:none;border-radius:3px}
+  .tcard-what{flex:1;min-width:0}
+  .tcard-what b{display:block;font-size:14.5px;color:var(--ink);letter-spacing:-.012em}
+  .tcard-what span{display:block;font-size:12px;color:var(--ink35);margin-top:2px}
+  .tcard-body{padding:4px 14px 14px;border-top:1px solid var(--line)}
+  .tcard-why{margin:0 0 11px;padding:10px 12px;background:var(--soft);border-radius:6px;
+    font-size:12px;color:var(--ink60);line-height:1.65}
+  .pastyears{margin-top:18px;padding-top:14px;border-top:1px dashed var(--line)}
+  .pastcard{margin-top:10px;padding:12px 13px;border:1px solid var(--line);border-radius:8px;
+    background:var(--soft)}
+  .pastcard b{font-size:14px;color:var(--ink)}
+  .pastwho{font-size:12.5px;color:var(--ink35);margin-top:2px}
+  .pastline{margin:8px 0 0;font-size:13px;color:var(--ink60);line-height:1.6}
+  .pastline.quiet{color:var(--ink35)}
 
   /* the academic record's own preview */
   .acadprev{margin-top:4px;padding-top:12px;border-top:1px dashed var(--line);
@@ -1729,15 +1909,9 @@
   .lecd-row{border-bottom:1px solid var(--line)}
   .lecd-row.open{background:var(--card);border-radius:7px}
   .lecd-top{display:flex;align-items:flex-start;gap:12px;padding:14px 10px 14px 2px}
-  .lecd-prio{flex:none;display:flex;flex-direction:column;align-items:center;gap:5px;
-    width:22px;padding-top:3px}
-  .lecd-ball{width:11px;height:11px;flex:none;padding:0;border-radius:50%;
-    border:1.5px solid var(--line);background:transparent;cursor:pointer;
-    transition:background .14s ease, border-color .14s ease, transform .12s ease}
-  .lecd-ball.on{background:var(--accent);border-color:var(--accent)}
-  .lecd-ball:hover{border-color:var(--accent);transform:scale(1.18)}
-  .lecd-ball:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  @media (hover:none){ .lecd-ball{width:15px;height:15px} .lecd-prio{width:26px;gap:7px} }
+  .lecd-prio{flex:none;display:flex;flex-direction:column;align-items:center;
+    width:18px;padding-top:3px}
+  .lecd-prio .balls{flex-direction:column;gap:5px}
   .lecd-main{flex:1;min-width:0;display:block;text-align:left;border:0;background:transparent;padding:0}
   .lecd-main:hover .lecd-name{text-decoration:underline;text-underline-offset:3px}
   .lecd-name{display:block;font-family:"Bricolage Grotesque",sans-serif;
@@ -2053,7 +2227,7 @@
 <body>
 <div id="root">
   <div class="boot" aria-live="polite">
-    <img class="boot-mark" src="favicon.png?v=3" width="54" height="54" alt="" />
+    <img class="boot-mark" src="favicon.png?v=4" width="54" height="54" alt="" />
     <b>PlanIt</b>
     <span>Getting your planner ready…</span>
   </div>
@@ -2103,7 +2277,11 @@ const CONFIG = {
   // later goes in the admins collection in the Firebase console instead, which
   // needs no new build. The same list is in firestore.rules, which is what
   // actually decides who gets served the data. See useIsAdmin below.
-  ADMIN_USERNAMES: ['admin'],
+  // Usernames are a second way in, for when a UID has been mistyped. They open
+  // the tab only: firestore.rules goes by UID, so the data still depends on the
+  // list below matching. A username cannot be taken by anyone else once it is
+  // claimed, which is why this is safe to have.
+  ADMIN_USERNAMES: ['admin', 'kaylin6677', 'niavenetia'],
   ADMIN_UIDS: [
     'YTj1DEgryLUe2zpJmiOaGdY32Rd2',   // Nirvi
     'BOGAeAld3HbDHoVStwAAZesv5cw2',   // Nia / Kaylin
@@ -2160,6 +2338,42 @@ const fmtWeek = d => { const s = startOfWeek(d), e = addDays(s,6);
 const fmtMonth = d => `${MON[d.getMonth()]} ${d.getFullYear()}`;
 const toMin = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
 const toTime = m => `${pad(Math.floor(m/60))}:${pad(m%60)}`;
+/* ---- time you can feel ----
+
+   A clock time is a fact you have to do arithmetic on. "In 25 minutes" is the
+   thing you actually needed to know. Time blindness is one of the hardest parts
+   of ADHD to design around, and the cheapest thing a planner can do about it is
+   never make somebody work out a gap in their head. So anywhere a scheduled
+   time is shown, the distance to it is shown as well. */
+const minsNow = () => { const d = new Date(); return d.getHours()*60 + d.getMinutes(); };
+const spanWords = m => {
+  const n = Math.abs(Math.round(m));
+  if(n < 1) return 'less than a minute';
+  if(n < 60) return n + ' min';
+  const h = Math.floor(n/60), r = n % 60;
+  return h + (h === 1 ? ' hour' : ' hours') + (r ? ' ' + r + ' min' : '');
+};
+/* Where a block sits relative to this minute, in five bands. The band is what
+   drives the colour, and the colour is the one the person chose for that block:
+   barely there while it is hours off, stronger as it comes, and at full
+   strength exactly when the thing is happening. Nothing introduces a colour of
+   its own, because a red warning on a block somebody painted green is the
+   interface arguing with its owner. */
+function whenWords(startM, endM, now = minsNow()){
+  if(startM === null || startM === undefined) return null;
+  const end = (endM === null || endM === undefined) ? startM : endM;
+  if(now >= startM && now < end) return {state:'now', text:spanWords(end - now) + ' left'};
+  if(now < startM){
+    const gap = startM - now;
+    if(gap <= 1) return {state:'now', text:'starting now'};
+    return {
+      state: gap <= 15 ? 'soon' : gap <= 60 ? 'near' : 'far',
+      text: 'in ' + spanWords(gap),
+    };
+  }
+  return {state:'past', text:spanWords(now - end) + ' ago'};
+}
+
 const pretty = t => { const [h,m] = t.split(':').map(Number);
   const ap = h >= 12 ? 'pm' : 'am'; const hh = h%12 === 0 ? 12 : h%12;
   return m === 0 ? `${hh}${ap}` : `${hh}:${pad(m)}${ap}`; };
@@ -2729,13 +2943,78 @@ const IconCheck = () => (
   </svg>
 );
 
-const XBtn = ({onClick, label = 'Delete'}) => (
-  <button className="iconbtn" onClick={onClick} aria-label={label} title={label}>
-    <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
-      <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  </button>
-);
+/* Asked before anything is deleted for good. Its own scrim rather than a
+   browser dialog, because window.confirm is styled by the phone, cannot say
+   what is about to be lost, and is refused outright inside the iOS build. */
+function ConfirmDelete({what, note, onYes, onNo}){
+  useEffect(() => {
+    const k = e => {
+      if(e.key === 'Escape') onNo();
+      if(e.key === 'Enter') onYes();
+    };
+    window.addEventListener('keydown', k);
+    return () => window.removeEventListener('keydown', k);
+  }, [onYes, onNo]);
+  return (
+    <div className="scrim over" onMouseDown={e => { if(e.target === e.currentTarget) onNo(); }}>
+      <div className="modal confirmbox" role="dialog" aria-modal="true"
+        aria-label="Are you sure you want to delete this?">
+        <div className="modal-body">
+          <h3>Are you sure you want to delete this?</h3>
+          {what && <p className="confirmwhat">{what}</p>}
+          <p className="confirmnote">{note || 'This cannot be undone.'}</p>
+        </div>
+        <div className="modal-foot">
+          <button className="btn ghost" onClick={onNo}>Keep it</button>
+          <button className="btn danger" autoFocus onClick={onYes}>Delete</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* The small x. Given something to name, it asks first. */
+const XBtn = ({onClick, label = 'Delete', confirm, note}) => {
+  const [asking, setAsking] = useState(false);
+  return (
+    <>
+      <button className="iconbtn" aria-label={label} title={label}
+        onClick={confirm === undefined ? onClick : () => setAsking(true)}>
+        <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
+          <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </button>
+      {asking && <ConfirmDelete what={confirm} note={note}
+        onNo={() => setAsking(false)}
+        onYes={() => { setAsking(false); onClick(); }} />}
+    </>
+  );
+};
+
+/* How much something matters, as five circles you press. Pressing the fourth
+   fills four; pressing the one already at the top steps back down, which is the
+   only way to reach none. The same control in Brag It, on the bragsheet, in the
+   editor and on the landing page, so the thing a visitor presses on the website
+   is the thing they get in the app.
+
+   Given no onChange it is a read-out rather than a control, which is what the
+   landing page mockups need. */
+function PrioBalls({value = 0, onChange, label = 'How important this is', size}){
+  const n = Math.max(0, Math.min(5, +value || 0));
+  const fixed = !onChange;
+  return (
+    <span className={'balls' + (fixed ? ' fixed' : '') + (size === 'sm' ? ' sm' : '')}
+      role={fixed ? 'img' : 'group'}
+      aria-label={fixed ? label + ': ' + n + ' of 5' : label}
+      title={n + ' of 5'}>
+      {[1,2,3,4,5].map(i => fixed
+        ? <i key={i} className={i <= n ? 'on' : ''} />
+        : <button key={i} type="button" className={'ball' + (i <= n ? ' on' : '')}
+            aria-label={i + ' of 5'} aria-pressed={i <= n}
+            onClick={ev => { ev.stopPropagation(); onChange(n === i ? i - 1 : i); }} />)}
+    </span>
+  );
+}
 
 const Check = ({on, onClick}) => (
   <button className={'check' + (on ? ' on' : '')} onClick={onClick} aria-pressed={on} aria-label="Mark done">
@@ -2744,6 +3023,167 @@ const Check = ({on, onClick}) => (
 );
 
 /* ============ ORGANIZE IT: daily ============ */
+/* ---- running over ----
+
+   A schedule that assumes everything took exactly as long as you guessed is a
+   schedule that is wrong by nine o'clock. Fifteen minutes past the end of
+   something that is still not ticked off, PlanIt asks rather than assumes: are
+   you finished, or does this need longer? Choosing longer moves everything
+   after it down by the same amount, which is what a person would do with a
+   paper diary and an eraser.
+
+   Only a block with both a start and an end can run over, and only one that is
+   not done. Three hours past the end it stops asking: by then the day has moved
+   on and the question is nagging rather than useful. */
+const OVERRUN_AFTER = 15;
+const OVERRUN_UNTIL = 180;
+
+const timedToday = (tasks, dayKey) => (tasks || []).filter(t =>
+  t.scope === 'daily' && t.date === dayKey && t.start && t.end);
+
+/* Two different thresholds, and the difference matters. Anything past its end
+   and not ticked off is late, and the bar on the schedule says so from the
+   first minute: quiet, always there, no interruption. Only at fifteen minutes
+   does PlanIt actually interrupt with the question.
+
+   Keeping them apart is what stops a block that is given ten more minutes
+   while twenty over from falling into a gap where it is still late and nothing
+   says so any more. */
+function lateTask(tasks, dayKey, now = minsNow(), from = 0){
+  const late = timedToday(tasks, dayKey)
+    .filter(t => !isDone(t, dayKey))
+    .map(t => ({t, end: toMin(t.end)}))
+    .filter(x => (now - x.end) >= from && (now - x.end) < OVERRUN_UNTIL)
+    .sort((a, b) => b.end - a.end);
+  return late.length ? late[0].t : null;
+}
+const overrunTask = (tasks, dayKey, now = minsNow()) =>
+  lateTask(tasks, dayKey, now, OVERRUN_AFTER);
+
+/* What is supposed to be happening this minute. */
+function runningTask(tasks, dayKey, now = minsNow()){
+  const live = timedToday(tasks, dayKey)
+    .filter(t => !isDone(t, dayKey))
+    .filter(t => now >= toMin(t.start) && now < toMin(t.end));
+  return live.length ? live[0] : null;
+}
+
+/* Lengthen one block, and push every later block on the same day down by the
+   same amount. Returns the patches to apply, so the caller can write them
+   through whatever update function it already has. */
+function extendPatches(tasks, dayKey, id, by){
+  const target = (tasks || []).find(t => t.id === id);
+  if(!target || !target.end) return [];
+  const cut = toMin(target.end);
+  const shift = m => toTime((((toMin(m) + by) % 1440) + 1440) % 1440);
+  const out = [{id, patch:{end: shift(target.end)}}];
+  timedToday(tasks, dayKey).forEach(t => {
+    if(t.id === id) return;
+    if(toMin(t.start) < cut) return;                 // already started, leave it
+    out.push({id:t.id, patch:{start: shift(t.start), end: shift(t.end)}});
+  });
+  return out;
+}
+
+/* Where the last thing on the day now ends, on the day's own timeline, so a
+   bedtime can be stretched to keep it in view rather than hiding it. */
+function latestEnd(tasks, dayKey, wake){
+  const wakeM = toMin(wake);
+  const norm = m => m < wakeM ? m + 1440 : m;
+  let last = 0;
+  timedToday(tasks, dayKey).forEach(t => { last = Math.max(last, norm(toMin(t.end))); });
+  return last;
+}
+
+/* A bedtime late enough to show everything, rounded up to the half hour. Capped,
+   because stretching a day to four in the morning helps nobody. */
+const BED_CAP = 26 * 60 + 30;            // 2:30am on the next day's clock
+function bedtimeFor(tasks, dayKey, day){
+  const wakeM = toMin(day.wake);
+  const sleepM = toMin(day.sleep) <= wakeM ? toMin(day.sleep) + 1440 : toMin(day.sleep);
+  const last = latestEnd(tasks, dayKey, day.wake);
+  if(last <= sleepM) return null;                    // nothing runs past bedtime
+  const want = Math.min(BED_CAP, Math.ceil(last / 30) * 30);
+  if(want <= sleepM) return null;
+  return toTime(want % 1440);
+}
+
+/* What you are on, and how to give it longer. The colour is the block's own,
+   so the bar reads as part of that task rather than as an alert about it. */
+function FocusBar({task, late, onExtend, onFinished}){
+  const [open, setOpen] = useState(false);
+  const [custom, setCustom] = useState('');
+  const over = late ? Math.max(0, minsNow() - toMin(task.end)) : 0;
+  const left = late ? 0 : Math.max(0, toMin(task.end) - minsNow());
+  return (
+    <div className={'focusbar' + (late ? ' late' : '')}
+      style={{'--pc': blockHex(task.color) || 'var(--accent)'}}>
+      <div className="focusmain">
+        <span className="eyebrow">{late ? 'Should have finished' : 'Currently focusing on'}</span>
+        <b>{task.title}</b>
+        <span className="focuswhen">
+          {late
+            ? 'due to end at ' + pretty(task.end) + ', ' + spanWords(over) + ' ago'
+            : spanWords(left) + ' left of it'}
+        </span>
+      </div>
+      {open ? (
+        <div className="focusacts">
+          <button className="btn sm" onClick={() => { onExtend(15); setOpen(false); }}>+15 min</button>
+          <button className="btn sm" onClick={() => { onExtend(30); setOpen(false); }}>+30 min</button>
+          <input className="finput" type="number" min="5" max="240" step="5" value={custom}
+            aria-label="Some other number of minutes" placeholder="mins"
+            style={{maxWidth:78}} onChange={e => setCustom(e.target.value)} />
+          <button className="btn sm" disabled={!(+custom > 0)}
+            onClick={() => { onExtend(+custom); setCustom(''); setOpen(false); }}>Add</button>
+          <button className="btn sm ghost" onClick={() => setOpen(false)}>Cancel</button>
+        </div>
+      ) : (
+        <div className="focusacts">
+          <button className="btn sm" onClick={() => setOpen(true)}>Needs longer</button>
+          <button className="btn sm primary" onClick={onFinished}>Finished</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* The question, and the three answers to it. */
+function OverrunAsk({task, onFinished, onExtend, onClose}){
+  const [custom, setCustom] = useState('');
+  const over = Math.max(0, minsNow() - toMin(task.end));
+  return (
+    <div className="scrim over" onMouseDown={e => { if(e.target === e.currentTarget) onClose(); }}>
+      <div className="modal confirmbox" role="dialog" aria-modal="true" aria-label="Still not finished?">
+        <div className="modal-body">
+          <h3>Still not finished?</h3>
+          <p className="confirmwhat">{task.title}</p>
+          <p className="confirmnote">
+            It was down to end at {pretty(task.end)}, {spanWords(over)} ago. Giving it longer moves
+            everything after it down by the same amount.
+          </p>
+          <div className="row" style={{gap:8, marginTop:14, flexWrap:'wrap'}}>
+            <button className="btn" onClick={() => onExtend(15)}>Extend by 15 min</button>
+            <button className="btn" onClick={() => onExtend(30)}>Extend by 30 min</button>
+          </div>
+          <div className="logadd" style={{marginTop:10}}>
+            <input className="finput" type="number" min="5" max="240" step="5" value={custom}
+              aria-label="Some other number of minutes" placeholder="Another number of minutes"
+              onChange={e => setCustom(e.target.value)} />
+            <button className="btn sm" disabled={!(+custom > 0)} onClick={() => onExtend(+custom)}>
+              Extend
+            </button>
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn ghost" onClick={onClose}>Not now</button>
+          <button className="btn primary" onClick={onFinished}>Finished</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, energyBase, onEditBase}){
   const dk = iso(date);
   const dayTasks = tasks.filter(t => t.scope === 'daily' && occursOn(t, dk));
@@ -2763,6 +3203,53 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
   if(endM <= startM) endM += 1440;
   const sleepM = sleepRaw <= wakeM ? sleepRaw + 1440 : sleepRaw;
   const span = endM - startM;
+
+  /* Running over. The clock is read every half minute so the question appears
+     on its own, and `asked` keeps it from coming straight back after it has
+     been waved away for that block. */
+  const isToday = sameDay(new Date(), date);
+  const [tick, setTick] = useState(0);
+  useEffect(() => { const i = setInterval(() => setTick(n => n + 1), 30000); return () => clearInterval(i); }, []);
+  const [asked, setAsked] = useState([]);
+  const [askOpen, setAskOpen] = useState(null);
+  const overrun = useMemo(() => isToday ? overrunTask(tasks, dk) : null, [tasks, dk, isToday, tick]);
+  const late = useMemo(() => isToday ? lateTask(tasks, dk, minsNow(), 1) : null, [tasks, dk, isToday, tick]);
+  const running = useMemo(() => isToday ? runningTask(tasks, dk) : null, [tasks, dk, isToday, tick]);
+
+  useEffect(() => {
+    if(overrun && !asked.includes(overrun.id)) setAskOpen(overrun.id);
+  }, [overrun && overrun.id, asked]);
+
+  /* Longer, and everything after it moves down. The bedtime moves too if it has
+     to, because a block pushed past it would otherwise be off the end of the
+     grid, which is the same as losing it. */
+  const extendBy = (id, by) => {
+    const mins = Math.max(5, Math.min(240, Math.round(by)));
+    const patches = extendPatches(tasks, dk, id, mins);
+    if(!patches.length) return;
+    patches.forEach(p2 => update(p2.id, p2.patch));
+    const after = tasks.map(t => {
+      const hit = patches.find(p2 => p2.id === t.id);
+      return hit ? {...t, ...hit.patch} : t;
+    });
+    const bed = bedtimeFor(after, dk, day);
+    if(bed && setDay){
+      setDay({...day, sleep: bed});
+      toast('Given ' + spanWords(mins) + ' more. Bedtime moved to ' + pretty(bed) + ' so you can still see it');
+    } else {
+      toast('Given ' + spanWords(mins) + ' more, and everything after it moved down');
+    }
+    setAsked(a => [...a, id]);
+    setAskOpen(null);
+  };
+
+  const markFinished = id => {
+    const t = tasks.find(x => x.id === id);
+    if(t) update(id, toggleDone(t, dk));
+    setAsked(a => [...a, id]);
+    setAskOpen(null);
+    buzz('medium');
+  };
 
   const norm = m => m < startM ? m + 1440 : m;             // absolute minute on this day's timeline
   const clampM = m => Math.max(startM, Math.min(endM, m));
@@ -2992,6 +3479,23 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
         </div>
       </div>
 
+      {/* What is supposed to be happening, with a way to give it longer before
+          it has even run over. Shown whether or not a notification arrived,
+          because the notification is a convenience and not the feature. */}
+      {(running || late) && setDay && (() => {
+        const t = late || running;
+        return <FocusBar task={t} late={!!late}
+          onExtend={by => extendBy(t.id, by)}
+          onFinished={() => markFinished(t.id)} />;
+      })()}
+
+      {askOpen && overrun && overrun.id === askOpen && (
+        <OverrunAsk task={overrun}
+          onFinished={() => markFinished(overrun.id)}
+          onExtend={by => extendBy(overrun.id, by)}
+          onClose={() => { setAsked(a => [...a, overrun.id]); setAskOpen(null); }} />
+      )}
+
       <button className="fab" onClick={newBlock} aria-label="New time block" title="New time block">+</button>
 
       <div className="sched-wrap" data-tour="schedule">
@@ -3130,9 +3634,6 @@ function DayEditor({day, onClose, onSave, first}){
         {!first && <button className="btn ghost" onClick={onClose}>Cancel</button>}
         <button className="btn primary" onClick={() => onSave(f)}>{first ? 'Start planning' : 'Save times'}</button>
       </>}>
-      <p style={{marginTop:0,color:'var(--ink60)',fontSize:13.5}}>
-        Your daily schedule starts and ends here instead of a fixed 6am to 11pm. These two repeat every day. Change them any time from the Daily view.
-      </p>
       <div className="grid2">
         <Field label="I wake up at"><input type="time" value={f.wake} onChange={e => set('wake', e.target.value)} /></Field>
         <Field label="I go to sleep at"><input type="time" value={f.sleep} onChange={e => set('sleep', e.target.value)} /></Field>
@@ -3195,7 +3696,9 @@ function BlockEditor({block, day, onClose, onSave, onDelete, occ, add, update, r
     if(wasRepeating && occ) return setAsking('save');
     onSave(payload());
   };
+  const [confirming, setConfirming] = useState(false);
   const del = () => {
+    setConfirming(false);
     if(wasRepeating && occ) return setAsking('delete');
     onDelete(block.id);
   };
@@ -3204,6 +3707,13 @@ function BlockEditor({block, day, onClose, onSave, onDelete, occ, add, update, r
     else applyRepeatDelete({orig:block, scope, occ, update, remove});
     onClose();
   };
+
+  const confirmNode = confirming && (
+    <ConfirmDelete what={f.title || block.title} onYes={del} onNo={() => setConfirming(false)}
+      note={subsOf(f).length
+        ? 'Its ' + subsOf(f).length + ' steps go with it. This cannot be undone.'
+        : 'This cannot be undone.'} />
+  );
 
   // keep the time, move the day
   const nextDay = () => {
@@ -3231,7 +3741,7 @@ function BlockEditor({block, day, onClose, onSave, onDelete, occ, add, update, r
   return (
     <Modal title={block.id ? 'Edit time block' : 'New time block'} onClose={onClose}
       footer={<>
-        {block.id && <button className="btn danger" onClick={del}>Delete</button>}
+        {block.id && <button className="btn danger" onClick={() => setConfirming(true)}>Delete</button>}
         <button className="btn primary" onClick={save}>Save block</button>
       </>}>
       <Field label="What are you doing?"><input autoFocus value={f.title}
@@ -3328,7 +3838,8 @@ function BlockEditor({block, day, onClose, onSave, onDelete, occ, add, update, r
                 <Check on={!!st.done} onClick={() => set('subs',
                   f.subs.map(x => x.id === st.id ? {...x, done: !x.done} : x))} />
                 <span className={st.done ? 'done' : ''}>{st.text}</span>
-                <XBtn onClick={() => set('subs', f.subs.filter(x => x.id !== st.id))} label="Remove" />
+                <XBtn onClick={() => set('subs', f.subs.filter(x => x.id !== st.id))} label="Remove"
+                  confirm={st.text} />
               </li>
             ))}
           </ul>
@@ -3357,6 +3868,7 @@ function BlockEditor({block, day, onClose, onSave, onDelete, occ, add, update, r
           <button className="btn sm" onClick={() => onSave({...payload(), start:null, end:null})}>Move back to unscheduled</button>
         </div>
       )}
+    {confirmNode}
     </Modal>
   );
 }
@@ -3542,7 +4054,7 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
                 </div>
                 <div className="todo-actions">
                   <button className="btn sm" onClick={() => { setEditTask(t); setEditOcc(t.date); }}>Edit</button>
-                  <XBtn onClick={() => remove(t.id)} />
+                  <XBtn onClick={() => remove(t.id)} confirm={t.title} />
                 </div>
               </div>
             );
@@ -3571,7 +4083,8 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
                       {isRepeat(e) ? ` · ${repeatText(e)}` : ''}{e.note ? ` · ${e.note}` : ''}
                     </div>
                   </div>
-                  <div className="todo-actions"><XBtn onClick={() => removeEvent(e.id)} label="Remove" /></div>
+                  <div className="todo-actions"><XBtn onClick={() => removeEvent(e.id)} label="Remove"
+                    confirm={e.title} /></div>
                 </div>
               );
             })}
@@ -4358,7 +4871,7 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
               <div className="txt"><b>{t.title}</b></div>
               <div className="todo-actions">
                 <span className="status">{t.done ? 'Done' : 'Open'}</span>
-                <XBtn onClick={() => remove(t.id)} />
+                <XBtn onClick={() => remove(t.id)} confirm={t.title} />
               </div>
             </div>
           ))}
@@ -4411,7 +4924,7 @@ function Monthly({date, setDate, events, addEvent, updateEvent, removeEvent, set
                       </select>
                     )}
                     <button className="btn sm" onClick={() => { setEditing(e); setOpen(null); }}>Edit</button>
-                    <XBtn onClick={() => removeEvent(e.id)} label="Remove" />
+                    <XBtn onClick={() => removeEvent(e.id)} label="Remove" confirm={e.title} />
                   </div>
                 </div>
               );
@@ -4478,7 +4991,58 @@ function EventEditor({ev, onClose, onSave, onDelete, cals = []}){
 }
 
 /* ============ LIST IT ============ */
-function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, carryOver, setCarryOver, toast, settings, setSettings}){
+/* ---- one thing at a time ----
+
+   A list of fourteen things is a reason not to start any of them. This picks
+   one and puts it above the list: whatever is running now, else the next thing
+   with a time on it, else the most important thing without one. Three ways out
+   of it, and the first is deliberately tiny, because the hard part is almost
+   never the work, it is the starting. Five minutes is small enough to agree to
+   and long enough to be past the worst of it.
+
+   "Not this" is as important as the other two. Being told to do the thing you
+   have already decided you cannot face is how a planner gets closed. */
+function pickNow(items, anchor, sub, skipped){
+  const live = items.filter(t =>
+    !(sub === 'daily' ? isDone(t, anchor) : t.done) && !skipped.includes(t.id));
+  if(!live.length) return null;
+  const now = minsNow();
+  const timed = live.filter(t => t.start).map(t => ({t, s:toMin(t.start), e:toMin(t.end || t.start)}));
+  const running = timed.find(x => now >= x.s && now < x.e);
+  if(running) return running.t;
+  const next = timed.filter(x => x.s > now).sort((a, b) => a.s - b.s)[0];
+  if(next) return next.t;
+  const loose = live.filter(t => !t.start);
+  if(loose.length) return loose[0];
+  return timed.sort((a, b) => a.s - b.s)[0].t;
+}
+
+function NowCard({task, anchor, sub, onDone, onSkip, onStart, onBreak, hasSteps}){
+  const when = task.start ? whenWords(toMin(task.start), toMin(task.end || task.start)) : null;
+  return (
+    <section className="nowbox" aria-label="What to do next">
+      <div className="nowhead">
+        <span className="eyebrow">Right now</span>
+        {when && <span className={'whenpill nowwhen ' + when.state}
+          style={{'--pc': blockHex(task.color) || 'var(--accent)'}}>{when.text}</span>}
+      </div>
+      <h2 className="nowwhat">{task.title}</h2>
+      {hasSteps
+        ? <p className="nowstep">First step: {subsOf(task).find(x => !x.done)
+            ? subsOf(task).find(x => !x.done).text : 'all steps done'}</p>
+        : <button className="nowbreak" onClick={onBreak}>
+            Too big? Write down the first step
+          </button>}
+      <div className="nowacts">
+        <button className="btn primary" onClick={onStart}>Start, just 5 minutes</button>
+        <button className="btn" onClick={onDone}>Done</button>
+        <button className="btn ghost" onClick={onSkip}>Not this</button>
+      </div>
+    </section>
+  );
+}
+
+function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, carryOver, setCarryOver, toast, settings, setSettings, onFocus}){
   const [text, setText] = useState('');
   const anchor = sub === 'daily' ? iso(date) : sub === 'weekly' ? weekKey(date) : monthKey(date);
   // Scheduled things read in the order the day happens; anything without a
@@ -4515,6 +5079,27 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, ca
 
   const [openSubs, setOpenSubs] = useState(null);
 
+  /* The one thing, and the ones waved away. Skipping resets when the day
+     changes, so nothing is hidden tomorrow because of a mood today. */
+  const [skipped, setSkipped] = useState([]);
+  useEffect(() => { setSkipped([]); }, [anchor, sub]);
+  const calm = !!(settings && settings.calm);
+  const oneThing = !(settings && settings.oneThing === false);
+  const untilOn = !(settings && settings.untilTime === false);
+  const picked = useMemo(() => pickNow(items, anchor, sub, skipped),
+    [items, anchor, sub, skipped]);
+  // only on today: "right now" means nothing on a day you are only looking at
+  const showNow = (oneThing && sub === 'daily' && anchor === iso(new Date())) ? picked : null;
+
+  /* Calm mode: the next few, and the rest behind a button. The number is three
+     because a list you can hold in your head is a list you might act on. */
+  const [showAll, setShowAll] = useState(false);
+  const undone = items.filter(t => !(sub === 'daily' ? isDone(t, anchor) : t.done));
+  const visible = (calm && !showAll)
+    ? undone.slice(0, 3)
+    : items;
+  const hidden = items.length - visible.length;
+
   /* Anything left unticked on a day that has passed. Repeating tasks are left
      alone: they come round again on their own and moving one would break the
      pattern. Only offered on today, and only once you have said nothing to the
@@ -4546,11 +5131,18 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, ca
     <div style={{maxWidth:760}}>
       <div className="spread" style={{marginBottom:16}}>
         <DateNav label={label} onPrev={() => setDate(step(-1))} onNext={() => setDate(step(1))} onToday={() => setDate(new Date())} />
-        <div style={{minWidth:170,flex:'0 1 220px'}}>
-          <div className="row" style={{justifyContent:'space-between',fontSize:12,color:'var(--ink60)',marginBottom:5}}>
-            <span>{doneCount} of {items.length} done</span><span className="mono">{pct}%</span>
+        <div className="row" style={{gap:10, alignItems:'flex-end'}}>
+          <SpeakBtn label="Read the list out loud" text={items.length
+            ? label + '. ' + items.length + (items.length === 1 ? ' thing. ' : ' things. ')
+              + items.map((t, i) => (i + 1) + '. ' + t.title
+                  + ((sub === 'daily' ? isDone(t, anchor) : t.done) ? ', done' : '')).join('. ')
+            : ''} />
+          <div style={{minWidth:150,flex:'0 1 220px'}}>
+            <div className="row" style={{justifyContent:'space-between',fontSize:12,color:'var(--ink60)',marginBottom:5}}>
+              <span>{doneCount} of {items.length} done</span><span className="mono">{pct}%</span>
+            </div>
+            <div className="bar"><i style={{width:pct+'%'}} /></div>
           </div>
-          <div className="bar"><i style={{width:pct+'%'}} /></div>
         </div>
       </div>
 
@@ -4574,11 +5166,27 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, ca
         </div>
       )}
 
+      {showNow && (
+        <NowCard task={showNow} anchor={anchor} sub={sub}
+          hasSteps={subsOf(showNow).length > 0}
+          onDone={() => {
+            update(showNow.id, sub === 'daily' ? toggleDone(showNow, anchor) : {done:true});
+            buzz('medium');
+          }}
+          onSkip={() => setSkipped(k => [...k, showNow.id])}
+          onStart={() => onFocus && onFocus(5, showNow.title)}
+          onBreak={() => setEditing(showNow)} />
+      )}
+
       <div className={'addbar' + (shake ? ' shake' : '')} data-tour="listadd">
         <div className="addwrap">
           <span className="addplus" aria-hidden="true">+</span>
           <input ref={inputRef} value={text} onChange={e => setText(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && submit()} placeholder={placeholder} />
+          <span className="addvoice">
+            <MicBtn onText={said => setText(t => (t.trim() ? t + ' ' : '') + said)}
+              label="Dictate it" />
+          </span>
         </div>
         <button className="btn primary" onClick={submit}>Add</button>
       </div>
@@ -4586,7 +5194,7 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, ca
       {items.length === 0
         ? <Empty title={sub === 'daily' ? 'Today is wide open' : sub === 'weekly' ? 'No goals for this week yet' : 'No goals for this month yet'}
             hint="Type above and press Enter to start the list." />
-        : items.map(t => (
+        : visible.map(t => (
           <div key={t.id} className={'todo' + ((sub === 'daily' ? isDone(t, anchor) : t.done) ? ' done' : '')}
             onDoubleClick={ev => { if(sub === 'daily' && !ev.target.closest('button')) setEditing(t); }}>
             <Check on={sub === 'daily' ? isDone(t, anchor) : t.done}
@@ -4596,7 +5204,13 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, ca
               {sub === 'daily' && (
               <div className="meta">
                 {blockHex(t.color) && <i className="cdot" style={{background:blockHex(t.color)}} />}
-                {t.start ? `Scheduled ${pretty(t.start)} – ${pretty(t.end)}` : 'Not on the schedule yet'}
+                {t.start ? `${pretty(t.start)} – ${pretty(t.end)}` : 'No time yet'}
+                {t.start && untilOn && anchor === today && (() => {
+                  const w = whenWords(toMin(t.start), toMin(t.end || t.start));
+                  if(!w) return null;
+                  return <span className={'whenpill ' + w.state}
+                    style={{'--pc': blockHex(t.color) || 'var(--accent)'}}>{w.text}</span>;
+                })()}
                 {isRepeat(t) ? ` · ${repeatText(t)}` : ''}
                 {subsOf(t).length > 0 && (
                   <button className="substoggle"
@@ -4622,10 +5236,19 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, ca
             </div>
             <div className="todo-actions">
               {sub === 'daily' && <button className="btn sm" onClick={() => setEditing(t)}>Edit</button>}
-              <XBtn onClick={() => remove(t.id)} />
+              <XBtn onClick={() => remove(t.id)} confirm={t.title} />
             </div>
           </div>
         ))}
+
+      {hidden > 0 && (
+        <button className="showrest" onClick={() => setShowAll(true)}>
+          {hidden} more {hidden === 1 ? 'thing' : 'things'}, and what you have finished
+        </button>
+      )}
+      {calm && showAll && items.length > 3 && (
+        <button className="showrest" onClick={() => setShowAll(false)}>Show me less again</button>
+      )}
 
       {editing && <BlockEditor block={editing} day={day || DEFAULT_DAY} occ={anchor}
         add={add} update={update} remove={remove} onClose={() => setEditing(null)}
@@ -5163,6 +5786,27 @@ function academicLines(a){
 
 const gradeText = g => (g || []).map(x => GRADE_LABEL[x] || x).join(', ');
 
+/* ---- teachers ----
+
+   A recommendation letter is written by somebody who taught you for a year and
+   has thirty other students to remember. What they are short of is not opinion
+   but material: the particular afternoon, the question you would not let go of,
+   the thing you fixed for somebody else. That is what this holds, one record
+   per class per school year, so when you ask in the autumn there is something
+   to hand over.
+
+   Keyed by class and school year rather than by the class itself, because
+   classes are cleared every summer and nothing written down should go with
+   them. */
+const schoolYearLabel = (d = new Date()) => {
+  const end = schoolYearEnd(d);
+  return (end - 1) + '–' + String(end).slice(2);
+};
+const teacherNotesOf = st => (Array.isArray(st && st.teacherNotes) ? st.teacherNotes : [])
+  .filter(n => n && n.id);
+const teacherNote = (st, cal, year) =>
+  teacherNotesOf(st).find(n => n.cal === cal && n.year === year) || null;
+
 /* ---- the preset shape ----
 
    The open version of the bragsheet keeps anything you like about an activity.
@@ -5354,9 +5998,172 @@ function suggestFor(kind, value, caret){
 /* A text box that shows the rest of a likely phrase in grey behind the caret.
    The grey is a second element sitting exactly under the real one, which is
    why both share a font and a padding to the pixel. */
+/* ---- reading out loud, and writing down what you say ----
+
+   Both come with the browser. Nothing is sent anywhere by PlanIt, there is no
+   key and no account, and where the browser cannot do it the button is not
+   drawn rather than drawn and dead.
+
+   Dictation is the uneven one. Safari and Chrome have it; the webview the iOS
+   build runs inside does not expose it at all, which is why `hears` is checked
+   rather than assumed. On the phone the keyboard's own microphone does the same
+   job into any field, so where the button cannot appear PlanIt says that
+   instead. Reading out loud works everywhere, the iOS build included. */
+/* Present is not the same as working: some webviews carry the name and nothing
+   behind it, so what is checked is the two things actually called. */
+const speaks = () => typeof window !== 'undefined'
+  && !!window.speechSynthesis
+  && typeof window.speechSynthesis.speak === 'function'
+  && typeof window.SpeechSynthesisUtterance === 'function';
+const Recog = () => (typeof window === 'undefined') ? null
+  : (window.SpeechRecognition || window.webkitSpeechRecognition || null);
+const hears = () => !!Recog();
+
+/* One voice at a time: starting a second reading stops the first, and leaving
+   the page stops it too, so nothing carries on talking into an empty room. */
+let speakingNow = null;
+function stopSpeaking(){
+  try{ window.speechSynthesis.cancel(); }catch(e){}
+  speakingNow = null;
+}
+if(typeof window !== 'undefined'){
+  window.addEventListener('pagehide', stopSpeaking);
+  window.addEventListener('beforeunload', stopSpeaking);
+}
+
+function SpeakBtn({text, label = 'Read out loud'}){
+  const [on, setOn] = useState(false);
+  const words = String(text || '').trim();
+  useEffect(() => () => { if(speakingNow === setOn) stopSpeaking(); }, []);
+  if(!speaks() || !words) return null;
+
+  const go = () => {
+    if(on){ stopSpeaking(); setOn(false); return; }
+    stopSpeaking();
+    try{
+      const u = new SpeechSynthesisUtterance(words.slice(0, 4000));
+      u.rate = 1;
+      u.onend = () => setOn(false);
+      u.onerror = () => setOn(false);
+      speakingNow = setOn;
+      setOn(true);
+      window.speechSynthesis.speak(u);
+    }catch(e){ setOn(false); }
+  };
+  return (
+    <button type="button" className={'voicebtn' + (on ? ' on' : '')} onClick={go}
+      aria-label={on ? 'Stop reading' : label} title={on ? 'Stop reading' : label}>
+      {on ? (
+        <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true">
+          <rect x="3" y="3" width="8" height="8" rx="1.5" fill="currentColor" />
+        </svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M2.5 6.2h2L7.8 3.4v9.2L4.5 9.8h-2z" fill="currentColor" />
+          <path d="M10.3 5.8a3 3 0 0 1 0 4.4M12.2 4a5.4 5.4 0 0 1 0 8" stroke="currentColor"
+            strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+/* Dictation. Each finished phrase is appended to whatever is already in the
+   field, so you can talk, stop, read it, and carry on. */
+/* Speech out of a microphone and into a callback, for as long as it is wanted.
+   Recognition gives up on its own after a silence, which would end a study
+   session's captions the first time nobody spoke for a few seconds, so it is
+   started again whenever it stops by itself. */
+function useSpeechOut({on, onPhrase, onFail}){
+  const hand = useRef(onPhrase);
+  useEffect(() => { hand.current = onPhrase; }, [onPhrase]);
+  const fail = useRef(onFail);
+  useEffect(() => { fail.current = onFail; }, [onFail]);
+
+  useEffect(() => {
+    if(!on) return;
+    const R = Recog();
+    if(!R){ if(fail.current) fail.current(); return; }
+    let dead = false;
+    let r;
+    try{
+      r = new R();
+      r.lang = (typeof navigator !== 'undefined' && navigator.language) || 'en-US';
+      r.continuous = true;
+      r.interimResults = false;
+      r.onresult = e => {
+        let said = '';
+        for(let i = e.resultIndex; i < e.results.length; i++){
+          if(e.results[i].isFinal) said += e.results[i][0].transcript;
+        }
+        if(said.trim() && hand.current) hand.current(said.trim());
+      };
+      r.onend = () => { if(!dead){ try{ r.start(); }catch(err){} } };
+      r.onerror = () => {};
+      r.start();
+    }catch(e){
+      if(fail.current) fail.current();
+      return;
+    }
+    return () => { dead = true; try{ r.onend = null; r.stop(); }catch(e){} };
+  }, [on]);
+}
+
+function MicBtn({onText, label = 'Dictate'}){
+  const [on, setOn] = useState(false);
+  const rec = useRef(null);
+  /* The browser is started once and then hands back phrase after phrase, so
+     what it calls has to be the newest handler rather than the one that
+     existed when it started. Without this, every phrase after the first was
+     written against the state as it was before the first, and overwrote it. */
+  const hand = useRef(onText);
+  useEffect(() => { hand.current = onText; }, [onText]);
+  useEffect(() => () => { try{ if(rec.current) rec.current.abort(); }catch(e){} }, []);
+  if(!hears()) return null;
+
+  const stop = () => { try{ if(rec.current) rec.current.stop(); }catch(e){} setOn(false); };
+
+  const go = () => {
+    if(on) return stop();
+    const R = Recog();
+    try{
+      const r = new R();
+      r.lang = (navigator.language || 'en-US');
+      r.continuous = true;
+      r.interimResults = false;
+      r.onresult = e => {
+        let said = '';
+        for(let i = e.resultIndex; i < e.results.length; i++){
+          if(e.results[i].isFinal) said += e.results[i][0].transcript;
+        }
+        if(said.trim()) hand.current(said.trim());
+      };
+      r.onerror = () => { setOn(false); rec.current = null; };
+      r.onend = () => { setOn(false); rec.current = null; };
+      rec.current = r;
+      r.start();
+      setOn(true);
+      buzz('light');
+    }catch(e){ setOn(false); }
+  };
+  return (
+    <button type="button" className={'voicebtn mic' + (on ? ' on' : '')} onClick={go}
+      aria-label={on ? 'Stop dictating' : label} title={on ? 'Stop dictating' : label}>
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <rect x="5.6" y="1.6" width="4.8" height="8" rx="2.4" fill="currentColor" />
+        <path d="M3.4 7.6a4.6 4.6 0 0 0 9.2 0M8 12.2v2.2" stroke="currentColor"
+          strokeWidth="1.4" strokeLinecap="round" />
+      </svg>
+    </button>
+  );
+}
+
 function Suggesting({kind, value, onChange, textarea, ...rest}){
   const ref = useRef(null);
   const [caret, setCaret] = useState(undefined);
+  // what is in the box right now, for dictation to append to
+  const now = useRef(value);
+  useEffect(() => { now.current = value; }, [value]);
   const hint = suggestFor(kind, value, caret);
   const take = () => {
     if(!hint) return false;
@@ -5385,6 +6192,15 @@ function Suggesting({kind, value, onChange, textarea, ...rest}){
         onKeyDown={keys} onKeyUp={sync} onClick={sync} onSelect={sync}
         onBlur={() => setCaret(-1)} onFocus={sync} />
       {hint && <span className="sugtip" aria-hidden="true">Tab</span>}
+      <span className="sugvoice">
+        <MicBtn onText={said => {
+          const had = String(now.current || '');
+          const joined = had + (had.trim() ? (/[.!?]$/.test(had.trim()) ? ' ' : ' ') : '') + said;
+          now.current = joined;
+          onChange(joined);
+        }} />
+        <SpeakBtn text={value} label="Read this back" />
+      </span>
     </span>
   );
 }
@@ -5437,7 +6253,8 @@ function LogList({rows, onChange, columns, addLabel, empty, foot}){
                     </span>
                   ))}
                 </span>
-                <XBtn onClick={() => onChange(rows.filter(x => x.id !== r.id))} label="Remove" />
+                <XBtn onClick={() => onChange(rows.filter(x => x.id !== r.id))} label="Remove"
+                  confirm={String(r[columns[0].k] || '') + ' ' + String(r[columns[1] ? columns[1].k : ''] || '')} />
               </li>
             ))}
           </ul>}
@@ -5501,7 +6318,8 @@ function AwardList({rows, onChange, stage, settings}){
                 {awardMeta(a) && <span className="awardmeta">{awardMeta(a)}</span>}
                 {a.detail && <span className="awarddetail">{a.detail}</span>}
               </div>
-              <XBtn onClick={() => onChange(rows.filter(x => x.id !== a.id))} label="Remove" />
+              <XBtn onClick={() => onChange(rows.filter(x => x.id !== a.id))} label="Remove"
+                confirm={a.title} />
             </li>
           ))}
         </ul>
@@ -5829,7 +6647,8 @@ function ActivityDetail({ec, onSave, onClose, onEdit, settings, setSettings, sta
                       <Check on={!!st.done} onClick={() => put('steps',
                         steps.map(x => x.id === st.id ? {...x, done: !x.done} : x))} />
                       <span className={st.done ? 'done' : ''}>{st.text}</span>
-                      <XBtn onClick={() => put('steps', steps.filter(x => x.id !== st.id))} label="Remove" />
+                      <XBtn onClick={() => put('steps', steps.filter(x => x.id !== st.id))} label="Remove"
+                        confirm={st.text} />
                     </li>
                   ))}
                 </ul>
@@ -5848,7 +6667,8 @@ function ActivityDetail({ec, onSave, onClose, onEdit, settings, setSettings, sta
                       <span className={g.done ? 'done' : ''}>
                         <b className="goalmonth">{monthLabel(g.month)}</b> {g.text}
                       </span>
-                      <XBtn onClick={() => put('monthGoals', goals.filter(x => x.id !== g.id))} label="Remove" />
+                      <XBtn onClick={() => put('monthGoals', goals.filter(x => x.id !== g.id))} label="Remove"
+                        confirm={g.text} />
                     </li>
                   ))}
                 </ul>
@@ -5944,7 +6764,7 @@ function Bragsheet({ecs, update, settings, setSettings, onOpen, onEdit, onExport
   const setField = (k, v) => setSettings({...settings,
     sheetFields: {...((settings.sheetFields) || DEFAULT_SHEET), [k]: v}});
 
-  const bump = (e, by) => update(e.id, {priority: Math.max(0, Math.min(5, (e.priority || 0) + by))});
+  const setPrio = (e, v) => update(e.id, {priority: Math.max(0, Math.min(5, v))});
 
   if(!ecs.length) return (
     <Empty title="Nothing on your sheet yet"
@@ -6013,10 +6833,8 @@ function Bragsheet({ecs, update, settings, setSettings, onOpen, onEdit, onExport
           const story = listOf(e, 'anecdotes').slice(-1)[0];
           return (
             <li key={e.id} className={'sheetrow' + (e.finished ? ' done' : '')}>
-              <span className="sheetprio" title={'Importance ' + (e.priority || 0) + ' of 5'}>
-                <button onClick={() => bump(e, 1)} aria-label="More important">▲</button>
-                <b>{e.priority || 0}</b>
-                <button onClick={() => bump(e, -1)} aria-label="Less important">▼</button>
+              <span className="sheetprio">
+                <PrioBalls value={e.priority || 0} onChange={v => setPrio(e, v)} />
               </span>
               <button className="sheetmain" onClick={() => onOpen(e)}>
                 <span className="sheettop">
@@ -6144,15 +6962,194 @@ function Academics({settings, setSettings, stage}){
   );
 }
 
-function BragIt({sub, ecs, add, update, remove, toast, stage, settings, setSettings, user}){
-  const [filter, setFilter] = useState('all');
+/* One class, for one year: who taught it, what happened in it worth telling,
+   and what you mean to do in it. */
+function TeacherCard({cal, note, onChange, open, onToggle}){
+  const anecdotes = (note && note.anecdotes) || [];
+  const goals = (note && note.goals) || [];
+  const put = patch => onChange({...patch});
+
+  return (
+    <div className={'tcard' + (open ? ' open' : '')}>
+      <button className="tcard-top" onClick={onToggle} aria-expanded={open}>
+        <i className="tcard-dot" style={{background: cal.color}} aria-hidden="true" />
+        <span className="tcard-what">
+          <b>{cal.name}</b>
+          <span>
+            {note && note.teacher ? note.teacher : 'No teacher named yet'}
+            {' · '}
+            {anecdotes.length} {anecdotes.length === 1 ? 'memory' : 'memories'}
+            {goals.length ? ' · ' + goals.filter(g => !g.done).length + ' to do' : ''}
+          </span>
+        </span>
+        <IconArrow dir={open ? 'up' : 'down'} />
+      </button>
+
+      {open && (
+        <div className="tcard-body">
+          <Field label="Who teaches it">
+            <input value={(note && note.teacher) || ''} maxLength={60}
+              placeholder="Ms. Reyes"
+              onChange={e => put({teacher: e.target.value})} />
+          </Field>
+
+          <div className="field">
+            <span className="spread">Memories worth telling
+              <span className="counter">{anecdotes.length}</span></span>
+            <p className="tcard-why">
+              Show rather than tell. Not "I worked hard", but the afternoon you stayed to rebuild
+              the model, or the question you would not let go of. A teacher with three of these can
+              write a letter nobody else could.
+            </p>
+            {anecdotes.length > 0 && (
+              <ul className="steplist">
+                {anecdotes.map(a => (
+                  <li key={a.id}>
+                    <span>
+                      {a.date && <b className="goalmonth">{dayLabel(a.date)}</b>}
+                      {a.text}
+                    </span>
+                    <XBtn label="Remove" confirm={a.text}
+                      onClick={() => put({anecdotes: anecdotes.filter(x => x.id !== a.id)})} />
+                  </li>
+                ))}
+              </ul>
+            )}
+            <LogList rows={[]} onChange={r => r.length && put({anecdotes: [...anecdotes, r[0]]})}
+              columns={[
+                {k:'date', label:'When', type:'date', cls:'mono', required:false},
+                {k:'text', label:'What happened', suggest:'anecdote'},
+              ]}
+              addLabel="Save it" empty="" />
+          </div>
+
+          <div className="field">
+            <span className="spread">What you want out of this class
+              <span className="counter">{goals.filter(g => g.done).length} of {goals.length} done</span></span>
+            {goals.length > 0 && (
+              <ul className="steplist">
+                {goals.map(g => (
+                  <li key={g.id}>
+                    <Check on={!!g.done} onClick={() => put({goals:
+                      goals.map(x => x.id === g.id ? {...x, done: !x.done} : x)})} />
+                    <span className={g.done ? 'done' : ''}>{g.text}</span>
+                    <XBtn label="Remove" confirm={g.text}
+                      onClick={() => put({goals: goals.filter(x => x.id !== g.id)})} />
+                  </li>
+                ))}
+              </ul>
+            )}
+            <LogList rows={[]} onChange={r => r.length && put({goals: [...goals, {...r[0], done:false}]})}
+              columns={[{k:'text', label:'Ask about the research project, sit nearer the front…', suggest:'goal'}]}
+              addLabel="Add" empty="" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* The Teachers tab: this year's classes, and every year before it. */
+function Teachers({settings, setSettings, setTab}){
+  const cals = calendarsOf(settings);
+  const year = schoolYearLabel();
+  const notes = teacherNotesOf(settings);
+  const [open, setOpen] = useState(cals.length === 1 ? cals[0].id : null);
+  const [past, setPast] = useState(false);
+
+  // Written against the class and the year, created the moment you type.
+  const write = (calId, calName, patch) => {
+    const found = teacherNote(settings, calId, year);
+    const next = found
+      ? notes.map(n => n.id === found.id ? {...n, ...patch} : n)
+      : [...notes, {id:'t' + uid(), cal:calId, className:calName, year,
+                    teacher:'', anecdotes:[], goals:[], ...patch}];
+    setSettings({...settings, teacherNotes: next});
+  };
+
+  const old = notes.filter(n => n.year !== year)
+    .sort((a, b) => String(b.year).localeCompare(String(a.year)));
+
+  if(cals.length === 0) return (
+    <>
+      <Empty title="No classes set up yet"
+        hint="Your classes come from Settings, under Classes and calendars. Add them there and they show up here, each with room for what happened in it." />
+      <div style={{marginTop:14}}>
+        <button className="btn primary" onClick={() => setTab('settings', 'calendars')}>
+          Add your classes
+        </button>
+      </div>
+      {old.length > 0 && <PastYears rows={old} open={past} onToggle={() => setPast(p => !p)} />}
+    </>
+  );
+
+  return (
+    <div style={{maxWidth:760}}>
+      <div className="spread dayhead">
+        <div>
+          <div className="eyebrow">Your teachers</div>
+          <p className="tlead">
+            One card per class. Write things down while the term is on, and when you ask for a
+            letter in the autumn you have something to give them.
+          </p>
+        </div>
+        <span className="metatag">{year}</span>
+      </div>
+
+      {cals.map(c => (
+        <TeacherCard key={c.id} cal={c} note={teacherNote(settings, c.id, year)}
+          open={open === c.id} onToggle={() => setOpen(o => o === c.id ? null : c.id)}
+          onChange={patch => write(c.id, c.name, patch)} />
+      ))}
+
+      <p className="cvfine" style={{marginTop:14}}>
+        Classes are set in Settings, under Classes and calendars. Clearing them for a new school
+        year leaves everything here untouched: it is filed by year, so last year's teachers stay
+        where they are.
+      </p>
+
+      {old.length > 0 && <PastYears rows={old} open={past} onToggle={() => setPast(p => !p)} />}
+    </div>
+  );
+}
+
+function PastYears({rows, open, onToggle}){
+  const years = Array.from(new Set(rows.map(r => r.year)));
+  return (
+    <div className="pastyears">
+      <button className="substoggle" onClick={onToggle} aria-expanded={open}>
+        Earlier years ({years.join(', ')})
+        <IconArrow dir={open ? 'up' : 'down'} />
+      </button>
+      {open && rows.map(r => (
+        <div key={r.id} className="pastcard">
+          <div className="spread">
+            <b>{r.className}</b>
+            <span className="metatag">{r.year}</span>
+          </div>
+          {r.teacher && <div className="pastwho">{r.teacher}</div>}
+          {(r.anecdotes || []).map(a => (
+            <p key={a.id} className="pastline">
+              {a.date && <b className="goalmonth">{dayLabel(a.date)}</b>}{a.text}
+            </p>
+          ))}
+          {(r.anecdotes || []).length === 0 && <p className="pastline quiet">Nothing was written down.</p>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BragIt({sub, ecs, add, update, remove, toast, stage, settings, setSettings, user, setTab}){
+  // Filtering by grade is gone: a bragsheet is read whole, and the grades are
+  // on each entry anyway. Finished and unfinished stayed, because that is the
+  // one split that changes what you are looking at.
   const [state, setState] = useState('all');   // all | unfinished | finished
   const [sort, setSort] = useState('priority');
-  const grades = gradesFor(stage);
   const [editing, setEditing] = useState(null);
   const [exporting, setExporting] = useState(false);
 
-  useEffect(() => { setFilter('all'); setState('all'); }, [sub]);
+  useEffect(() => { setState('all'); }, [sub]);
 
   const [detail, setDetail] = useState(null);
   // the detail panel reads from the live list, so an edit shows at once
@@ -6160,7 +7157,6 @@ function BragIt({sub, ecs, add, update, remove, toast, stage, settings, setSetti
 
   const list = useMemo(() => {
     let l = ecs.filter(e => e.category === sub);
-    if(filter !== 'all') l = l.filter(e => (e.grades || []).includes(filter));
     if(state === 'finished') l = l.filter(e => e.finished);
     if(state === 'unfinished') l = l.filter(e => !e.finished);
     const c = [...l];
@@ -6168,7 +7164,7 @@ function BragIt({sub, ecs, add, update, remove, toast, stage, settings, setSetti
     if(sort === 'recent') c.sort((a,b) => (b.start || '').localeCompare(a.start || ''));
     if(sort === 'az') c.sort((a,b) => a.title.localeCompare(b.title));
     return c;
-  }, [ecs, sub, filter, state, sort]);
+  }, [ecs, sub, state, sort]);
 
   const blank = {category:sub, title:'', org:'', desc:'', actType:'',
     grades:[], hoursPerWeek:'', weeksPerYear:'', college:'', levels:[], start:'', end:'', ongoing:true,
@@ -6188,6 +7184,10 @@ function BragIt({sub, ecs, add, update, remove, toast, stage, settings, setSetti
 
   if(sub === 'academics') return (
     <div><Academics settings={settings} setSettings={setSettings} stage={stage} />{sheetViews}</div>
+  );
+
+  if(sub === 'teacher') return (
+    <div><Teachers settings={settings} setSettings={setSettings} setTab={setTab} />{sheetViews}</div>
   );
 
   if(sub === 'sheet') return (
@@ -6248,12 +7248,12 @@ function BragIt({sub, ecs, add, update, remove, toast, stage, settings, setSetti
                   <div className="org">{e.org || (e.actType || '')}</div>
                 </div>
                 <div className="ec-actions">
-                  <span className="prio" title={`Importance ${e.priority || 0} of 5`}>
-                    {[1,2,3,4,5].map(n => <i key={n} className={n <= (e.priority || 0) ? 'on' : ''} />)}
-                  </span>
+                  <PrioBalls value={e.priority || 0}
+                    onChange={v => update(e.id, {priority: v})} />
                   <button className="btn sm" onClick={() => setDetail(e.id)}>Open</button>
                   <button className="btn sm" onClick={() => setEditing(e)}>Edit</button>
-                  <XBtn onClick={() => remove(e.id)} />
+                  <XBtn onClick={() => remove(e.id)} confirm={e.title}
+                    note="Everything kept with it goes too: the hours, the money, the awards and the anecdotes. This cannot be undone." />
                 </div>
               </div>
 
@@ -6298,8 +7298,45 @@ function EcEditor({ec, onClose, onSave, stage}){
   const toggleIn = (k, v) => setF(p => ({...p,
     [k]: (p[k] || []).includes(v) ? p[k].filter(x => x !== v) : [...(p[k] || []), v]}));
 
+  /* An end before a start is always a slip, so it is corrected rather than
+     refused: the end moves into the month and year the start is in. Said out
+     loud, because a date that changes itself without a word is worse than the
+     mistake. The pickers carry min and max too, so on a desktop the impossible
+     day cannot be reached in the first place. */
+  const [dateNote, setDateNote] = useState('');
+  const intoMonthOf = (end, start) => {
+    const e = /^(\d{4})-(\d{2})-(\d{2})$/.exec(end || '');
+    const t = /^(\d{4})-(\d{2})-(\d{2})$/.exec(start || '');
+    if(!e || !t) return start;
+    const last = new Date(+t[1], +t[2], 0).getDate();     // that month's length
+    const day = Math.min(+e[3], last);
+    const out = t[1] + '-' + t[2] + '-' + String(day).padStart(2, '0');
+    return out < start ? start : out;                      // never before the start
+  };
+  const setEnd = v => {
+    if(v && f.start && v < f.start){
+      const fixed = intoMonthOf(v, f.start);
+      setF(p => ({...p, end: fixed}));
+      setDateNote('An end date cannot come before the start, so it moved to ' + dayLabel(fixed) + '.');
+      return;
+    }
+    setDateNote('');
+    set('end', v);
+  };
+  const setStart = v => {
+    if(v && f.end && f.end < v){
+      const fixed = intoMonthOf(f.end, v);
+      setF(p => ({...p, start: v, end: fixed}));
+      setDateNote('The end date was before the new start, so it moved to ' + dayLabel(fixed) + '.');
+      return;
+    }
+    setDateNote('');
+    set('start', v);
+  };
+
   const save = () => {
     if(!f.title.trim()) return setErr('Give it a name first.');
+    if(f.start && f.end && f.end < f.start) return setErr('The end date is before the start date.');
     onSave({...f, title:f.title.trim()});
   };
   const grades = gradesFor(stage);
@@ -6336,14 +7373,28 @@ function EcEditor({ec, onClose, onSave, stage}){
 
       <div className="grid2">
         <Field label={f.category === 'certification' ? 'Earned' : 'Start date'}>
-          <input type="date" value={f.start} onChange={e => set('start', e.target.value)} />
+          <input type="date" value={f.start} max={f.end || undefined}
+            onChange={e => setStart(e.target.value)} />
         </Field>
         <Field label={f.category === 'certification' ? 'Expires' : 'End date'}>
-          <input type="date" value={f.end} disabled={f.category === 'certification' ? f.ongoing : f.finished === false && !f.end}
-            onChange={e => set('end', e.target.value)} />
+          <input type="date" value={f.end} min={f.start || undefined}
+            disabled={f.category === 'certification' ? f.ongoing : f.finished === false && !f.end}
+            onChange={e => setEnd(e.target.value)} />
         </Field>
       </div>
+      {dateNote && <div className="formnote">{dateNote}</div>}
       {err && <div className="formerr">{err}</div>}
+
+      <label className="row" style={{gap:9,margin:'2px 0 16px',fontSize:13.5,fontWeight:500,alignItems:'flex-start'}}>
+        <input type="checkbox" checked={!!f.finished} onChange={e => set('finished', e.target.checked)}
+          style={{width:16,height:16,marginTop:2,flex:'none'}} />
+        <span>
+          Finished
+          <small style={{display:'block',color:'var(--ink35)',fontWeight:400,fontSize:12,marginTop:1}}>
+            Leave this off while it's still going. You can filter by it at the top.
+          </small>
+        </span>
+      </label>
 
       {isExp && (
         <>
@@ -6454,21 +7505,10 @@ function EcEditor({ec, onClose, onSave, stage}){
         </>
       )}
 
-      <label className="row" style={{gap:9,margin:'2px 0 16px',fontSize:13.5,fontWeight:500,alignItems:'flex-start'}}>
-        <input type="checkbox" checked={!!f.finished} onChange={e => set('finished', e.target.checked)}
-          style={{width:16,height:16,marginTop:2,flex:'none'}} />
-        <span>
-          Finished
-          <small style={{display:'block',color:'var(--ink35)',fontWeight:400,fontSize:12,marginTop:1}}>
-            Leave this off while it's still going. You can filter by it at the top.
-          </small>
-        </span>
-      </label>
-
-      <Field label={`How important is this to you? (${f.priority || 0} of 5)`}>
-        <input type="range" min="0" max="5" value={f.priority || 0}
-          onChange={e => set('priority', +e.target.value)} style={{padding:0}} />
-      </Field>
+      <div className="field">
+        <span>How important is this to you?</span>
+        <PrioBalls value={f.priority || 0} onChange={v => set('priority', v)} />
+      </div>
 
       <Field label="Private notes, only you see these">
         <Suggesting textarea kind="desc" value={f.notes} onChange={v => set('notes', v)}
@@ -6483,7 +7523,8 @@ function EcEditor({ec, onClose, onSave, stage}){
 function LockIt({sub, lock, running, left, minutes, start, pause, reset, toast, sound, setSound, haptics, setHapticsPref,
                  mode, setMode, pomo, setPomo, phase, cycle, addCycle,
                  camOn, setCamOn, camFull, camCount, remoteStreams, camTick,
-                 room, setRoom, members, myId, name, setName}){
+                 room, setRoom, members, myId, name, setName,
+                 talkAs, setTalkAs, talking, setTalking, lines, clearLines, capsOpen, setCapsOpen}){
   const [code, setCode] = useState('');
   const [roomErr, setRoomErr] = useState('');
   const [busy, setBusy] = useState(false);
@@ -6663,6 +7704,43 @@ function LockIt({sub, lock, running, left, minutes, start, pause, reset, toast, 
               </div>
             </div>
             {roomErr && <div style={{fontSize:12.5,color:'var(--rule)',marginBottom:10}}>{roomErr}</div>}
+            <div className="talkbox">
+              <div className="field" style={{marginBottom:11}}>
+                <span>When you talk, send it as</span>
+                <div className="row" style={{gap:7, flexWrap:'wrap'}}>
+                  {[['captions','Captions'],['voice','Your voice']].map(([k, l]) => (
+                    <button key={k} className={'chip' + (talkAs === k ? ' on' : '')}
+                      onClick={() => setTalkAs(k)}>{l}</button>
+                  ))}
+                </div>
+                <p className="talknote">
+                  {talkAs === 'captions'
+                    ? 'Your words are turned into text on your own device and the text goes to the room. Nobody hears you, and the captions stay on screen until somebody clears them.'
+                    : 'The sound goes to the room. Your camera has to be on for voice to reach anybody, because that is the connection it travels over.'}
+                </p>
+              </div>
+              <div className="row" style={{gap:8, flexWrap:'wrap'}}>
+                <button className={'btn' + (talking ? ' primary' : '')}
+                  onClick={() => setTalking(!talking)}>
+                  {talking
+                    ? (talkAs === 'captions' ? 'Stop captioning me' : 'Mute me')
+                    : (talkAs === 'captions' ? 'Caption what I say' : 'Unmute me')}
+                </button>
+                {talking && <span className="talklive">
+                  <i aria-hidden="true" />
+                  {talkAs === 'captions' ? 'Captioning' : 'Live'}
+                </span>}
+              </div>
+              {talking && talkAs === 'voice' && !camOn && (
+                <p className="talknote warn">
+                  Your camera is off, so nobody can hear you yet. Turn it on below, or send what
+                  you say as captions instead.
+                </p>
+              )}
+              <CaptionLog compact lines={lines || []} onClear={clearLines}
+                open={capsOpen} setOpen={setCapsOpen} />
+            </div>
+
             <label className="switchrow" style={{marginBottom:12}}>
               <span><b>My camera</b><small>{camFull && !camOn
                 ? `Camera circle is full, ${CAM_LIMIT} at a time`
@@ -6841,8 +7919,8 @@ const GMark = () => (
 // fails to load, the drawn mark below is used instead so nothing looks broken.
 // Bumped every time a file is handed over, so a build can be identified
 // without printing a version number next to the wordmark.
-const BUILD = 'b7791';
-const LOGO_SRC = 'logo.png';
+const BUILD = 'b7869';
+const LOGO_SRC = 'logo.png?v=4';
 // The homepage photograph, graded to the palette. Two files rather than one
 // CSS filter, because a filter that works on cream washes out on charcoal.
 const HERO_LIGHT = 'hero-light.jpg';
@@ -7539,7 +8617,7 @@ async function fireNotification(title, body, tag){
 
 const log = (...a) => { if(CONFIG.DEBUG_VIDEO) console.log('[planit-video]', ...a); };
 
-function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
+function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick, trackKey = 'v'}){
   const [remote, setRemote] = useState({});
   const [status, setStatus] = useState({});
   const pcs = useRef({});
@@ -7563,6 +8641,10 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
 
   const closeAll = useCallback(() => { Object.keys(pcs.current).forEach(close); }, [close]);
   const wasSending = useRef(sending);
+  // what our own stream carries. Adding or dropping a microphone changes every
+  // connection, so they are rebuilt rather than patched, the same as gaining or
+  // losing the camera.
+  const wasTracks = useRef(trackKey);
   const [retry, setRetry] = useState(0);
 
   useEffect(() => {
@@ -7572,6 +8654,7 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
     // Gaining or losing your own track changes what every connection carries,
     // so those get rebuilt rather than patched.
     if(wasSending.current !== sending){ wasSending.current = sending; closeAll(); }
+    if(wasTracks.current !== trackKey){ wasTracks.current = trackKey; closeAll(); }
 
     Object.keys(pcs.current).forEach(id => { if(!others.includes(id)) close(id); });
 
@@ -7690,7 +8773,7 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
         }catch(err){ close(otherId); }
       })();
     });
-  }, [room, sending, key, myId, streamTick, retry, close, closeAll, streamRef]);
+  }, [room, sending, key, myId, streamTick, retry, trackKey, close, closeAll, streamRef]);
 
   // A connection that never gets past 'connecting' is dead, drop it so the
   // next pass builds a fresh one.
@@ -7711,6 +8794,46 @@ function useVideoMesh({room, myId, camOn, camPeers, streamRef, streamTick}){
   return {remote, status};
 }
 
+/* Captions, kept rather than flashed. They stay until somebody clears them, so
+   a line can be read late, read twice, or read after looking up from a book.
+   Newest at the bottom, the way a conversation reads. */
+function CaptionLog({lines, onClear, open, setOpen, compact}){
+  const box = useRef(null);
+  useEffect(() => {
+    const el = box.current;
+    if(el && open) el.scrollTop = el.scrollHeight;
+  }, [lines, open]);
+  return (
+    <div className={'caplog' + (compact ? ' compact' : '') + (open ? ' open' : '')}>
+      <div className="caphead">
+        <button className="capname" onClick={() => setOpen(!open)} aria-expanded={open}>
+          Captions
+          {lines.length > 0 && <span className="capcount">{lines.length}</span>}
+          <IconArrow dir={open ? 'down' : 'up'} />
+        </button>
+        {open && lines.length > 0 && (
+          <button className="capclear" onClick={onClear}>Clear</button>
+        )}
+      </div>
+      {open && (
+        <div className="caplines" ref={box} aria-live="polite">
+          {lines.length === 0
+            ? <p className="capempty">
+                Nothing said yet. Anybody with captions on will turn up here, and the lines stay
+                until you clear them.
+              </p>
+            : lines.map(l => (
+                <p key={l.key} className={'capline' + (l.mine ? ' mine' : '')}>
+                  <b>{l.mine ? 'You' : l.who}</b>
+                  {l.text}
+                </p>
+              ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ============ AVATAR ============ */
 function Seat({name, focusing, me, stream, tick, bursts = [], note}){
   const vid = useRef(null);
@@ -7719,7 +8842,8 @@ function Seat({name, focusing, me, stream, tick, bursts = [], note}){
     <div className={'seat' + (focusing ? ' live' : '') + (me ? ' me' : '')}>
       <div className="seatmedia">
         {stream
-          ? <video ref={vid} autoPlay playsInline muted className={'seatvid' + (me ? ' mirror' : '')} />
+          ? <video ref={vid} autoPlay playsInline muted={me}
+              className={'seatvid' + (me ? ' mirror' : '')} />
           : <div className="seatinitial" style={{background:avColor(name)}}>
               {String(name || '?').trim().slice(0,1).toUpperCase()}
             </div>}
@@ -8371,17 +9495,33 @@ const SOURCE_LABELS = {friend:'A friend', social:'Social media', search:'A searc
 // Sign-up and referral numbers for the team. The code on the sign-up screen
 // decides who sees this tab; the Firestore rules decide who can actually read
 // the rows, so a guessed code shows an empty screen rather than other people's data.
+/* Two different numbers, which is where this went wrong before.
+   /signups holds one row per person who answered "how did you hear about
+   PlanIt" on the way in. Accounts made before that question existed, and
+   anyone who skipped it, have no row, so counting that collection undercounts
+   the accounts: it was reading 24 against 38 real accounts.
+
+   The honest count of accounts is /usernames, which gets exactly one document
+   per account the moment a username is claimed, and which is already readable
+   without a rules change. Both are shown, and the gap between them is
+   explained rather than hidden. */
 function AdminNumbers({sub, user, isAdmin}){
   const [rows, setRows] = useState(null);
+  const [accounts, setAccounts] = useState(null);
   const [err, setErr] = useState('');
   useEffect(() => {
     db().collection('signups').get()
       .then(sn => setRows(sn.docs.map(d => d.data())))
       .catch(() => { setRows([]); setErr("You're signed in as team, but this account isn't allowed to read the numbers yet."); });
+    db().collection('usernames').get()
+      .then(sn => setAccounts(sn.size))
+      .catch(() => setAccounts(null));
   }, []);
 
   if(rows === null) return <Empty title="Loading…" hint="Fetching sign-ups." />;
-  const total = rows.length;
+  const answered = rows.length;
+  const total = (accounts !== null && accounts > answered) ? accounts : answered;
+  const quiet = total - answered;
 
   if(sub === 'referrers'){
     const named = {};
@@ -8419,8 +9559,12 @@ function AdminNumbers({sub, user, isAdmin}){
         {err && <div className="formerr">{err}</div>}
         <div className="row" style={{gap:12, flexWrap:'wrap'}}>
           <div className="card" style={{flex:1, minWidth:140}}>
-            <div className="eyebrow">Total sign-ups</div>
+            <div className="eyebrow">Accounts</div>
             <div className="mono" style={{fontSize:30, fontWeight:600}}>{total}</div>
+          </div>
+          <div className="card" style={{flex:1, minWidth:140}}>
+            <div className="eyebrow">Told us where they heard</div>
+            <div className="mono" style={{fontSize:30, fontWeight:600}}>{answered}</div>
           </div>
           <div className="card" style={{flex:1, minWidth:140}}>
             <div className="eyebrow">Came from a friend</div>
@@ -8433,9 +9577,23 @@ function AdminNumbers({sub, user, isAdmin}){
             <div className="mono" style={{fontSize:30, fontWeight:600}}>{Math.max(0, 100 - total)}</div>
           </div>
         </div>
+        {accounts === null && (
+          <p className="cvfine" style={{marginTop:11}}>
+            The account count could not be read just now, so the figures below are from the
+            people who answered the question on the way in.
+          </p>
+        )}
+        {quiet > 0 && (
+          <p className="cvfine" style={{marginTop:11}}>
+            {quiet} {quiet === 1 ? 'account' : 'accounts'} never answered where they heard about
+            PlanIt, either because they skipped it or because they signed up before it was asked.
+            Everything under "where sign-ups come from" is out of {answered}, not {total}.
+          </p>
+        )}
       </Section>
 
-      <Section title="Where sign-ups come from">
+      <Section title="Where sign-ups come from"
+        hint={answered ? 'Out of the ' + answered + ' who answered.' : undefined}>
         {total === 0
           ? <Empty title="Nothing yet" hint="No sign-ups have been recorded." />
           : <div className="card">
@@ -8560,12 +9718,105 @@ const BUG_AREAS = [
   ['account','Signing in or my account'], ['other','Somewhere else'],
 ];
 
+/* ---- the switches for getting started ----
+
+   Written for the way an ADHD week actually goes wrong: not from not knowing
+   what is due, but from a list too long to start, a sense of time that is not
+   there, and work that is too vague to begin. Each switch here is aimed at one
+   of those, and each one is off by default, because deciding for somebody how
+   their attention works is the mistake underneath most of this.
+
+   Nothing here is a diagnosis and nothing here is medical. They are preferences
+   about an interface. */
+function FocusHelp({settings, setSettings}){
+  const put = (k, v) => setSettings({...settings, [k]: v});
+  return (
+    <Section title="Getting started"
+      hint="Three switches for when a list is the thing stopping you. Turn any of them on or off whenever you like.">
+      <div className="card">
+        <label className="switchrow" style={{marginBottom:14}}>
+          <span>
+            <b>One thing at a time</b>
+            <small>
+              Put a single card above the daily list: whatever is running now, or the next thing
+              with a time on it. It offers a five minute start, because starting is the hard part.
+            </small>
+          </span>
+          <input type="checkbox" checked={settings.oneThing !== false}
+            onChange={e => put('oneThing', e.target.checked)} />
+        </label>
+
+        <label className="switchrow" style={{marginBottom:14}}>
+          <span>
+            <b>Show me less</b>
+            <small>
+              The daily list shows the next three things and keeps the rest behind a button, with
+              what you have finished tucked away. A list you can hold in your head is a list you
+              might act on.
+            </small>
+          </span>
+          <input type="checkbox" checked={!!settings.calm}
+            onChange={e => put('calm', e.target.checked)} />
+        </label>
+
+        <label className="switchrow">
+          <span>
+            <b>Say how long, not just when</b>
+            <small>
+              Anything with a time on it also says how far away it is: in 25 minutes, 10 minutes
+              left, an hour ago. No arithmetic in your head.
+            </small>
+          </span>
+          <input type="checkbox" checked={settings.untilTime !== false}
+            onChange={e => put('untilTime', e.target.checked)} />
+        </label>
+      </div>
+    </Section>
+  );
+}
+
+/* What this device can and cannot do with your voice. Here rather than beside
+   every field, because it is the same answer every time, and because the one
+   thing somebody needs to be told is where the microphone went in the app. */
+function VoiceNote(){
+  const canSpeak = speaks(), canHear = hears();
+  return (
+    <Section title="Voice"
+      hint="Reading out loud and dictation both come with your browser. Nothing is recorded and nothing is sent to PlanIt.">
+      <div className="card" style={{fontSize:13.5, color:'var(--ink60)', lineHeight:1.65}}>
+        <div className="voicerow" style={{marginBottom:10}}>
+          <SpeakBtn text="Reading out loud works on this device. This is what it sounds like."
+            label="Try it" />
+          <span>
+            <b style={{color:'var(--ink)'}}>Reading out loud</b>{' '}
+            {canSpeak
+              ? 'works here. The speaker button reads a list or a description back to you, which is the quickest way to catch a sentence that does not read properly.'
+              : 'is not available in this browser.'}
+          </span>
+        </div>
+        <div className="voicerow">
+          {canHear && <MicBtn onText={() => {}} label="Dictate" />}
+          <span>
+            <b style={{color:'var(--ink)'}}>Dictation</b>{' '}
+            {canHear
+              ? 'works here. The microphone button sits in the corner of every long box: press it, talk, press it again. What you say is added to whatever is already written.'
+              : isNativeApp()
+                ? 'is handled by your keyboard in the app rather than by PlanIt. Tap any box, then press the microphone on the keyboard and talk. It works in every field, including the long ones in Brag It.'
+                : 'is not available in this browser. Chrome and Safari both have it.'}
+          </span>
+        </div>
+      </div>
+    </Section>
+  );
+}
+
 /* Classes, clubs, jobs: the things a date can belong to. Kept in settings
    because that is where you set them up once, and because the colour you give
    one is the colour it shows in on the monthly calendar. */
 function CalendarSettings({settings, setSettings, events, setEvents, toast}){
   const cals = calendarsOf(settings);
   const [name, setName] = useState('');
+  const [clearing, setClearing] = useState(false);
   const save = next => setSettings({...settings, calendars: next});
 
   const add = () => {
@@ -8608,7 +9859,8 @@ function CalendarSettings({settings, setSettings, events, setEvents, toast}){
                     <span className="calcount">
                       {(events || []).filter(e => e.cal === c.id).length}
                     </span>
-                    <XBtn onClick={() => drop(c)} label="Remove" />
+                    <XBtn onClick={() => drop(c)} label="Remove" confirm={c.name}
+                      note="The calendar goes, and every date filed under it loses its colour. This cannot be undone." />
                   </li>
                 ))}
               </ul>}
@@ -8626,6 +9878,35 @@ function CalendarSettings({settings, setSettings, events, setEvents, toast}){
           </p>
         </div>
       </Section>
+
+      {cals.length > 0 && (
+        <Section title="A new school year"
+          hint="Clear last year's classes when the new timetable comes out, then add this year's. Nothing else goes: your dates keep their colour, and what you wrote about each teacher in Brag It is filed by year and stays there.">
+          <div className="card">
+            <div className="row" style={{gap:10, flexWrap:'wrap', alignItems:'center'}}>
+              <button className="btn danger" onClick={() => setClearing(true)}>
+                Clear my {cals.length} {cals.length === 1 ? 'class' : 'classes'}
+              </button>
+              <span style={{fontSize:12.5, color:'var(--ink35)'}}>
+                You are in {schoolYearLabel()} now.
+              </span>
+            </div>
+          </div>
+        </Section>
+      )}
+
+      {clearing && (
+        <ConfirmDelete what={cals.map(c => c.name).join(', ')}
+          note={'Your dates stay where they are and lose only their class. Teacher notes are kept under ' +
+            schoolYearLabel() + ' in Brag It. You can add this year\u2019s classes straight after.'}
+          onNo={() => setClearing(false)}
+          onYes={() => {
+            setClearing(false);
+            if(setEvents) setEvents((events || []).map(e => e.cal ? {...e, cal:null} : e));
+            save([]);
+            toast('Classes cleared. Add this year\u2019s below');
+          }} />
+      )}
 
       {unfiled > 0 && (
         <Section title="Imported dates with no class">
@@ -8939,11 +10220,18 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
     });
   }, [profile, form]);
 
+  // the form is null until the profile arrives, so read the stage defensively
+  const gradeNow = currentGrade(settings, (form && form.stage) || user.stage || 'hs');
+
   const saveAccount = async () => {
     setBusy(true); setErr(''); setNote('');
     try{
       await saveProfile(user.id, {
-        name:form.name.trim(), dob:form.dob, grade:form.grade, stage:form.stage,
+        name:form.name.trim(), dob:form.dob,
+        // the written-down grade follows the derived one, so nothing reading
+        // the profile is left with a grade from two years ago
+        grade: gradeNow ? (GRADE_LABEL[gradeNow] || form.grade) : form.grade,
+        stage:form.stage,
         gender:form.gender, school:form.school.trim(), email:user.email
       });
       setNote('Saved.');
@@ -9050,11 +10338,23 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
                     {ageFrom(form.dob) !== null &&
                       <small className="fieldnote">That makes you {ageFrom(form.dob)}.</small>}
                   </Field>
-                  <Field label="Grade">
-                    <select value={form.grade} onChange={e => setForm({...form, grade:e.target.value})}>
+                  {/* A grade typed in once is wrong by the next August and
+                      nobody comes back to change it. The year you leave does
+                      not move, so the grade is worked out from that instead,
+                      exactly as the age is worked out from the birthday. */}
+                  <Field label="Graduating in">
+                    <select value={settings.gradYear || ''}
+                      onChange={e => setSettings({...settings, gradYear:e.target.value})}>
                       <option value="">Prefer not to say</option>
-                      {['6','7','8','9','10','11','12','College','Other'].map(g => <option key={g} value={g}>{g}</option>)}
+                      {GRAD_YEARS().map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
+                    {gradeNow
+                      ? <small className="fieldnote">
+                          That puts you in {GRADE_LABEL[gradeNow]} this year, and it moves up by itself every August.
+                        </small>
+                      : (form.grade
+                          ? <small className="fieldnote">You had {form.grade} saved. Set the year and PlanIt keeps it current for you.</small>
+                          : null)}
                   </Field>
                 </div>
                 <Field label="Where are you studying?">
@@ -9474,6 +10774,12 @@ function Settings({sub, user, onSignOut, settings, setSettings, toast, onLinksCh
         );
       })()}
 
+      {sub === 'account' && user.role !== 'parent' && (
+        <FocusHelp settings={settings} setSettings={setSettings} />
+      )}
+
+      {sub === 'account' && <VoiceNote />}
+
       {sub === 'calendars' && <CalendarSettings settings={settings} setSettings={setSettings}
         events={events} setEvents={setEvents} toast={toast} />}
 
@@ -9874,12 +11180,49 @@ function Reports({lock}){
 /* ============ NOTIFICATIONS ============ */
 // Everything here is flagged as planned rather than live. A promo that reads
 // as active but can't be claimed is worse than one that says "coming".
-const NEWS = [
-  {id:'founding100', tag:'Planned', title:'Founding 100: PlanIt Pro free',},
-  {id:'survey', tag:'Coming soon', title:'Tell us what to build next',},
+/* What is actually new, newest first. An id is never reused: the unread count
+   is worked out from the ids somebody has already seen, so reusing one would
+   hide an announcement from everybody who had read the old one. */
+const NEWS_FIXED = [
+  {id:'teacher-anecdotes', tag:'New', title:'Teacher anecdotes are now available in Brag It',
+   body:'Teacher anecdotes are now available in Brag It! List important memories that show, not tell, how great of a student you were in their class so they have something to write about in recommendation letters.'},
 ];
 
-function NewsPanel({onClose, readIds, markRead, requests = [], onDecide, report, reportDue, onOpenReports, referralReady, refCount, onOpenReferral, isAdmin}){
+/* ---- the one that comes round every year ----
+
+   Timetables come out in late July and the class list has to be rebuilt before
+   September, which is exactly the sort of thing nobody remembers to do. So from
+   the 20th of July until the end of September there is a notice about it, with
+   the year in its id: each summer it is a new announcement, unread again, and
+   reading it once does not silence it the following year.
+
+   Outside that window it is not in the list at all, so nothing is nagging about
+   classes in February. */
+const CLASS_NOTICE_FROM = {m:6, d:20};        // 20 July, months counted from 0
+const CLASS_NOTICE_TO = {m:8, d:30};          // 30 September
+function classNotice(d = new Date()){
+  const m = d.getMonth(), day = d.getDate();
+  const after = m > CLASS_NOTICE_FROM.m || (m === CLASS_NOTICE_FROM.m && day >= CLASS_NOTICE_FROM.d);
+  const before = m < CLASS_NOTICE_TO.m || (m === CLASS_NOTICE_TO.m && day <= CLASS_NOTICE_TO.d);
+  if(!(after && before)) return null;
+  const year = schoolYearLabel(d);
+  return {
+    id: 'classes-' + schoolYearEnd(d),
+    tag: 'Every year',
+    title: 'Time to update your classes for ' + year,
+    body: 'New timetables are out about now. Open Settings, then Classes and calendars, clear last '
+      + "year's classes and put this year's in. Everything you wrote about last year's teachers "
+      + 'stays where it is in Brag It, filed under the year it happened.',
+    goto: ['settings', 'calendars'],
+  };
+}
+
+const newsList = (d = new Date()) => {
+  const yearly = classNotice(d);
+  return yearly ? [yearly, ...NEWS_FIXED] : NEWS_FIXED;
+};
+
+function NewsPanel({onClose, readIds, markRead, requests = [], onDecide, report, reportDue, onOpenReports, referralReady, refCount, onOpenReferral, isAdmin, onGo}){
   const [bugs, setBugs] = useState(null);
   useEffect(() => {
     if(!isAdmin) return;
@@ -9888,7 +11231,8 @@ function NewsPanel({onClose, readIds, markRead, requests = [], onDecide, report,
       .catch(() => setBugs([]));
   }, [isAdmin]);
   // News gets marked read on open; requests don't, they stay until answered.
-  useEffect(() => { markRead(NEWS.map(n => n.id)); }, [markRead]);
+  const items = newsList();
+  useEffect(() => { markRead(items.map(n => n.id)); }, [markRead]);
   return (
     <Modal title="Notifications" onClose={onClose}
       footer={<button className="btn primary" onClick={onClose}>Close</button>}>
@@ -9997,10 +11341,8 @@ function NewsPanel({onClose, readIds, markRead, requests = [], onDecide, report,
         </div>
       )}
 
-      <p style={{margin:'0 0 16px', color:'var(--ink60)', fontSize:13.5}}>
-        PlanIt is early. Nothing below is live yet. This is what's being built.
-      </p>
-      {NEWS.map(n => (
+      <div className="eyebrow" style={{marginBottom:9}}>What's new</div>
+      {items.map(n => (
         <div key={n.id} className={'newsitem' + (readIds.includes(n.id) ? '' : ' fresh')}>
           <div>
             <div className="row" style={{gap:8, marginBottom:3, flexWrap:'wrap'}}>
@@ -10008,6 +11350,12 @@ function NewsPanel({onClose, readIds, markRead, requests = [], onDecide, report,
               <span className="newstag">{n.tag}</span>
             </div>
             <p style={{margin:0, color:'var(--ink60)', fontSize:13, lineHeight:1.55}}>{n.body}</p>
+            {n.goto && onGo && (
+              <button className="btn sm" style={{marginTop:11}}
+                onClick={() => { onGo(n.goto[0], n.goto[1]); onClose(); }}>
+                Take me there
+              </button>
+            )}
           </div>
         </div>
       ))}
@@ -10197,7 +11545,7 @@ const TABS = [
   {id:'brag',     label:'Brag It',    sub:'Extracurriculars', color:'var(--brag)',
    title:'Brag It', tagline:'Everything you have done, written down before you forget it.',
    subs:[['sheet','Bragsheet'],['experience','Experience'],['honor','Honors & awards'],
-         ['certification','Certifications'],['academics','Academics']]},
+         ['certification','Certifications'],['teacher','Teachers'],['academics','Academics']]},
   {id:'list',     label:'List It',    sub:'To-do', color:'var(--list)',
    title:'List It', tagline:'Daily items feed straight into your schedule.',
    subs:[['daily','Daily'],['weekly','Weekly'],['monthly','Monthly']]},
@@ -10546,13 +11894,25 @@ function App({user, onSignOut}){
   // Out on Saturday, the day before everything rolls over.
   const isSaturday = new Date().getDay() === 6;
   const reportUnread = (isSaturday && report.minutes > 0 && settings.reportSeen !== thisWeek) ? 1 : 0;
-  const unreadNews = NEWS.filter(n => !readNews.includes(n.id)).length + pendingList.length + reportUnread + (referralReady ? 1 : 0);
+  const freshNews = newsList().filter(n => !readNews.includes(n.id));
+  const unreadNews = freshNews.length + pendingList.length + reportUnread + (referralReady ? 1 : 0);
+  // the strip names the newest thing; a parent request outranks an announcement
+  const newsStrip = pendingList.length
+    ? {title: pendingList.length === 1
+        ? 'A parent is asking to follow your planner'
+        : pendingList.length + ' people are asking to follow your planner'}
+    : (freshNews[0] ? {title: freshNews[0].title} : null);
+  /* Opening the panel is what marks an announcement read, and the flag has to
+     be saved like anything else: without marking the store dirty it never
+     reached Firestore, so the red count came back at the next sign-in on any
+     device. That is the whole of that bug. */
   const markNewsRead = useCallback(ids => {
     setStore(s0 => {
       const st = s0.settings || DEFAULT_SETTINGS;
       const merged = Array.from(new Set([...(st.readNews || []), ...ids]));
       const week = weekKey(new Date());
       if(merged.length === (st.readNews || []).length && st.reportSeen === week) return s0;
+      dirty.current = true;
       return {...s0, settings:{...st, readNews:merged, reportSeen:week}};
     });
   }, []);
@@ -10607,6 +11967,19 @@ function App({user, onSignOut}){
     setRunning(true);
   }, [pomo.work, pomo.brk]);
 
+  /* Starting a short timer from somewhere that is not Lock It. The minutes are
+     state, so the start has to wait a tick for them to land, which is what the
+     pending value is for. */
+  const [pendingStart, setPendingStart] = useState(null);
+  const focusFor = (n, what) => {
+    setMode('timer');
+    setMinutes(n);
+    setTab('lock');
+    setSub(p => ({...p, lock:'focus'}));
+    setPendingStart(n);
+    if(what) toast('Five minutes on ' + what);
+  };
+
   const startTimer = useCallback(() => {
     goFullscreen();
     ensureAudio();
@@ -10640,6 +12013,27 @@ function App({user, onSignOut}){
     setRunning(false);
     if(secs >= 60) toast(`Logged ${Math.floor(secs/60)} min`);
   }, [creditElapsed, toast]);
+
+  useEffect(() => {
+    if(pendingStart === null || minutes !== pendingStart) return;
+    setPendingStart(null);
+    startTimer();
+  }, [pendingStart, minutes, startTimer]);
+
+  /* Nothing behind the focus screen should move while it is up, and the page
+     behind it should not be white if a finger drags past the edge. */
+  useEffect(() => {
+    if(!running) return;
+    const root = document.documentElement;
+    const y = window.scrollY || 0;
+    root.classList.add('shielded');
+    document.body.style.top = (-y) + 'px';
+    return () => {
+      root.classList.remove('shielded');
+      document.body.style.top = '';
+      try{ window.scrollTo(0, y); }catch(e){}
+    };
+  }, [running]);
 
   const resetTimer = useCallback(m => {
     leaveFullscreen();
@@ -10740,22 +12134,77 @@ function App({user, onSignOut}){
     };
   }, [room, user.id, toast]);
 
+  /* ---- how you talk ----
+
+     A study room where speaking means being heard is a study room some people
+     will not speak in: a shared bedroom, a quiet house, a voice you would
+     rather not use. So the microphone has two destinations. On captions, what
+     you say is turned into text on your own device and the text is what
+     travels. On voice, the sound itself travels.
+
+     Captions stay on screen until they are cleared rather than fading after a
+     few seconds, because reading at your own pace is the entire point of
+     having them. */
+  const [talkAs, setTalkAs] = useState('captions');     // captions | voice
+  const [talking, setTalking] = useState(false);        // the microphone is open
+  const [capsOpen, setCapsOpen] = useState(true);
+  const [lines, setLines] = useState([]);
+  const seenCaps = useRef({});
+  const trackKey = (camOn ? 'v' : '') + (talking && talkAs === 'voice' ? 'a' : '');
+
   // my own presence row, refreshed so stale seats drop out
   useEffect(() => {
     if(!room) return;
     const doc = db().collection('rooms').doc(room).collection('peers').doc(user.id);
     const write = () => doc.set({
       name: (roomName || '').trim() || 'Someone',
-      camOn, focusing: running, min: store.lock.minutes, at: Date.now()
+      camOn, focusing: running, min: store.lock.minutes, at: Date.now(),
+      talkAs, talking
     }, {merge:true}).catch(() => {});
     write();
     const hb = setInterval(write, 20000);
     return () => clearInterval(hb);
-  }, [room, user.id, roomName, camOn, running, store.lock.minutes]);
+  }, [room, user.id, roomName, camOn, running, store.lock.minutes, talkAs, talking]);
 
   const {remote: remoteStreams, status: peerStatus} = useVideoMesh({
-    room, myId:user.id, camOn, camPeers, streamRef:camStream, streamTick:camTick
+    room, myId:user.id, camOn, camPeers, streamRef:camStream, streamTick:camTick,
+    trackKey
   });
+
+  /* A finished phrase goes on your own presence row, which everyone in the room
+     is already listening to. No new collection, and so nothing to change in the
+     rules: a caption is a line on the row that says who is speaking. */
+  const sendCaption = useCallback(text => {
+    if(!room || !text) return;
+    db().collection('rooms').doc(room).collection('peers').doc(user.id)
+      .set({caption:{text: String(text).slice(0, 300), at: Date.now()}}, {merge:true})
+      .catch(() => {});
+  }, [room, user.id]);
+
+  // everyone else's captions, kept as a log rather than a flash
+  useEffect(() => {
+    if(!room) return;
+    members.forEach(m => {
+      const c = m.caption;
+      if(!c || !c.text) return;
+      const stamp = m.id + ':' + c.at;
+      if(seenCaps.current[stamp]) return;
+      seenCaps.current[stamp] = true;
+      if(Date.now() - c.at > 120000) return;           // old news on joining
+      setLines(l => [...l.slice(-60), {key:stamp, who:m.name || 'Someone',
+        mine:m.id === user.id, text:c.text, at:c.at}]);
+    });
+  }, [members, room, user.id]);
+
+  // my own microphone, pointed at whichever destination is chosen
+  useSpeechOut({
+    on: talking && talkAs === 'captions' && !!room,
+    onPhrase: sendCaption,
+    onFail: () => { setTalking(false); toast('This device cannot turn speech into text'); },
+  });
+
+  // leaving the room closes the microphone with it
+  useEffect(() => { if(!room){ setTalking(false); setLines([]); } }, [room]);
 
   // Reactions piggyback on your presence row: everyone is already listening to
   // it, so a new timestamp is all it takes to make an emoji pop up for the room.
@@ -10796,11 +12245,12 @@ function App({user, onSignOut}){
       return;
     }
     let dead = false;
-    navigator.mediaDevices.getUserMedia({video:{width:480, height:480, facingMode:'user'}, audio:false})
+    navigator.mediaDevices.getUserMedia({video:{width:480, height:480, facingMode:'user'},
+      audio: talking && talkAs === 'voice'})
       .then(st => { if(dead){ st.getTracks().forEach(t => t.stop()); return; } camStream.current = st; setCamTick(t => t+1); })
       .catch(() => { setCamOn(false); toast('Could not open the camera'); });
     return () => { dead = true; };
-  }, [camOn, toast]);
+  }, [camOn, talking, talkAs, toast]);
   // A drag interrupted by switching tabs never sees its pointerup, which would
   // leave the page scroll-locked. Clear that whenever we come back.
   useEffect(() => {
@@ -11023,8 +12473,48 @@ function App({user, onSignOut}){
           body: `Starts at ${pretty(t.start)}`, schedule:{at}});
       });
     }
+    /* And the other kind: a quarter of an hour past the end of something that
+       is still not ticked off. Booked for every timed block, not only the ones
+       set to remind, because this one is not a reminder to start something, it
+       is a question about something that is already late. Tapping it opens the
+       schedule, where the same question is waiting. */
+    for(let i = 0; i < NOTIF_DAYS; i++){
+      const day = addDays(new Date(), i);
+      const dk = iso(day);
+      store.tasks.forEach(t => {
+        if(t.scope !== 'daily' || !t.start || !t.end) return;
+        if(!occursOn(t, dk) || isDone(t, dk)) return;
+        const at = new Date(day);
+        at.setHours(0, toMin(t.end) + OVERRUN_AFTER, 0, 0);
+        if(at.getTime() <= now + 60000) return;
+        out.push({id: notifId('over:' + t.id + dk), title: 'Still not finished?',
+          body: t.title + ' was down to end at ' + pretty(t.end) + '.',
+          extra: {kind:'overrun', taskId:t.id, date:dk},
+          schedule:{at}});
+      });
+    }
     return out.sort((x,y) => x.schedule.at - y.schedule.at).slice(0, NOTIF_CAP);
   }, [store.tasks, settings.notify]);
+
+  /* Tapping that notification should land on the question, not just on the
+     app. Only the native build can do this; a browser notification has no
+     payload to read. */
+  useEffect(() => {
+    const n = Notifs();
+    if(!n || !n.addListener) return;
+    let handle = null;
+    try{
+      const got = n.addListener('localNotificationActionPerformed', ev => {
+        const extra = ev && ev.notification && ev.notification.extra;
+        if(!extra || extra.kind !== 'overrun') return;
+        setTab('organize');
+        setSub(p2 => ({...p2, organize:'daily'}));
+        if(extra.date) setDate(parseISO(extra.date));
+      });
+      Promise.resolve(got).then(h => { handle = h; }).catch(() => {});
+    }catch(e){}
+    return () => { try{ if(handle && handle.remove) handle.remove(); }catch(e){} };
+  }, []);
 
   useEffect(() => {
     const n = Notifs();
@@ -11167,15 +12657,30 @@ function App({user, onSignOut}){
         </div>
       </nav>
 
+      {/* On a phone the rail is shut, so a badge inside it is a badge nobody
+          sees. The count rides on the button that opens it instead. */}
       <button className="menubtn" onClick={() => setRailOpen(v => !v)} aria-label="Menu">
         <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
           <path d={railOpen ? "M5 5l10 10M15 5L5 15" : "M3 6h14M3 10h14M3 14h14"}
             stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
         </svg>
+        {unreadNews > 0 && !railOpen && <i className="tabcount menucount">{unreadNews}</i>}
       </button>
       {railOpen && <div className="railscrim" onClick={() => setRailOpen(false)} />}
 
       <main className={'pane' + (isParent && tab !== 'watch' && tab !== 'settings' ? ' readonly' : '')}>
+        {/* Something new, said once where it cannot be missed, rather than a
+            small number in a corner of a menu that is usually closed. */}
+        {newsStrip && (
+          <button className="newsstrip" onClick={() => setNewsOpen(true)}>
+            <span className="newsdot" aria-hidden="true" />
+            <span className="newsstrip-txt">
+              <b>{newsStrip.title}</b>
+              <span>Tap to read it</span>
+            </span>
+            <IconArrow />
+          </button>
+        )}
         <div className="pane-head">
           <div className="title-wrap">
             <div>
@@ -11245,13 +12750,15 @@ function App({user, onSignOut}){
               carryOver={(store.settings || DEFAULT_SETTINGS).carryOver !== false && !!(store.settings || DEFAULT_SETTINGS).carryOver}
               setCarryOver={v => setSettings({...(store.settings || DEFAULT_SETTINGS), carryOver:v})}
               settings={settings} setSettings={isParent ? null : setSettings}
+              onFocus={isParent ? null : focusFor}
               toast={toast}
               day={view.day || user.day || DEFAULT_DAY}
               setTab={t => { setTab(t); setSub(p => ({...p, organize:'daily'})); }} />}
 
           {tab === 'brag' &&
             <BragIt sub={sub.brag} ecs={view.ecs} add={addEc} update={updateEc} remove={removeEc}
-              toast={toast} stage={user.stage} settings={settings} setSettings={setSettings} user={user} />}
+              toast={toast} stage={user.stage} settings={settings} setSettings={setSettings} user={user}
+              setTab={(t, s2) => { setTab(t); if(s2) setSub(p => ({...p, [t]: s2})); }} />}
 
           {tab === 'admin' && <AdminNumbers sub={sub.admin} user={user} isAdmin={isAdmin} />}
 
@@ -11285,7 +12792,10 @@ function App({user, onSignOut}){
               camOn={camOn} setCamOn={toggleCam} camFull={camFull}
               camCount={othersOn + (camOn ? 1 : 0)} remoteStreams={remoteStreams} camTick={camTick}
               room={room} setRoom={setRoom} members={members} myId={user.id}
-              name={roomName} setName={setRoomName} />}
+              name={roomName} setName={setRoomName}
+              talkAs={talkAs} setTalkAs={setTalkAs} talking={talking} setTalking={setTalking}
+              lines={lines} clearLines={() => setLines([])}
+              capsOpen={capsOpen} setCapsOpen={setCapsOpen} />}
         </div>
       </main>
 
@@ -11302,6 +12812,7 @@ function App({user, onSignOut}){
             ? 'Stretch, get water, look out a window. Work starts again on its own.'
             : 'PlanIt is closed until the timer ends. Put the phone face down.'}</div>
           {room && (
+            <>
             <div className="seats">
               <Seat me name={roomName || 'You'} focusing
                 stream={camOn ? camStream.current : null} tick={camTick}
@@ -11317,6 +12828,10 @@ function App({user, onSignOut}){
                 <div key={'e'+i} className="seat empty"><span>open</span></div>
               ))}
             </div>
+
+            <CaptionLog lines={lines} onClear={() => setLines([])}
+              open={capsOpen} setOpen={setCapsOpen} />
+            </>
           )}
 
           {room && (
@@ -11439,7 +12954,8 @@ function App({user, onSignOut}){
         requests={pendingList} onDecide={decideLink} report={report} reportDue={isSaturday}
         referralReady={referralReady} refCount={refCount} isAdmin={isAdmin}
         onOpenReferral={() => { setNewsOpen(false); setTab('settings'); setSub(p => ({...p, settings:'account'})); }}
-        onOpenReports={() => { setNewsOpen(false); setTab('lock'); setSub(p => ({...p, lock:'reports'})); }} />}
+        onOpenReports={() => { setNewsOpen(false); setTab('lock'); setSub(p => ({...p, lock:'reports'})); }}
+        onGo={(t, s2) => { setTab(t); if(s2) setSub(p => ({...p, [t]: s2})); }} />}
 
       {toastMsg && <div className="toast">{toastMsg}</div>}
     </div>
@@ -12116,7 +13632,7 @@ function BragDemo(){
   /* Five balls, filled up to whatever you press. Pressing the one already at
      the top lets the count back down, which is the only way to reach nothing. */
   const setPrio = (id, n) => setRows(rs => rs.map(r =>
-    r.id === id ? {...r, priority: r.priority === n ? n - 1 : n} : r));
+    r.id === id ? {...r, priority: Math.max(0, Math.min(5, n))} : r));
 
   const addHour = () => {
     if(!cur) return;
@@ -12153,13 +13669,9 @@ function BragDemo(){
               return (
                 <li key={e.id} className={'lecd-row' + (isOpen ? ' open' : '')}>
                   <div className="lecd-top">
-                    <span className="lecd-prio" role="group"
-                      aria-label={'How important ' + e.title + ' is'}>
-                      {[1,2,3,4,5].map(n => (
-                        <button key={n} className={'lecd-ball' + (n <= e.priority ? ' on' : '')}
-                          onClick={() => setPrio(e.id, n)}
-                          aria-label={n + ' of 5'} aria-pressed={n <= e.priority} />
-                      ))}
+                    <span className="lecd-prio">
+                      <PrioBalls value={e.priority} label={'How important ' + e.title + ' is'}
+                        onChange={v => setPrio(e.id, v)} />
                     </span>
                     <button className="lecd-main"
                       onClick={() => { setOpen(isOpen ? null : e.id); if(!isOpen) setTab('plan'); }}
@@ -12461,9 +13973,7 @@ function BragPanel(){
                 <div className="org">{r.org}</div>
               </div>
               <div className="ec-actions">
-                <span className="prio">
-                  {[1,2,3,4,5].map(n => <i key={n} className={n <= r.prio ? 'on' : ''} />)}
-                </span>
+                <PrioBalls value={r.prio} />
               </div>
             </div>
             <div className="row" style={{gap:7, marginTop:10, flexWrap:'wrap'}}>
