@@ -348,10 +348,23 @@
   /* and on a narrow screen two fields side by side leave neither enough room */
   @media (max-width:460px){ .grid2{grid-template-columns:minmax(0,1fr)} }
   /* icons only, one row, the labels made this section scroll */
+  /* tick a block off without leaving the schedule */
+  .block .blockcheck{position:absolute;top:5px;right:5px;z-index:3;width:19px;height:19px;
+    padding:0;border:1.5px solid var(--line);border-radius:5px;background:var(--card);
+    display:grid;place-items:center;cursor:pointer;line-height:1;font-size:12px;
+    color:var(--accent);opacity:.85;touch-action:manipulation}
+  .block .blockcheck:hover{border-color:var(--accent);opacity:1}
+  .block.done .blockcheck{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);opacity:1}
+  .block .bt{padding-right:24px}
+  @media (hover:none){ .block .blockcheck{width:24px;height:24px;font-size:14px} .block .bt{padding-right:30px} }
+
   .erow{display:flex;align-items:center;gap:4px;background:var(--soft);border:1px solid var(--line);
     border-radius:99px;padding:4px;width:100%}
-  .echip{flex:1 1 0;min-width:0;display:grid;place-items:center;height:40px;border:0;
-    background:transparent;border-radius:99px;padding:0;transition:.16s}
+  .echip{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:3px;min-height:58px;border:0;
+    background:transparent;border-radius:99px;padding:6px 2px;transition:.16s}
+  .echip small{font-size:10px;color:var(--ink35);line-height:1;white-space:nowrap}
+  .echip.on small{color:var(--ink)}
   .echip svg,.echip span{pointer-events:none}
   .echip:hover{background:rgba(0,0,0,.05)}
   .echip.on{background:var(--accent)}
@@ -756,6 +769,10 @@
   .tutskip{display:block;margin:14px auto 0;border:0;background:transparent;color:var(--ink35);font-size:12.5px}
   .tutskip:hover{color:var(--ink60);text-decoration:underline}
   .streak{color:var(--brag) !important;font-weight:600}
+  /* An inline SVG sits on the text baseline, which left the flame riding high
+     and the number sitting low against it. Centred against each other now. */
+  .rail-account .who small.streak{display:flex;align-items:center;gap:5px;line-height:1}
+  .streak > span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .streakbig{font-size:32px;line-height:1}
   .streakwrap{position:fixed;inset:0;z-index:8500;background:rgba(12,10,20,.72);display:grid;
     place-items:center;padding:20px;animation:fade .25s ease}
@@ -2455,8 +2472,8 @@ function LotusIcon({size = 15}){
 }
 
 // One flame, growing with the level rather than repeating.
-function FireIcon({level = 1}){
-  const size = [0, 12, 15, 19][Math.max(1, Math.min(3, level))];
+function FireIcon({level = 1, size: given}){
+  const size = given || [0, 12, 15, 19][Math.max(1, Math.min(3, level))];
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{flex:'none'}}>
       <path d="M12 1.5c1.1 3.7 4.8 5.8 4.8 10.6a4.8 4.8 0 0 1-9.6 0c0-2.1 1-3.7 2.1-4.8 0 2.1 1.1 3.2 2.1 3.7C11 8.2 11.5 4.7 12 1.5z" fill="#E23B28"/>
@@ -2486,7 +2503,14 @@ function FreezeIcon({size = 15}){
   );
 }
 
-const EnergyIcon = ({v}) => v < 0 ? <LotusIcon /> : v > 0 ? <FireIcon level={v} /> : <span style={{opacity:.5}}>–</span>;
+/* Picking how much something will take is a five-way choice made with pictures
+   and no words, so the pictures have to be big enough to tell apart. They were
+   drawn at the size of a letter inside a button twice that tall. Given a size
+   they use it; left alone they stay small, which is right where one sits inline
+   in a line of text. */
+const EnergyIcon = ({v, size}) => v < 0 ? <LotusIcon size={size} />
+  : v > 0 ? <FireIcon level={v} size={size && Math.round(size * (0.76 + v * 0.08))} />
+  : <span style={{opacity:.5, fontSize:size ? Math.round(size * 0.9) : undefined}}>–</span>;
 
 // Cost is the level once per half hour: low is 1 for 30 minutes and 2 for an
 // hour, medium 2 and 4, high 3 and 6. Unscheduled tasks count as half an hour.
@@ -3471,6 +3495,21 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
       <div className="spread dayhead">
         <DateNav label={fmtDay(date)} onPrev={() => setDate(addDays(date,-1))} onNext={() => setDate(addDays(date,1))} onToday={() => setDate(new Date())} />
         <div className="row" style={{gap:8}}>
+          <SpeakBtn label="Read the day out loud"
+            text={spokenList(fmtDay(date), [...scheduled, ...tray], t => isDone(t, dk))} />
+          {add && <MicBtn label="Say what you are doing, and when"
+            onText={said => {
+              const got = parseWhen(said);
+              if(got.start){
+                const st = toMin(got.start);
+                add({title:got.title, scope:'daily', date:dk,
+                  start:wire(st), end:wire(st + 60), done:false});
+                toast(got.title + ' at ' + pretty(wire(st)));
+              } else {
+                add({title:got.title, scope:'daily', date:dk, start:null, end:null, done:false});
+                toast(got.title + ' added, with no time on it');
+              }
+            }} />}
           <button data-tour="energy" className="energybtn" disabled={!onEditBase}
             onClick={() => onEditBase && onEditBase()}
             title={onEditBase ? 'Change your baseline' : 'Viewing only'}>
@@ -3536,6 +3575,18 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
                               } : {})}}
                       onPointerDown={e => onDown(e, t, 'move')}
                       onDoubleClick={() => setEditing(t)}>
+                      {/* Finishing something while looking at the schedule had
+                          meant going to List It to tick it. The box stops the
+                          press from starting a drag, since a tap on it is the
+                          one press here that does not mean "move me". */}
+                      {update && (
+                        <button className="blockcheck" aria-label={'Finished ' + t.title}
+                          aria-pressed={isDone(t, dk)}
+                          onPointerDown={e => e.stopPropagation()}
+                          onClick={e => { e.stopPropagation(); update(t.id, toggleDone(t, dk)); buzz('medium'); }}>
+                          <span>{isDone(t, dk) ? '✓' : ''}</span>
+                        </button>
+                      )}
                       <div className="bt">{t.title}</div>
                       <div className="bm mono">
                         {pretty(t.start)} – {pretty(t.end)}
@@ -3790,7 +3841,10 @@ function BlockEditor({block, day, onClose, onSave, onDelete, occ, add, update, r
         <div className="erow">
           {ENERGY.map(([v,l]) => (
             <button key={v} className={'echip' + ((f.energy || 0) === v ? ' on' : '')}
-              onClick={() => set('energy', v)} title={l} aria-label={l}><EnergyIcon v={v} /></button>
+              onClick={() => set('energy', v)} title={l} aria-label={l}>
+              <EnergyIcon v={v} size={30} />
+              <small>{l}</small>
+            </button>
           ))}
         </div>
       </div>
@@ -3983,7 +4037,31 @@ function Weekly({date, setDate, tasks, events, addEvent, updateEvent, removeEven
     <div>
       <div className="spread dayhead">
         <DateNav label={fmtWeek(date)} onPrev={() => setDate(addDays(date,-7))} onNext={() => setDate(addDays(date,7))} onToday={() => setDate(new Date())} />
-        <button className="btn primary" onClick={() => setNewEv({title:'', date:iso(date), type:'deadline', note:''})}>+ Add to the week</button>
+        <div className="row" style={{gap:8}}>
+          <SpeakBtn label="Read the week out loud" text={days.map(d => {
+            const k = iso(d);
+            const on = tasks.filter(t => t.scope === 'daily' && occursOn(t, k));
+            return on.length
+              ? spokenList(DOW[d.getDay()] + ' the ' + d.getDate(), on, t => isDone(t, k))
+              : '';
+          }).filter(Boolean).join(' ')} />
+          {add && <MicBtn label="Say what you are doing, and when"
+            onText={said => {
+              const got = parseWhen(said);
+              const k = iso(date);
+              if(got.start){
+                const st = toMin(got.start);
+                add({title:got.title, scope:'daily', date:k, onWeek:true,
+                  start:toTime(st), end:toTime((st + 60) % 1440), done:false});
+                toast(got.title + ' at ' + pretty(toTime(st)));
+              } else {
+                add({title:got.title, scope:'daily', date:k, onWeek:true,
+                  start:null, end:null, done:false});
+                toast(got.title + ' added, with no time on it');
+              }
+            }} />}
+          <button className="btn primary" onClick={() => setNewEv({title:'', date:iso(date), type:'deadline', note:''})}>+ Add to the week</button>
+        </div>
       </div>
 
       <div className="week" data-tour="week">
@@ -4955,9 +5033,13 @@ function EventEditor({ev, onClose, onSave, onDelete, cals = []}){
         {onDelete && <button className="btn danger" onClick={onDelete}>Delete</button>}
         <button className="btn primary" onClick={save}>Save date</button>
       </>}>
-      <Field label="What is it?"><input autoFocus value={f.title}
-        onChange={e => { set('title', e.target.value); setErr(''); }}
-        onKeyDown={e => e.key === 'Enter' && save()} placeholder="Enter what it is here" /></Field>
+      <label className="field">
+        <span>What is it?</span>
+        <Suggesting kind="step" value={f.title} autoFocus
+          onChange={v => { set('title', v); setErr(''); }}
+          placeholder="Enter what it is here"
+          onKeyDown={e => e.key === 'Enter' && save()} />
+      </label>
       {err && <div className="formerr">{err}</div>}
       <div className="grid2">
         <Field label="Date"><input type="date" value={f.date} onChange={e => set('date', e.target.value)} /></Field>
@@ -5132,11 +5214,8 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, ca
       <div className="spread" style={{marginBottom:16}}>
         <DateNav label={label} onPrev={() => setDate(step(-1))} onNext={() => setDate(step(1))} onToday={() => setDate(new Date())} />
         <div className="row" style={{gap:10, alignItems:'flex-end'}}>
-          <SpeakBtn label="Read the list out loud" text={items.length
-            ? label + '. ' + items.length + (items.length === 1 ? ' thing. ' : ' things. ')
-              + items.map((t, i) => (i + 1) + '. ' + t.title
-                  + ((sub === 'daily' ? isDone(t, anchor) : t.done) ? ', done' : '')).join('. ')
-            : ''} />
+          <SpeakBtn label="Read the list out loud"
+            text={spokenList(label, items, t => sub === 'daily' ? isDone(t, anchor) : t.done)} />
           <div style={{minWidth:150,flex:'0 1 220px'}}>
             <div className="row" style={{justifyContent:'space-between',fontSize:12,color:'var(--ink60)',marginBottom:5}}>
               <span>{doneCount} of {items.length} done</span><span className="mono">{pct}%</span>
@@ -5255,12 +5334,6 @@ function ListIt({sub, date, setDate, tasks, add, update, remove, setTab, day, ca
         onSave={b => { update(b.id, b); setEditing(null); }}
         onDelete={id => { remove(id); setEditing(null); }} />}
 
-      {sub === 'daily' && (
-        <div className="card soft" style={{marginTop:16,color:'var(--ink60)',fontSize:13}}>
-          Anything here shows up in <b style={{color:'var(--ink)'}}>Organize It → Daily</b>. Double-click an item
-          to set a time, a colour, or make it repeat.
-        </div>
-      )}
 
     </div>
   );
@@ -6031,6 +6104,16 @@ if(typeof window !== 'undefined'){
   window.addEventListener('beforeunload', stopSpeaking);
 }
 
+/* How a list sounds. The day, then each thing by name and whether it is done.
+   No counting and no numbering: hearing "eleven things" before the first one
+   is a reason to stop listening, and the position in a list is not what
+   anybody needed to know. */
+function spokenList(when, rows, done){
+  if(!rows || !rows.length) return '';
+  const parts = rows.map(t => (t.title || 'Untitled') + ', ' + (done(t) ? 'finished' : 'unfinished'));
+  return (when ? when + '. ' : '') + parts.join('. ') + '.';
+}
+
 function SpeakBtn({text, label = 'Read out loud'}){
   const [on, setOn] = useState(false);
   const words = String(text || '').trim();
@@ -6107,6 +6190,49 @@ function useSpeechOut({on, onPhrase, onFail}){
     }
     return () => { dead = true; try{ r.onend = null; r.stop(); }catch(e){} };
   }, [on]);
+}
+
+/* ---- "AP precalc homework at 4pm" ----
+
+   Said out loud, a scheduled thing comes with its time attached, so the time is
+   taken off the end and turned into a start. Only a time at the end counts: "Ask
+   about the 4pm bus" keeps its whole title, because the time there is part of
+   what the task is rather than when it is.
+
+   Nothing is guessed. If there is no time on the end, the title is the whole
+   sentence and it goes on the list with no time, which is exactly what List It
+   is for. */
+const SPOKEN_TIME = /\s+(?:at|@|around|about)?\s*(\d{1,2})(?::|\.|\s)?(\d{2})?\s*(a\.?m\.?|p\.?m\.?|o'?clock)?\s*$/i;
+
+function parseWhen(said){
+  const text = String(said || '').trim().replace(/[.!?]+$/, '');
+  const m = SPOKEN_TIME.exec(text);
+  if(!m) return {title: text, start: null};
+
+  let hour = +m[1];
+  const mins = m[2] ? +m[2] : 0;
+  const mark = (m[3] || '').toLowerCase().replace(/[.']/g, '');
+  if(hour > 23 || mins > 59) return {title: text, start: null};
+
+  // A bare number is only a time when it was introduced as one, or when it
+  // cannot be anything else. "Read 20" is a page, not eight in the evening.
+  const said_at = /\s(?:at|@|around|about)\s*\d/i.test(text);
+  if(!mark && !said_at) return {title: text, start: null};
+
+  if(mark === 'pm' && hour < 12) hour += 12;
+  if(mark === 'am' && hour === 12) hour = 0;
+  /* No am or pm, including "seven o'clock": read it the way a school day runs,
+     so four is the afternoon and nobody is scheduled at four in the morning by
+     accident. Eight to twelve are left alone, since those are said about the
+     morning as often as the evening. */
+  if((!mark || mark === 'oclock') && hour >= 1 && hour <= 7) hour += 12;
+
+  const title = text.slice(0, m.index).trim()
+    .replace(/[,;]+$/, '')
+    .replace(/\s*\b(at|around|about)$/i, '').trim();
+  // "at 4pm" on its own names a time and nothing to do at it
+  if(title.length < 2) return {title: text, start: null};
+  return {title, start: pad(hour) + ':' + pad(mins)};
 }
 
 function MicBtn({onText, label = 'Dictate'}){
@@ -7195,6 +7321,10 @@ function BragIt({sub, ecs, add, update, remove, toast, stage, settings, setSetti
       <div className="spread dayhead" data-tour="brag">
         <div className="eyebrow">Your bragsheet</div>
         <div className="row">
+          <SpeakBtn label="Read the sheet out loud"
+            text={spokenList('', [...ecs].sort((a, b) =>
+              (b.priority || 0) - (a.priority || 0) || a.title.localeCompare(b.title)),
+              e => !!e.finished)} />
           <button className="btn" onClick={() => setExporting(true)} disabled={ecs.length === 0}>Export résumé</button>
           <button className="btn primary" onClick={() => setEditing({...blank, category:'experience'})}>
             + Add an activity
@@ -7217,6 +7347,8 @@ function BragIt({sub, ecs, add, update, remove, toast, stage, settings, setSetti
           ))}
         </div>
         <div className="row">
+          <SpeakBtn label="Read these out loud"
+            text={spokenList('', list, e => !!e.finished)} />
           <select className="btn sortpick" value={sort} onChange={e => setSort(e.target.value)}>
             <option value="priority">Most important first</option>
             <option value="recent">Most recent first</option>
@@ -7919,7 +8051,7 @@ const GMark = () => (
 // fails to load, the drawn mark below is used instead so nothing looks broken.
 // Bumped every time a file is handed over, so a build can be identified
 // without printing a version number next to the wordmark.
-const BUILD = 'b7869';
+const BUILD = 'b7891';
 const LOGO_SRC = 'logo.png?v=4';
 // The homepage photograph, graded to the palette. Two files rather than one
 // CSS filter, because a filter that works on cream washes out on charcoal.
@@ -10042,7 +10174,9 @@ function BlockedApps({settings, setSettings, toast}){
     }catch(e){ toast("Couldn't open the picker"); }
   };
 
-  if(probe === 'checking') return <Empty title="Checking…" hint="Seeing whether this build can block apps." />;
+  // It takes a moment to find out what this build can do. That is PlanIt's
+  // business rather than the reader's, so nothing is said while it looks.
+  if(probe === 'checking') return null;
 
   if(probe === 'web') return (
     <Section title="Blocking other apps">
@@ -11946,7 +12080,12 @@ function App({user, onSignOut}){
   // A pomodoro phase. Break time deliberately isn't credited as focus minutes.
   // Browsers only grant full screen from inside a click, which is why this
   // lives on the start path rather than in an effect.
+  /* Not in the app. There is no browser chrome to hide there, the focus screen
+     already covers everything, and iOS announces the page's own address when
+     anything goes full screen: a bar reading "capacitor://localhost" across the
+     top of a study session, and a grey strip left behind on the way out. */
   const goFullscreen = () => {
+    if(isNativeApp()) return;
     const el = document.documentElement;
     const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
     if(req) { try{ req.call(el); }catch(e){} }
@@ -12014,11 +12153,16 @@ function App({user, onSignOut}){
     if(secs >= 60) toast(`Logged ${Math.floor(secs/60)} min`);
   }, [creditElapsed, toast]);
 
+  /* Both the length and the kind of timer have to have landed before it
+     starts. Waiting only for the minutes meant it could fire while the mode was
+     still pomodoro, which ignores the minutes entirely and runs a full work
+     block: ask for five and get twenty-five. */
   useEffect(() => {
-    if(pendingStart === null || minutes !== pendingStart) return;
+    if(pendingStart === null) return;
+    if(minutes !== pendingStart || mode !== 'timer') return;
     setPendingStart(null);
     startTimer();
-  }, [pendingStart, minutes, startTimer]);
+  }, [pendingStart, minutes, mode, startTimer]);
 
   /* Nothing behind the focus screen should move while it is up, and the page
      behind it should not be white if a finger drags past the edge. */
@@ -12645,7 +12789,8 @@ function App({user, onSignOut}){
             <div className="who">
               <b>{user.username}</b>
               <small className="streak" title={`${streak} days in a row`}>
-                <FireIcon level={2} /> {streak} day{streak === 1 ? '' : 's'}
+                <FireIcon level={2} />
+                <span>{streak} day{streak === 1 ? '' : 's'}</span>
               </small>
             </div>
             <button className="iconbtn" onClick={onSignOut} title="Sign out" aria-label="Sign out"><IconOut /></button>
