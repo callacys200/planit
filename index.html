@@ -1273,6 +1273,10 @@
   @media (prefers-reduced-motion: reduce){ .voicebtn.mic.on{animation:none} }
   @media (hover:none){ .voicebtn{width:30px;height:30px} }
   .addvoice{position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:2}
+  /* why dictation stopped, said where the button is rather than nowhere */
+  .micbad{position:absolute;right:0;top:calc(100% + 6px);z-index:6;max-width:240px;
+    padding:7px 10px;border-radius:7px;background:var(--rule);color:#fff;
+    font-size:11.5px;line-height:1.45;box-shadow:0 6px 18px rgba(0,0,0,.18)}
   .voicerow{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
   .voicenote{font-size:11.5px;color:var(--ink35);line-height:1.5}
 
@@ -3095,15 +3099,22 @@ function runningTask(tasks, dayKey, now = minsNow()){
 /* Lengthen one block, and push every later block on the same day down by the
    same amount. Returns the patches to apply, so the caller can write them
    through whatever update function it already has. */
-function extendPatches(tasks, dayKey, id, by){
+function extendPatches(tasks, dayKey, id, by, wake = '00:00'){
   const target = (tasks || []).find(t => t.id === id);
   if(!target || !target.end) return [];
-  const cut = toMin(target.end);
+  /* Positions are read on the day's own timeline rather than the clock's. A
+     block already pushed past midnight starts at something like 00:10, which
+     as a plain clock time looks like the earliest thing of the day and would
+     be left behind as "already started" by every later extension. Measured
+     from the hour you wake, it is correctly the last thing of the day. */
+  const wakeM = toMin(wake || '00:00');
+  const onDay = m => (m < wakeM ? m + 1440 : m);
+  const cut = onDay(toMin(target.end));
   const shift = m => toTime((((toMin(m) + by) % 1440) + 1440) % 1440);
   const out = [{id, patch:{end: shift(target.end)}}];
   timedToday(tasks, dayKey).forEach(t => {
     if(t.id === id) return;
-    if(toMin(t.start) < cut) return;                 // already started, leave it
+    if(onDay(toMin(t.start)) < cut) return;          // already started, leave it
     out.push({id:t.id, patch:{start: shift(t.start), end: shift(t.end)}});
   });
   return out;
@@ -3249,7 +3260,7 @@ function Daily({date, setDate, tasks, update, remove, add, toast, day, setDay, e
      grid, which is the same as losing it. */
   const extendBy = (id, by) => {
     const mins = Math.max(5, Math.min(240, Math.round(by)));
-    const patches = extendPatches(tasks, dk, id, mins);
+    const patches = extendPatches(tasks, dk, id, mins, day.wake);
     if(!patches.length) return;
     patches.forEach(p2 => update(p2.id, p2.patch));
     const after = tasks.map(t => {
@@ -6157,37 +6168,64 @@ function SpeakBtn({text, label = 'Read out loud'}){
    Recognition gives up on its own after a silence, which would end a study
    session's captions the first time nobody spoke for a few seconds, so it is
    started again whenever it stops by itself. */
-function useSpeechOut({on, onPhrase, onFail}){
+const SPEECH_TROUBLE = {
+  'not-allowed': 'The microphone is blocked. Allow it for this site and try again.',
+  'service-not-allowed': 'The microphone is blocked. Allow it for this site and try again.',
+  'audio-capture': 'No microphone was found on this device.',
+  'network': 'The speech service could not be reached. Check your connection.',
+};
+
+function useSpeechOut({on, onPhrase, onFail, onTrouble}){
   const hand = useRef(onPhrase);
   useEffect(() => { hand.current = onPhrase; }, [onPhrase]);
   const fail = useRef(onFail);
   useEffect(() => { fail.current = onFail; }, [onFail]);
+  const bad = useRef(onTrouble);
+  useEffect(() => { bad.current = onTrouble; }, [onTrouble]);
 
   useEffect(() => {
     if(!on) return;
     const R = Recog();
     if(!R){ if(fail.current) fail.current(); return; }
     let dead = false;
+    let stopped = 0;              // how many times it has given up on its own
     let r;
-    try{
-      r = new R();
-      r.lang = (typeof navigator !== 'undefined' && navigator.language) || 'en-US';
-      r.continuous = true;
-      r.interimResults = false;
-      r.onresult = e => {
+
+    const build = () => {
+      const x = new R();
+      x.lang = (typeof navigator !== 'undefined' && navigator.language) || 'en-US';
+      x.continuous = true;
+      x.interimResults = false;
+      x.onresult = e => {
+        stopped = 0;
         let said = '';
         for(let i = e.resultIndex; i < e.results.length; i++){
           if(e.results[i].isFinal) said += e.results[i][0].transcript;
         }
         if(said.trim() && hand.current) hand.current(said.trim());
       };
-      r.onend = () => { if(!dead){ try{ r.start(); }catch(err){} } };
-      r.onerror = () => {};
-      r.start();
-    }catch(e){
-      if(fail.current) fail.current();
-      return;
-    }
+      /* Recognition gives up after a few seconds of quiet, which is the whole
+         reason dictation seemed not to work: press the button, think for a
+         moment, and it had already switched itself off. While it is still
+         wanted it is started again, with a ceiling so a microphone that cannot
+         start at all is not retried forever. */
+      x.onend = () => {
+        if(dead) return;
+        if(++stopped > 40){ if(fail.current) fail.current(); return; }
+        try{ r = build(); r.start(); }catch(err){}
+      };
+      x.onerror = e => {
+        const kind = e && e.error;
+        if(kind === 'no-speech' || kind === 'aborted') return;   // onend restarts it
+        dead = true;
+        if(bad.current) bad.current(SPEECH_TROUBLE[kind] || 'Dictation stopped unexpectedly.');
+        if(fail.current) fail.current();
+      };
+      return x;
+    };
+
+    try{ r = build(); r.start(); }
+    catch(e){ if(fail.current) fail.current(); return; }
     return () => { dead = true; try{ r.onend = null; r.stop(); }catch(e){} };
   }, [on]);
 }
@@ -6237,50 +6275,28 @@ function parseWhen(said){
 
 function MicBtn({onText, label = 'Dictate'}){
   const [on, setOn] = useState(false);
-  const rec = useRef(null);
-  /* The browser is started once and then hands back phrase after phrase, so
-     what it calls has to be the newest handler rather than the one that
-     existed when it started. Without this, every phrase after the first was
-     written against the state as it was before the first, and overwrote it. */
-  const hand = useRef(onText);
-  useEffect(() => { hand.current = onText; }, [onText]);
-  useEffect(() => () => { try{ if(rec.current) rec.current.abort(); }catch(e){} }, []);
+  const [trouble, setTrouble] = useState('');
+  useSpeechOut({
+    on,
+    onPhrase: said => onText(said),
+    onFail: () => setOn(false),
+    onTrouble: msg => setTrouble(msg),
+  });
   if(!hears()) return null;
-
-  const stop = () => { try{ if(rec.current) rec.current.stop(); }catch(e){} setOn(false); };
-
-  const go = () => {
-    if(on) return stop();
-    const R = Recog();
-    try{
-      const r = new R();
-      r.lang = (navigator.language || 'en-US');
-      r.continuous = true;
-      r.interimResults = false;
-      r.onresult = e => {
-        let said = '';
-        for(let i = e.resultIndex; i < e.results.length; i++){
-          if(e.results[i].isFinal) said += e.results[i][0].transcript;
-        }
-        if(said.trim()) hand.current(said.trim());
-      };
-      r.onerror = () => { setOn(false); rec.current = null; };
-      r.onend = () => { setOn(false); rec.current = null; };
-      rec.current = r;
-      r.start();
-      setOn(true);
-      buzz('light');
-    }catch(e){ setOn(false); }
-  };
   return (
-    <button type="button" className={'voicebtn mic' + (on ? ' on' : '')} onClick={go}
-      aria-label={on ? 'Stop dictating' : label} title={on ? 'Stop dictating' : label}>
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <rect x="5.6" y="1.6" width="4.8" height="8" rx="2.4" fill="currentColor" />
-        <path d="M3.4 7.6a4.6 4.6 0 0 0 9.2 0M8 12.2v2.2" stroke="currentColor"
-          strokeWidth="1.4" strokeLinecap="round" />
-      </svg>
-    </button>
+    <>
+      <button type="button" className={'voicebtn mic' + (on ? ' on' : '')}
+        onClick={() => { setTrouble(''); setOn(v => !v); if(!on) buzz('light'); }}
+        aria-label={on ? 'Stop dictating' : label}
+        title={on ? 'Stop dictating' : label}>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="5.6" y="1.6" width="4.8" height="8" rx="2.4" fill="currentColor" />
+          <path d="M3.4 7.6a4.6 4.6 0 0 0 9.2 0M8 12.2v2.2" stroke="currentColor"
+            strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+      </button>
+      {trouble && <span className="micbad" role="alert">{trouble}</span>}
+    </>
   );
 }
 
@@ -8051,7 +8067,7 @@ const GMark = () => (
 // fails to load, the drawn mark below is used instead so nothing looks broken.
 // Bumped every time a file is handed over, so a build can be identified
 // without printing a version number next to the wordmark.
-const BUILD = 'b7891';
+const BUILD = 'b7897';
 const LOGO_SRC = 'logo.png?v=4';
 // The homepage photograph, graded to the palette. Two files rather than one
 // CSS filter, because a filter that works on cream washes out on charcoal.
